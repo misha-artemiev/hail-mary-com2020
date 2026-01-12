@@ -1,0 +1,10 @@
+**/node_modules
+**/.vscode
+**/.DS_Store
+**/.npm
+**/__pycache__
+**/venv
+**/.venv
+**/env
+**/.env
+
