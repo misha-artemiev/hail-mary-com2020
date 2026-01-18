@@ -9,3 +9,12 @@ class Host_Settings(BaseSettings):
     api_version: str = "v1"
 
     model_config = SettingsConfigDict(env_prefix="HOST_", case_sensitive=False)
+
+class Database_Settings(BaseSettings):
+    host: str = "localhost"
+    port: int = 3306
+    username: str = "hail-mary"
+    password: str = "secure-password"
+    database: str = "hail-mary"
+
+    model_config = SettingsConfigDict(env_prefix="DATABASE_", case_sensitive=False)
