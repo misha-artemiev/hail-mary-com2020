@@ -1,14 +1,17 @@
 import mysql
 from mysql.connector import Error
+from backend.internal.settings import Database_Settings
 
+database_settings = Database_Settings()
 
 def get_db_connection():
     try:
         connection = mysql.connector.connect(
-            host='host',
-            database='database',
-            user='user',
-            password='pw'
+            host=database_settings.host,
+            port=database_settings.port,
+            database=database_settings.database,
+            user=database_settings.username,
+            password=database_settings.password
         )
         if connection.is_connected():
             print("Connection to database successful.")
