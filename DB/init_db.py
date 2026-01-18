@@ -61,10 +61,10 @@ def init_seller_table(connection):
         user_id INT NOT NULL,
         city VARCHAR(100) NOT NULL,
         seller_name VARCHAR(250) NOT NULL,
-        verified BOOLEAN NOT NULL DEFAULT FALSE,
         verified_by INT,
         verification_date TIMESTAMP,
         PRIMARY KEY (user_id),
+        FOREIGN KEY (verified_by) REFERENCES admins(user_id) ON DELETE SET NULL,
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
     );
     """
@@ -105,6 +105,7 @@ def init_bundle_table(connection):
         pickup_start_at TIMESTAMP NOT NULL,
         pickup_end_at TIMESTAMP NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category) REFERENCES food_category(category_id) ON DELETE SET NULL,
         FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
     );
     """
