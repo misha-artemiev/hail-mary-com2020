@@ -1,4 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 class Host_Settings(BaseSettings):
     host: str = "localhost"
@@ -17,4 +20,4 @@ class Database_Settings(BaseSettings):
     password: str = "secure-password"
     database: str = "hail-mary"
 
-    model_config = SettingsConfigDict(env_prefix="DATABASE_", case_sensitive=False)
+    model_config = SettingsConfigDict(env_prefix="DATABASE_", case_sensitive=False, env_file=BASE_DIR/".env")
