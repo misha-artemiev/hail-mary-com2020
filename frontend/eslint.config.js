@@ -16,8 +16,8 @@ export default defineConfig([
         extends: ["js/recommended"],
         settings: {
             react: {
-                version: "detect"
-            }
+                version: "detect",
+            },
         },
         languageOptions: {
             globals: globals.browser,

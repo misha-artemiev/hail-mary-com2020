@@ -17,7 +17,7 @@ export default defineConfig({
 
     // Build info
     build: {
-        outDir: 'dist',
-        sourcemap: true // For easier debugging
-    }
-})
+        outDir: "dist",
+        sourcemap: true, // For easier debugging
+    },
+});
