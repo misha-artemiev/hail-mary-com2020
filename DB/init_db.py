@@ -228,7 +228,7 @@ def init_issue_report_table(connection):
     CREATE TABLE IF NOT EXISTS issue_reports (
         report_id INT AUTO_INCREMENT PRIMARY KEY,
         reporter_id INT NOT NULL,
-        reported_bundle_id INT NOT NULL,
+        reservation_id INT NOT NULL,
         issue_type ENUM(
         'ITEM_MISSING',
         'ITEM_INCORRECT',
@@ -246,8 +246,8 @@ def init_issue_report_table(connection):
         description VARCHAR(500) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL DEFAULT 'open',
-        FOREIGN KEY (reporter_id) REFERENCES users(user_id) ON DELETE CASCADE,
-        FOREIGN KEY (reported_bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+        FOREIGN KEY (reporter_id) REFERENCES consumers(user_id) ON DELETE CASCADE,
+        FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE CASCADE
     );
     """
     cursor = connection.cursor()
@@ -339,24 +339,37 @@ def init_forecast_output_table(connection):
     print("Forecast Output table initialized.")
     cursor.close()
 
+# Remove Table Function
+def remove_table(connection, table_name):
+    drop_table_query = f"DROP TABLE IF EXISTS {table_name};"
+    cursor = connection.cursor()
+    cursor.execute(drop_table_query)
+    connection.commit()
+    print(f"Table {table_name} removed.")
+    cursor.close()
+
+# Initialize All Tables
+def init_all_tables(conn):
+    init_user_table(conn)
+    init_consumer_table(conn)
+    init_admin_table(conn)
+    init_seller_table(conn)
+    init_allergens_table(conn)
+    init_food_category_table(conn)
+    init_bundle_table(conn)
+    init_bundle_allergens_table(conn)
+    init_reservation_table(conn)
+    init_badge_table(conn)
+    init_badges_acquired_table(conn)
+    init_issue_report_table(conn)
+    init_token_table(conn)
+    init_inbox_table(conn)
+    init_forecast_input_table(conn)
+    init_forecast_output_table(conn)
+
 if __name__ == "__main__":
     conn = get_db_connection()
     if conn:
-        init_user_table(conn)
-        init_consumer_table(conn)
-        init_admin_table(conn)
-        init_seller_table(conn)
-        init_allergens_table(conn)
-        init_food_category_table(conn)
-        init_bundle_table(conn)
-        init_bundle_allergens_table(conn)
-        init_reservation_table(conn)
-        init_badge_table(conn)
-        init_badges_acquired_table(conn)
-        init_issue_report_table(conn)
-        init_token_table(conn)
-        init_inbox_table(conn)
-        init_forecast_input_table(conn)
-        init_forecast_output_table(conn)
+        init_all_tables(conn)
         conn.close()
         print("Database connection closed.")
