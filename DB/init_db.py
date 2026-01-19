@@ -62,12 +62,17 @@ def init_seller_table(connection):
     create_table_query = """
     CREATE TABLE IF NOT EXISTS sellers (
         user_id INT NOT NULL,
-        city VARCHAR(100) NOT NULL,
         seller_name VARCHAR(250) NOT NULL,
         verified_by INT,
         verification_date TIMESTAMP,
+        address_line1 VARCHAR(255) NOT NULL,
+        address_line2 VARCHAR(255),
+        city VARCHAR(100) NOT NULL,
+        postal_code VARCHAR(20) NOT NULL,
+        region VARCHAR(100) NOT NULL,
+        country VARCHAR(100) NOT NULL,
         PRIMARY KEY (user_id),
-        FOREIGN KEY (verified_by) REFERENCES admins(user_id) ON DELETE SET NULL,
+        FOREIGN KEY (verified_by) REFERENCES admins(user_id),
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
     );
     """
@@ -100,15 +105,16 @@ def init_bundle_table(connection):
     CREATE TABLE IF NOT EXISTS bundles (
         bundle_id INT AUTO_INCREMENT PRIMARY KEY,
         seller_id INT NOT NULL,
-        category INT NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        category_id INT NOT NULL,
         description VARCHAR(255) NOT NULL,
         total_qty INT NOT NULL,
         price DECIMAL(10, 2) NOT NULL,
         discount_percentage INT NOT NULL,
-        pickup_start_at TIMESTAMP NOT NULL,
-        pickup_end_at TIMESTAMP NOT NULL,
+        window_start TIMESTAMP NOT NULL,
+        window_end TIMESTAMP NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (category) REFERENCES food_category(category_id) ON DELETE SET NULL,
+        FOREIGN KEY (category_id) REFERENCES food_category(category_id),
         FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
     );
     """
@@ -123,7 +129,7 @@ def init_allergens_table(connection):
     create_table_query = """
     CREATE TABLE IF NOT EXISTS allergens (
         allergen_id INT AUTO_INCREMENT PRIMARY KEY,
-        allergen_name VARCHAR(100) NOT NULL UNIQUE   );
+        allergen_name VARCHAR(100) NOT NULL UNIQUE);
     """
     cursor = connection.cursor()
     cursor.execute(create_table_query)
@@ -170,7 +176,7 @@ def init_reservation_table(connection):
         bundle_id INT NOT NULL,
         consumer_id INT,
         reserved_at TIMESTAMP,
-        claim_code INT,
+        claim_code VARCHAR(20) NOT NULL,
         status ENUM('available', 'reserved', 'collected', 'no_show', 'expired') NOT NULL DEFAULT 'available',
         collected_at TIMESTAMP,
         FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id),
@@ -188,7 +194,7 @@ def init_badge_table(connection):
     create_table_query = """
     CREATE TABLE IF NOT EXISTS badges (
         badge_id INT AUTO_INCREMENT PRIMARY KEY,
-        badge_name VARCHAR(100) NOT NULL UNIQUE,
+        name VARCHAR(100) NOT NULL UNIQUE,
         description VARCHAR(255) NOT NULL
     );
     """
@@ -198,13 +204,13 @@ def init_badge_table(connection):
     print("Badge table initialized.")
     cursor.close()
 
-#  Badge_aquired Table
-def init_badge_aquired_table(connection):
+#  Badge_acquired Table
+def init_badges_acquired_table(connection):
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS badge_aquired (
+    CREATE TABLE IF NOT EXISTS badges_acquired (
         user_id INT NOT NULL,
         badge_id INT NOT NULL,
-        aquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, badge_id),
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
         FOREIGN KEY (badge_id) REFERENCES badges(badge_id) ON DELETE CASCADE
@@ -213,7 +219,7 @@ def init_badge_aquired_table(connection):
     cursor = connection.cursor()
     cursor.execute(create_table_query)
     connection.commit()
-    print("Badge_Aquired table initialized.")
+    print("Badges_Acquired table initialized.")
     cursor.close()
 
 # Issue Report Table
@@ -237,8 +243,8 @@ def init_issue_report_table(connection):
         'CLAIM_CODE_ALREADY_USED',
         'OTHER'
         ) NOT NULL,
-        issue_description VARCHAR(500) NOT NULL,
-        reported_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        description VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL DEFAULT 'open',
         FOREIGN KEY (reporter_id) REFERENCES users(user_id) ON DELETE CASCADE,
         FOREIGN KEY (reported_bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
@@ -294,18 +300,17 @@ def init_forecast_input_table(connection):
     create_table_query = """
     CREATE TABLE IF NOT EXISTS forecast_input (
         input_id INT AUTO_INCREMENT PRIMARY KEY,
-        bundle_id INT NOT NULL,
-        date DATE NOT NULL,
+        seller_id INT NOT NULL,
+        category_id INT NOT NULL,
         day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
-        pickup_start_hour INT NOT NULL,
-        pickup_end_hour INT NOT NULL,
+        window_start_hour TIME NOT NULL,
+        window_end_hour TIME NOT NULL,
         is_holiday BOOLEAN NOT NULL,
         temperature DECIMAL(5,2) NOT NULL,
-        weather_condition ENUM('sunny', 'cloudy', 'rainy', 'snowy', 'foggy') NOT NULL,
-        observend_reservations INT NOT NULL,
+        weather_flag ENUM('sunny', 'cloudy', 'rainy', 'snowy', 'windy') NOT NULL,
+        observed_reservations INT NOT NULL,
         observed_no_shows INT NOT NULL,
-        UNIQUE (bundle_id, date),
-        FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+        FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
     );
     """
     cursor = connection.cursor()
@@ -321,8 +326,8 @@ def init_forecast_output_table(connection):
         output_id INT AUTO_INCREMENT PRIMARY KEY,
         bundle_id INT NOT NULL,
         predicted_reservations INT NOT NULL,
-        predicted_no_show_prob INT NOT NULL,
-        confidence DECIMAL(5,2) NOT NULL,
+        predicted_no_show_prob DECIMAL(5,4) NOT NULL,
+        confidence DECIMAL(5,4) NOT NULL,
         rationale VARCHAR(500),
         generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
@@ -339,19 +344,19 @@ if __name__ == "__main__":
     if conn:
         init_user_table(conn)
         init_consumer_table(conn)
-        init_seller_table(conn)
         init_admin_table(conn)
-        init_bundle_table(conn)
+        init_seller_table(conn)
         init_allergens_table(conn)
-        init_bundle_allergens_table(conn)
         init_food_category_table(conn)
+        init_bundle_table(conn)
+        init_bundle_allergens_table(conn)
         init_reservation_table(conn)
         init_badge_table(conn)
-        init_badge_aquired_table(conn)
+        init_badges_acquired_table(conn)
         init_issue_report_table(conn)
         init_token_table(conn)
-        init_inbox_table(conn)  
+        init_inbox_table(conn)
         init_forecast_input_table(conn)
         init_forecast_output_table(conn)
-        conn.close()    
+        conn.close()
         print("Database connection closed.")
