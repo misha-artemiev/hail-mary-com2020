@@ -1,10 +1,12 @@
 import React from "react";
 
+import defaultProfile from "../assets/default-user.jpg";
+
 // Generic profile info row
 function Info({ label, value }) {
     return (
-        <p>
-            <strong>{label}:</strong> {value}
+        <p className="text-gray-700 mb-2">
+            <span className="font-semibold">{label}:</span> {value}
         </p>
     );
 }
@@ -16,23 +18,41 @@ export default function Profile() {
     };
 
     return (
-        <>
-            <h1>Profile</h1>
+        <div className="max-w-3xl mx-auto p-6">
+            {/* Profile card */}
+            <div className="bg-white shadow-md rounded-lg p-6 mb-2">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-3xl font-bold text-green-700">
+                        Profile
+                    </h1>
+                    <button
+                        onClick={handleEdit}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                        Edit Profile
+                    </button>
+                </div>
 
-            <button onClick={handleEdit}>Edit Profile</button>
+                <img
+                    // TODO: get user profile properly
+                    src={defaultProfile}
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full mb-4 mx-auto"
+                />
 
-            {/* Profile information */}
-            <div>
-                <Info label="Display Name" value="User0001" />
+                <Info label="Display name" value="User0001" />
                 <Info label="Current rescue streak" value="0 weeks" />
                 <Info label="Bundles rescued" value="0" />
             </div>
 
-            <hr />
-
-            {/* Badge information */}
-            <h2>Badges</h2>
-            <p>No badges yet...!</p>
-        </>
+            {/* Badges card */}
+            <div className="bg-white shadow-md rounded-lg p-6">
+                <h2 className="text-2xl font-bold mb-4 text-green-700">
+                    Badges
+                </h2>
+                <p>No badges yet...!</p>
+            </div>
+        </div>
     );
 }

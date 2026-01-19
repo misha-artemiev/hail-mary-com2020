@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 
 export default function App() {
     return (
-        <>
+        <div className="bg-gray-50 min-h-screen">
             {/* Display a navigation bar */}
             <Navbar />
 
@@ -23,6 +23,6 @@ export default function App() {
                 {/* Catch-all (i.e. 404) */}
                 <Route path="*" element={<NotFound />}></Route>
             </Routes>
-        </>
+        </div>
     );
 }

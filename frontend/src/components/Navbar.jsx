@@ -11,22 +11,17 @@ export default function Navbar() {
     };
 
     return (
-        <nav style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <NavLink to="/">Home</NavLink>
+        <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
+            <NavLink to="/" className="font-bold text-xl">
+                RescueMarket
+            </NavLink>
 
             {/* Profile picture */}
-            <NavLink to="/profile" style={{ marginLeft: "auto" }}>
+            <NavLink to="/profile">
                 <img
                     src={user.profilePic}
                     alt={`${user.displayName}'s profile`}
-                    style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                        border: "2px solid #4CAF50",
-                        cursor: "pointer",
-                    }}
+                    className="w-10 h-10 rounded-full hover:scale-110 transition"
                 />
             </NavLink>
         </nav>
