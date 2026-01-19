@@ -1,0 +1,41 @@
+01. open the app (backend) -> 29
+02. shutdown the app (backend) -> 31
+03. create user -> func: hash password, db: insert user,
+04. user email verification -> func: gen code, db: insert code, email: send code, func: verify code -> db: delete code, db: update user
+05. get user data
+06. delete user (cascade)
+07. update user info (email, password, ...)
+08. create seller
+09. delete seller
+10. manage seller (by admins)
+11. manage seller (by seller)
+12. create product
+13. update producr
+14. delete product (cascade)
+15. claim product (by user) -> func: payment (27), func: create collection code(16), db: insert collection code, -> 35
+16. create product verification code
+17. collect product -> func: check code, db: update
+18. login -> db: get user by email, func: check password hash, func: craete token, db: insert token
+19. logout -> db: get user by token, db: delete token
+20. signup -> 03 -> func: verify input fields, func: check for collisions, db: insert user, -> 04
+21. signup for sellers -> 08
+22. search product with filters -> filters: price, distance -> 38, allergens, name
+23. select (get) product
+24. get user profile
+25. rate sellers
+26. get claimed products (history) (for user)
+27. pay for the product -> redirect/bank details
+28. submit issue
+29. connect to database
+30. get database session -> 29
+31. disconnect for database
+32. get sellers products (history) (by seller)
+33. badges <- FUCK THEM AND TABLES
+34. testiamabouttolosemymindsuite
+35. notify seller on claim and updates on inventory
+36. GDPR LOGS 😭
+37. get analytics
+38. get distance between user and seller
+
+notes:
+tell noe and mp to make an ER!!!!!! diagram
