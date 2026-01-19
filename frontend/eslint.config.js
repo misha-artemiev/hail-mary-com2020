@@ -13,7 +13,7 @@ export default defineConfig([
     {
         files: ["**/*.{js,jsx}"],
         plugins: { js },
-        extends: ["js/recommended"],
+        extends: ["js/recommended", pluginReact.configs.flat.recommended],
         settings: {
             react: {
                 version: "detect",
@@ -22,8 +22,8 @@ export default defineConfig([
         languageOptions: {
             globals: globals.browser,
         },
+        rules: {
+            "react/prop-types": "off",
+        },
     },
-
-    // Default React rules
-    pluginReact.configs.flat.recommended,
 ]);
