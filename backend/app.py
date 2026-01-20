@@ -6,6 +6,6 @@ host_settings = Host_Settings()
 app = FastAPI(
     title = host_settings.name,
     version = host_settings.version,
-    root_path=f"/api/{host_settings.api_version}"
+    root_path="/api"
 )
 
