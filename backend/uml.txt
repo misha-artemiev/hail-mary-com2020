@@ -30,12 +30,9 @@
 30. get database session -> 29
 31. disconnect for database
 32. get sellers products (history) (by seller)
-33. badges <- FUCK THEM AND TABLES
-34. testiamabouttolosemymindsuite
+33. badges
+34. testsuite
 35. notify seller on claim and updates on inventory
-36. GDPR LOGS 😭
+36. logs -> gdpr
 37. get analytics
 38. get distance between user and seller
-
-notes:
-tell noe and mp to make an ER!!!!!! diagram
