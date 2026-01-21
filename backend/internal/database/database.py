@@ -1,8 +1,5 @@
 from sqlalchemy import create_engine, Engine, text
 from internal.settings import database_settings
-import logging
-
-logger = logging.getLogger("uvicorn.error")
 
 class DatabaseManager:
     engine: Engine
@@ -29,3 +26,5 @@ class DatabaseManager:
     def cleanup(self):
         if self.engine:
             self.engine.dispose()
+
+database_manager = DatabaseManager()

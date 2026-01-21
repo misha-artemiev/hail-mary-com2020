@@ -2,10 +2,8 @@ from fastapi import FastAPI
 from uvicorn import run
 from contextlib import asynccontextmanager
 from internal.settings import host_settings
-from internal.database import DatabaseManager
+from internal.database import database_manager
 from internal.logging import logger
-
-database_manager = DatabaseManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
