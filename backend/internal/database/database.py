@@ -1,25 +1,31 @@
-from mysql.connector import connect, Error
-from mysql.connector.abstracts import MySQLConnectionAbstract
-import logging as log
+from sqlalchemy import create_engine, Engine, text
+from internal.settings import database_settings
+import logging
 
-class db_conn:
-    connection: MySQLConnectionAbstract
+logger = logging.getLogger("uvicorn.error")
 
-    def connect(self, host: str, port: int, username: str, password: str, database: str):
+class DatabaseManager:
+    engine: Engine
+
+    def initialise(self) -> None | str:
+        self.engine = create_engine(
+            f"mysql+mysqlconnector://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            pool_recycle=2600
+        )
+    
         try:
-            conn = connect(
-                host=host,
-                port=port,
-                database=database,
-                user=username,
-                password=password
-            )
-        except Error as err:
-            log.error(f"can't estabilished connection with database: {err}")
-        else:
-            if isinstance(conn, MySQLConnectionAbstract):
-                self.connection = conn
-                return
-            else:
-                log.error("internal erorr: database connection type mismatch")
-                return
+            with self.engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except Exception:
+            return "Failed to initiate connection with database"
+
+    def get_engine(self) -> Engine | None:
+        if self.engine:
+            return self.engine
+
+    def cleanup(self):
+        if self.engine:
+            self.engine.dispose()

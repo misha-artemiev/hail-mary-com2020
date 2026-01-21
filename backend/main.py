@@ -1,8 +1,33 @@
+from fastapi import FastAPI
 from uvicorn import run
-from app import app
-from internal.settings import Host_Settings
+from contextlib import asynccontextmanager
+from internal.settings import host_settings
+from internal.database import DatabaseManager
+from internal.logging import logger
 
+database_manager = DatabaseManager()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initialising database engine")
+    err = database_manager.initialise()
+    if err:
+        logger.error(err)
+        raise
+    logger.info("Database ready")
+
+    yield
+
+
+    logger.info("Cleaning database engine")
+    database_manager.cleanup()
+
+app = FastAPI(
+    title = host_settings.name,
+    version = host_settings.version,
+    root_path="/api",
+    lifespan=lifespan
+)
 
 if __name__ == "__main__":
-    host_settings = Host_Settings()
-    run(app, host=host_settings.host, forwarded_allow_ips=host_settings.forward_from, port=host_settings.port)
+    run(app, host=host_settings.host, forwarded_allow_ips=host_settings.forward_from, port=host_settings.port, log_level="info")
