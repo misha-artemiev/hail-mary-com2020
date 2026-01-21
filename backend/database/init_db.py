@@ -2,7 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from mysql.connector.abstracts import MySQLConnectionAbstract
 from mysql.connector.pooling import PooledMySQLConnection
-from internal.settings import Database_Settings
+from internal.settings import database_settings
 from uvicorn.config import LOGGING_CONFIG
 from logging.config import dictConfig
 from logging import getLogger
@@ -10,7 +10,6 @@ from re import search, IGNORECASE
 
 dictConfig(LOGGING_CONFIG)
 logger = getLogger("uvicorn.info")
-database_settings = Database_Settings()
 table_queries: list[str] = []
 
 # Connect to the database
