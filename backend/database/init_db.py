@@ -1,6 +1,6 @@
-import mysql
+import mysql.connector
 from mysql.connector import Error
-from backend.internal.settings import Database_Settings
+from internal.settings import Database_Settings
 
 database_settings = Database_Settings()
 
