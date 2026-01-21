@@ -27,8 +27,7 @@ def init_user_table(connection):
     CREATE TABLE IF NOT EXISTS users (
         user_id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(250) NOT NULL UNIQUE,
-        pw_salt BINARY(16) NOT NULL,
-        pw_hash BINARY(64) NOT NULL,
+        pw_hash VARCHAR(255) NOT NULL,
         role ENUM('seller','consumer','admin') NOT NULL DEFAULT 'consumer',
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -62,14 +61,14 @@ def init_seller_table(connection):
     create_table_query = """
     CREATE TABLE IF NOT EXISTS sellers (
         user_id INT NOT NULL,
-        seller_name VARCHAR(250) NOT NULL,
+        seller_name VARCHAR(255) NOT NULL,
         verified_by INT,
         verification_date TIMESTAMP,
         address_line1 VARCHAR(255) NOT NULL,
         address_line2 VARCHAR(255),
         city VARCHAR(100) NOT NULL,
-        postal_code VARCHAR(20) NOT NULL,
-        region VARCHAR(100) NOT NULL,
+        post_code VARCHAR(20) NOT NULL,
+        region VARCHAR(100),
         country VARCHAR(100) NOT NULL,
         PRIMARY KEY (user_id),
         FOREIGN KEY (verified_by) REFERENCES admins(user_id),
@@ -105,8 +104,7 @@ def init_bundle_table(connection):
     CREATE TABLE IF NOT EXISTS bundles (
         bundle_id INT AUTO_INCREMENT PRIMARY KEY,
         seller_id INT NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        category_id INT NOT NULL,
+        bundle_name VARCHAR(100) NOT NULL,
         description VARCHAR(255) NOT NULL,
         total_qty INT NOT NULL,
         price DECIMAL(10, 2) NOT NULL,
@@ -114,7 +112,6 @@ def init_bundle_table(connection):
         window_start TIMESTAMP NOT NULL,
         window_end TIMESTAMP NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (category_id) REFERENCES food_category(category_id),
         FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
     );
     """
@@ -154,10 +151,27 @@ def init_bundle_allergens_table(connection):
     print("Bundle-Allergens table initialized.")
     cursor.close()
 
+# Bundle-Category Table
+def init_bundle_category_table(connection):
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS bundle_category (
+        category_id INT NOT NULL ,
+        bundle_id INT NOT NULL,
+        PRIMARY KEY (category_id, bundle_id),
+        FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE,
+        FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+    );
+    """
+    cursor = connection.cursor()
+    cursor.execute(create_table_query)
+    connection.commit()
+    print("Bundle Category table initialized.")
+    cursor.close()
+
 # Food Category Table
 def init_food_category_table(connection):
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS food_category (
+    CREATE TABLE IF NOT EXISTS category (
         category_id INT AUTO_INCREMENT PRIMARY KEY,
         category_name VARCHAR(100) NOT NULL UNIQUE
     );
@@ -174,12 +188,12 @@ def init_reservation_table(connection):
     CREATE TABLE IF NOT EXISTS reservations (
         reservation_id INT AUTO_INCREMENT PRIMARY KEY,
         bundle_id INT NOT NULL,
-        consumer_id INT,
-        reserved_at TIMESTAMP,
+        consumer_id INT NOT NULL,
+        reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         claim_code VARCHAR(20) NOT NULL,
-        status ENUM('available', 'reserved', 'collected', 'no_show', 'expired') NOT NULL DEFAULT 'available',
+        status ENUM('reserved', 'collected', 'no_show') NOT NULL DEFAULT 'reserved',
         collected_at TIMESTAMP,
-        FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id),
+        FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
         FOREIGN KEY (consumer_id) REFERENCES consumers(user_id)
     );
     """
@@ -222,44 +236,72 @@ def init_badges_acquired_table(connection):
     print("Badges_Acquired table initialized.")
     cursor.close()
 
-# Issue Report Table
-def init_issue_report_table(connection):
+# Admin Issue Report Table
+def init_admin_issue_report_table(connection):
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS issue_reports (
+    CREATE TABLE IF NOT EXISTS admin_issue_reports (
         report_id INT AUTO_INCREMENT PRIMARY KEY,
-        reporter_id INT NOT NULL,
-        reservation_id INT NOT NULL,
+        user_id INT NOT NULL,
         issue_type ENUM(
-        'ITEM_MISSING',
-        'ITEM_INCORRECT',
-        'ITEM_DAMAGED',
-        'SELLER_CLOSED',
-        'SELLER_REFUSED_PICKUP',
-        'PICKUP_DELAYED',
-        'BUNDLE_EXPIRED',
-        'RESERVATION_CANCELLED_BY_SELLER',
-        'RESERVATION_NOT_FOUND',
-        'CLAIM_CODE_INVALID',
-        'CLAIM_CODE_ALREADY_USED',
-        'OTHER'
+            'LOGIN_FAILED',
+            'ACCOUNT_LOCKED',
+            'PASSWORD_RESET_FAILED',
+            'PAYMENT_FAILED',
+            'QR_CODE_NOT_GENERATED',
+            'QR_CODE_SCAN_ERROR',
+            'APP_CRASH',
+            'DATA_INCONSISTENCY',
+            'PERMISSION_ERROR',
+            'OTHER'
         ) NOT NULL,
         description VARCHAR(500) NOT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        status ENUM('open', 'in_progress', 'resolved', 'closed') NOT NULL DEFAULT 'open',
-        FOREIGN KEY (reporter_id) REFERENCES consumers(user_id) ON DELETE CASCADE,
+        status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    );
+    """
+    cursor = connection.cursor()
+    cursor.execute(create_table_query)
+    connection.commit()
+    print("Admin Issue Report table initialized.")
+    cursor.close()
+
+# Seller Issue Report Table
+def init_seller_issue_report_table(connection):
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS seller_issue_reports (
+        report_id INT AUTO_INCREMENT PRIMARY KEY,
+        reservation_id INT NOT NULL,
+        issue_type ENUM(
+            'ITEM_MISSING',
+            'ITEM_INCORRECT',
+            'ITEM_DAMAGED',
+            'SELLER_CLOSED',
+            'SELLER_REFUSED_PICKUP',
+            'PICKUP_DELAYED',
+            'BUNDLE_EXPIRED',
+            'RESERVATION_CANCELLED_BY_SELLER',
+            'RESERVATION_NOT_FOUND',
+            'CLAIM_CODE_INVALID',
+            'CLAIM_CODE_ALREADY_USED',
+            'OTHER'
+        ) NOT NULL,
+        description VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
         FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE CASCADE
     );
     """
     cursor = connection.cursor()
     cursor.execute(create_table_query)
     connection.commit()
-    print("Issue Report table initialized.")
+    print("Seller Issue Report table initialized.")
     cursor.close()
 
 # Token Table
 def init_token_table(connection):
     create_table_query = """
-    CREATE TABLE IF NOT EXISTS tokens (
+    CREATE TABLE IF NOT EXISTS token (
         token_id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         token VARCHAR(255) NOT NULL,
@@ -357,19 +399,62 @@ def init_all_tables(conn):
     init_allergens_table(conn)
     init_food_category_table(conn)
     init_bundle_table(conn)
+    init_bundle_category_table(conn)
     init_bundle_allergens_table(conn)
     init_reservation_table(conn)
     init_badge_table(conn)
     init_badges_acquired_table(conn)
-    init_issue_report_table(conn)
+    init_seller_issue_report_table(conn)
+    init_admin_issue_report_table(conn)
     init_token_table(conn)
     init_inbox_table(conn)
     init_forecast_input_table(conn)
     init_forecast_output_table(conn)
 
+# Drop All Tables
+def drop_all_tables(conn):
+    # Drop tables in order: children first, parents last
+    tables = [
+        # Tables with most dependencies (children)
+        "badges_acquired",
+        "bundle_allergens",
+        "bundle_category",
+        "admin_issue_reports", 
+        "seller_issue_reports",
+        "reservations",
+        "tokens",
+        "inbox",
+        "forecast_output",
+        "forecast_input",
+        # Then tables referenced by above
+        "bundles",
+        "badges",
+        "allergens",
+        "food_category",
+        "consumers",
+        "sellers",   # Drop sellers before admins
+        "admins",
+        # Finally, parent table
+        "users"
+    ]
+    for table in tables:
+        remove_table(conn, table)
+
+# Show All Tables
+def show_all_tables(conn):
+    cursor = conn.cursor()
+    cursor.execute("SHOW TABLES;")
+    tables = cursor.fetchall()
+    print("Current tables in the database:")
+    for table in tables:
+        print(table[0])
+    cursor.close()
+
 if __name__ == "__main__":
     conn = get_db_connection()
     if conn:
         init_all_tables(conn)
+        # show_all_tables(conn)
+        # drop_all_tables(conn)
         conn.close()
         print("Database connection closed.")
