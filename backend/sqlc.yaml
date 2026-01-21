@@ -13,5 +13,5 @@ sql:
         out: "internal/queries"
         options:
           package: "queries"
-          emit_sync_querier: false
-          emit_async_querier: false
+          emit_sync_querier: true
+          emit_async_querier: true
