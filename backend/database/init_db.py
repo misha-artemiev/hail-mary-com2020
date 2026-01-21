@@ -41,16 +41,6 @@ def get_table_name(sql: str) -> str | None:
     else:
         return None
 
-# Executing sql transactions
-def execute_transaction(sql: str, connection: PooledMySQLConnection):
-    table_name = get_table_name(sql)
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(sql)
-            logger.info(f"{table_name} table created.")
-    except Error as err:
-        logger.error(f"Failed to create {table_name}: {err}")
-
 # Create users table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS users (
