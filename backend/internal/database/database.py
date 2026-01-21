@@ -4,7 +4,7 @@ from internal.settings import database_settings
 class DatabaseManager:
     engine: Engine
 
-    def initialise(self) -> None | str:
+    def initialise(self) -> None | Exception:
         self.engine = create_engine(
             f"mysql+mysqlconnector://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
             pool_size=10,
@@ -17,11 +17,12 @@ class DatabaseManager:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
         except Exception:
-            return "Failed to initiate connection with database"
+            return Exception("Failed to initiate connection with database")
 
-    def get_engine(self) -> Engine | None:
+    def get_engine(self) -> Engine | Exception:
         if self.engine:
             return self.engine
+        return Exception("No engine found")
 
     def cleanup(self):
         if self.engine:

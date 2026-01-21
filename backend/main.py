@@ -10,7 +10,7 @@ async def lifespan(app: FastAPI):
     logger.info("Initialising database engine")
     err = database_manager.initialise()
     if err:
-        logger.error(err)
+        logger.error(err.args)
         raise
     logger.info("Database ready")
 
