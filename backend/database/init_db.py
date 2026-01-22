@@ -1,7 +1,4 @@
-import mysql.connector
-from mysql.connector import Error
-from mysql.connector.abstracts import MySQLConnectionAbstract
-from mysql.connector.pooling import PooledMySQLConnection
+from psycopg import connect, Error, Connection
 from internal.settings import database_settings
 from uvicorn.config import LOGGING_CONFIG
 from logging.config import dictConfig
@@ -13,43 +10,135 @@ logger = getLogger("uvicorn.info")
 table_queries: list[str] = []
 
 # Connect to the database
-def get_db_connection() -> PooledMySQLConnection | MySQLConnectionAbstract | None:
+def get_db_connection() -> Connection | None:
     try:
-        connection = mysql.connector.connect(
+        connection = connect(
             host=database_settings.host,
             port=database_settings.port,
-            database=database_settings.database,
+            dbname=database_settings.database,
             user=database_settings.username,
             password=database_settings.password
         )
-        if connection.is_connected():
+        if connection.closed == 0:
             logger.info("Connection to database successful.")
             return connection
     except Error as e:
-        logger.error(f"Error while connecting to MySQL: {e}")
+        logger.error(f"Error while connecting to Postgres: {e}")
         return None
  
-# Get table name using regex
-def get_table_name(sql: str) -> str | None:
-    table_name = search(
-        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?",
-        sql,
+# Get entity name and type
+def get_type_and_name(sql: str) -> tuple[str, str] | None:
+    table_match = search(
+        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?", 
+        sql, 
         IGNORECASE
     )
-    if table_name:
-        return table_name.group(1)
-    else:
-        return None
+    if table_match:
+        return ("TABLE", table_match.group(1))
+
+    enum_match = search(
+        r"CREATE\s+TYPE\s+`?(\w+)`?\s+AS\s+ENUM", 
+        sql, 
+        IGNORECASE
+    )
+    if enum_match:
+        return ("ENUM", enum_match.group(1))
+    return None
+
+# Create user role enum
+table_queries.append("""
+CREATE TYPE user_role AS ENUM (
+    'seller',
+    'consumer',
+    'admin'
+);
+""")
+
+# Create reservation status enum
+table_queries.append("""
+CREATE TYPE reservation_status AS ENUM (
+    'reserved',
+    'collected',
+    'no_show'
+);
+""")
+
+# Create admin issue enum
+table_queries.append("""
+CREATE TYPE admin_issue_type AS ENUM (
+    'LOGIN_FAILED',
+    'ACCOUNT_LOCKED',
+    'PASSWORD_RESET_FAILED',
+    'PAYMENT_FAILED',
+    'QR_CODE_NOT_GENERATED',
+    'QR_CODE_SCAN_ERROR',
+    'APP_CRASH',
+    'DATA_INCONSISTENCY',
+    'PERMISSION_ERROR',
+    'OTHER'
+);
+""")
+
+# Create seller issue enum
+table_queries.append("""
+CREATE TYPE seller_issue_type AS ENUM (
+    'ITEM_MISSING',
+    'ITEM_INCORRECT',
+    'ITEM_DAMAGED',
+    'SELLER_CLOSED',
+    'SELLER_REFUSED_PICKUP',
+    'PICKUP_DELAYED',
+    'BUNDLE_EXPIRED',
+    'RESERVATION_CANCELLED_BY_SELLER',
+    'RESERVATION_NOT_FOUND',
+    'CLAIM_CODE_INVALID',
+    'CLAIM_CODE_ALREADY_USED',
+    'OTHER'
+);
+""")
+
+# Create issue status enum
+table_queries.append("""
+CREATE TYPE issue_status AS ENUM (
+    'open',
+    'in_progress',
+    'closed'
+);
+""")
+
+# Create day of the week enum
+table_queries.append("""
+CREATE TYPE day_of_week AS ENUM (
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+);
+""")
+
+# Create weather enum
+table_queries.append("""
+CREATE TYPE weather_flag AS ENUM (
+    'sunny',
+    'cloudy',
+    'rainy',
+    'snowy',
+    'windy'
+);
+""")
 
 # Create users table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id SERIAL PRIMARY KEY,
     email VARCHAR(250) NOT NULL UNIQUE,
     pw_hash VARCHAR(255) NOT NULL,
-    role ENUM('seller','consumer','admin') NOT NULL DEFAULT 'consumer',
+    role user_role NOT NULL DEFAULT 'consumer',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 """)
 
@@ -97,7 +186,7 @@ CREATE TABLE IF NOT EXISTS sellers (
 # Create boundles table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS bundles (
-    bundle_id INT AUTO_INCREMENT PRIMARY KEY,
+    bundle_id SERIAL PRIMARY KEY,
     seller_id INT NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
@@ -114,7 +203,7 @@ CREATE TABLE IF NOT EXISTS bundles (
 # Create allergens table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS allergens (
-    allergen_id INT AUTO_INCREMENT PRIMARY KEY,
+    allergen_id SERIAL PRIMARY KEY,
     allergen_name VARCHAR(100) NOT NULL UNIQUE);
 """)
 
@@ -132,7 +221,7 @@ CREATE TABLE IF NOT EXISTS bundle_allergens (
 # Create category table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS category (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id SERIAL PRIMARY KEY,
     category_name VARCHAR(100) NOT NULL UNIQUE
 );
 """)
@@ -151,12 +240,12 @@ CREATE TABLE IF NOT EXISTS bundle_category (
 # Create reservations table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS reservations (
-    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id SERIAL PRIMARY KEY,
     bundle_id INT NOT NULL,
     consumer_id INT NOT NULL,
     reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     claim_code VARCHAR(20) NOT NULL,
-    status ENUM('reserved', 'collected', 'no_show') NOT NULL DEFAULT 'reserved',
+    status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES consumers(user_id)
@@ -166,7 +255,7 @@ CREATE TABLE IF NOT EXISTS reservations (
 # Create badges table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS badges (
-    badge_id INT AUTO_INCREMENT PRIMARY KEY,
+    badge_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(255) NOT NULL
 );
@@ -187,23 +276,12 @@ CREATE TABLE IF NOT EXISTS badges_acquired (
 # Create admin issue reports table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS admin_issue_reports (
-    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    issue_type ENUM(
-        'LOGIN_FAILED',
-        'ACCOUNT_LOCKED',
-        'PASSWORD_RESET_FAILED',
-        'PAYMENT_FAILED',
-        'QR_CODE_NOT_GENERATED',
-        'QR_CODE_SCAN_ERROR',
-        'APP_CRASH',
-        'DATA_INCONSISTENCY',
-        'PERMISSION_ERROR',
-        'OTHER'
-    ) NOT NULL,
+    issue_type admin_issue_type NOT NULL,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+    status issue_status NOT NULL DEFAULT 'open',
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 """)
@@ -211,25 +289,12 @@ CREATE TABLE IF NOT EXISTS admin_issue_reports (
 # Create seller issue reports table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS seller_issue_reports (
-    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL,
-    issue_type ENUM(
-        'ITEM_MISSING',
-        'ITEM_INCORRECT',
-        'ITEM_DAMAGED',
-        'SELLER_CLOSED',
-        'SELLER_REFUSED_PICKUP',
-        'PICKUP_DELAYED',
-        'BUNDLE_EXPIRED',
-        'RESERVATION_CANCELLED_BY_SELLER',
-        'RESERVATION_NOT_FOUND',
-        'CLAIM_CODE_INVALID',
-        'CLAIM_CODE_ALREADY_USED',
-        'OTHER'
-    ) NOT NULL,
+    issue_type seller_issue_type,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+    status issue_status NOT NULL DEFAULT 'open',
     FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE CASCADE
 );
 """)
@@ -237,7 +302,7 @@ CREATE TABLE IF NOT EXISTS seller_issue_reports (
 # Create token table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS token (
-    token_id INT AUTO_INCREMENT PRIMARY KEY,
+    token_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     token VARCHAR(255) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -249,7 +314,7 @@ CREATE TABLE IF NOT EXISTS token (
 # Create inbox table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS inbox (
-    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    message_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     sender_id INT NOT NULL,
     message_subject VARCHAR(255) NOT NULL,
@@ -264,15 +329,15 @@ CREATE TABLE IF NOT EXISTS inbox (
 # Create forcast input table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS forecast_input (
-    input_id INT AUTO_INCREMENT PRIMARY KEY,
+    input_id SERIAL PRIMARY KEY,
     seller_id INT NOT NULL,
     category_id INT NOT NULL,
-    day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+    day_of_week day_of_week NOT NULL,
     window_start_hour TIME NOT NULL,
     window_end_hour TIME NOT NULL,
     is_holiday BOOLEAN NOT NULL,
     temperature DECIMAL(5,2) NOT NULL,
-    weather_flag ENUM('sunny', 'cloudy', 'rainy', 'snowy', 'windy') NOT NULL,
+    weather_flag weather_flag NOT NULL,
     observed_reservations INT NOT NULL,
     observed_no_shows INT NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
@@ -282,7 +347,7 @@ CREATE TABLE IF NOT EXISTS forecast_input (
 # Create forcast output table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS forecast_output (
-    output_id INT AUTO_INCREMENT PRIMARY KEY,
+    output_id SERIAL PRIMARY KEY,
     bundle_id INT NOT NULL,
     predicted_reservations INT NOT NULL,
     predicted_no_show_prob DECIMAL(5,4) NOT NULL,
@@ -308,13 +373,17 @@ def main():
         case 1:
             # Create all tables
             for sql in table_queries:
-                table_name = get_table_name(sql)
+                type_name = get_type_and_name(sql)
+                if not type_name:
+                    logger.error("unrecognised entity type")
+                    continue
                 try:
                     with conn.cursor() as cursor:
                         cursor.execute(sql)
-                        logger.info(f"{table_name} table created.")
+                        logger.info(f"{type_name[1]} created.")
                 except Error as err:
-                    logger.error(f"Failed to create {table_name}: {err}")
+                    logger.error(f"Failed to create {type_name[1]}: {err}")
+                conn.commit()
         case 2:
             # Show all tables
             with conn.cursor() as cursor:
@@ -327,10 +396,16 @@ def main():
             # Drop all tables
             table_queries.reverse()
             for sql in table_queries:
-                table_name = get_table_name(sql)
+                type_name = get_type_and_name(sql)
+                if not type_name:
+                    logger.error("unrecognised entity type")
+                    continue
+                if type_name[0] == "ENUM":
+                    logger.warning(f"skipping {type_name[1]} as enum")
+                    continue
                 with conn.cursor() as cursor:
-                    cursor.execute(f"DROP TABLE IF EXISTS {table_name};")
-                    logger.info(f"Table {table_name} removed.")
+                    cursor.execute(f"DROP {type_name[0]} IF EXISTS {type_name[1]};")
+                    logger.info(f"{type_name[1]} removed.")
     conn.close()
     logger.info("Database connection closed.")
 
