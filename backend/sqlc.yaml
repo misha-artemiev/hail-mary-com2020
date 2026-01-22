@@ -12,6 +12,6 @@ sql:
       - plugin: "py"
         out: "internal/queries"
         options:
-          package: "queries"
+          package: "."
           emit_sync_querier: true
           emit_async_querier: true

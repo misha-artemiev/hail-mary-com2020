@@ -8,7 +8,7 @@ from typing import Any, Optional
 import sqlalchemy
 import sqlalchemy.ext.asyncio
 
-from queries import models
+from . import models
 
 
 CREATE_CONSUMER = """-- name: create_consumer \\:exec
