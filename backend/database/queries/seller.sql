@@ -5,6 +5,6 @@ INNER JOIN users ON sellers.user_id=users.user_od
 WHERE users.user_id=?
 LIMIT 1;
 
--- name: CreateSeller :execresult
+-- name: CreateSeller :exec
 INSERT INTO sellers (user_id, seller_name, address_line1, address_line2, city, post_code, region, country)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);

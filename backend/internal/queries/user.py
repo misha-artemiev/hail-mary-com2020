@@ -10,7 +10,7 @@ import sqlalchemy.ext.asyncio
 from queries import models
 
 
-CREATE_USER = """-- name: create_user \\:execresult
+CREATE_USER = """-- name: create_user \\:exec
 INSERT INTO users (email, pw_hash, role)
 VALUES (?, ?, ?)
 """
@@ -24,15 +24,36 @@ LIMIT 1
 """
 
 
+GET_USER_BY_EMAIL = """-- name: get_user_by_email \\:one
+SELECT user_id, email, pw_hash, role, created_at, last_login
+FROM users
+WHERE email=?
+LIMIT 1
+"""
+
+
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_user(self, *, email: Any, pw_hash: Any, role: Any) -> sqlalchemy.engine.Result:
-        return self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role})
+    def create_user(self, *, email: Any, pw_hash: Any, role: Any) -> None:
+        self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role})
 
     def get_user(self, *, user_id: Any) -> Optional[models.User]:
         row = self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id}).first()
+        if row is None:
+            return None
+        return models.User(
+            user_id=row[0],
+            email=row[1],
+            pw_hash=row[2],
+            role=row[3],
+            created_at=row[4],
+            last_login=row[5],
+        )
+
+    def get_user_by_email(self, *, email: Any) -> Optional[models.User]:
+        row = self._conn.execute(sqlalchemy.text(GET_USER_BY_EMAIL), {"p1": email}).first()
         if row is None:
             return None
         return models.User(
@@ -49,11 +70,24 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    async def create_user(self, *, email: Any, pw_hash: Any, role: Any) -> sqlalchemy.engine.Result:
-        return await self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role})
+    async def create_user(self, *, email: Any, pw_hash: Any, role: Any) -> None:
+        await self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role})
 
     async def get_user(self, *, user_id: Any) -> Optional[models.User]:
         row = (await self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id})).first()
+        if row is None:
+            return None
+        return models.User(
+            user_id=row[0],
+            email=row[1],
+            pw_hash=row[2],
+            role=row[3],
+            created_at=row[4],
+            last_login=row[5],
+        )
+
+    async def get_user_by_email(self, *, email: Any) -> Optional[models.User]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_USER_BY_EMAIL), {"p1": email})).first()
         if row is None:
             return None
         return models.User(

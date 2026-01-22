@@ -11,7 +11,7 @@ import sqlalchemy.ext.asyncio
 from queries import models
 
 
-CREATE_CONSUMER = """-- name: create_consumer \\:execresult
+CREATE_CONSUMER = """-- name: create_consumer \\:exec
 INSERT INTO consumers (user_id, fName, lName)
 VALUES (?, ?, ?)
 """
@@ -38,8 +38,8 @@ class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_consumer(self, *, user_id: Any, fname: Any, lname: Any) -> sqlalchemy.engine.Result:
-        return self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": user_id, "p2": fname, "p3": lname})
+    def create_consumer(self, *, user_id: Any, fname: Any, lname: Any) -> None:
+        self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": user_id, "p2": fname, "p3": lname})
 
     def get_consumer(self, *, user_id: Any) -> Optional[GetConsumerRow]:
         row = self._conn.execute(sqlalchemy.text(GET_CONSUMER), {"p1": user_id}).first()
@@ -57,8 +57,8 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    async def create_consumer(self, *, user_id: Any, fname: Any, lname: Any) -> sqlalchemy.engine.Result:
-        return await self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": user_id, "p2": fname, "p3": lname})
+    async def create_consumer(self, *, user_id: Any, fname: Any, lname: Any) -> None:
+        await self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": user_id, "p2": fname, "p3": lname})
 
     async def get_consumer(self, *, user_id: Any) -> Optional[GetConsumerRow]:
         row = (await self._conn.execute(sqlalchemy.text(GET_CONSUMER), {"p1": user_id})).first()

@@ -11,7 +11,7 @@ import sqlalchemy.ext.asyncio
 from queries import models
 
 
-CREATE_SELLER = """-- name: create_seller \\:execresult
+CREATE_SELLER = """-- name: create_seller \\:exec
 INSERT INTO sellers (user_id, seller_name, address_line1, address_line2, city, post_code, region, country)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 """
@@ -57,8 +57,8 @@ class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_seller(self, arg: CreateSellerParams) -> sqlalchemy.engine.Result:
-        return self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
+    def create_seller(self, arg: CreateSellerParams) -> None:
+        self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
             "p1": arg.user_id,
             "p2": arg.seller_name,
             "p3": arg.address_line1,
@@ -92,8 +92,8 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    async def create_seller(self, arg: CreateSellerParams) -> sqlalchemy.engine.Result:
-        return await self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
+    async def create_seller(self, arg: CreateSellerParams) -> None:
+        await self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
             "p1": arg.user_id,
             "p2": arg.seller_name,
             "p3": arg.address_line1,

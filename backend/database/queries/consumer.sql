@@ -5,6 +5,6 @@ INNER JOIN users ON consumers.user_id=users.user_od
 WHERE users.user_id=?
 LIMIT 1;
 
--- name: CreateConsumer :execresult
+-- name: CreateConsumer :exec
 INSERT INTO consumers (user_id, fName, lName)
 VALUES (?, ?, ?);
