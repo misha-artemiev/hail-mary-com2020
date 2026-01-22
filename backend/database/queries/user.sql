@@ -1,11 +1,9 @@
 -- name: GetUser :one
-SELECT * 
+SELECT *
 FROM users
-WHERE user_id = ? 
+WHERE user_id=?
 LIMIT 1;
 
--- name: GetUserForLogin :one
-SELECT user_id, email, password_hash 
-FROM users
-WHERE email = ?
-LIMIT 1;
+-- name: CreateUser :execresult
+INSERT INTO users (email, pw_hash, role)
+VALUES (?, ?, ?);
