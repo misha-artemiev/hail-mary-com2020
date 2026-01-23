@@ -1,7 +1,7 @@
 -- name: GetConsumer :one
 SELECT users.user_id, email, fName, lName
 FROM consumers
-INNER JOIN users ON consumers.user_id=users.user_od
+INNER JOIN users ON consumers.user_id=users.user_id
 WHERE users.user_id=$1
 LIMIT 1;
 
