@@ -7,4 +7,5 @@ LIMIT 1;
 
 -- name: CreateSeller :one
 INSERT INTO sellers (user_id, seller_name, address_line1, address_line2, city, post_code, region, country)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING *;

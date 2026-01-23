@@ -7,4 +7,5 @@ LIMIT 1;
 
 -- name: CreateConsumer :one
 INSERT INTO consumers (user_id, fName, lName)
-VALUES ($1, $2, $3);
+VALUES ($1, $2, $3)
+RETURNING *;
