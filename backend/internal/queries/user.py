@@ -2,7 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: user.sql
-import dataclasses
+import pydantic
 from typing import Optional
 
 import sqlalchemy
@@ -26,8 +26,7 @@ LIMIT 1
 """
 
 
-@dataclasses.dataclass()
-class GetUserForLoginRow:
+class GetUserForLoginRow(pydantic.BaseModel):
     user_id: int
     email: str
     pw_hash: str

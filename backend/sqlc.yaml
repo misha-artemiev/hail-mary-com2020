@@ -14,3 +14,5 @@ sql:
         options:
           package: "."
           emit_sync_querier: true
+          emit_pydantic_models: true
+          emit_type_hints: true
