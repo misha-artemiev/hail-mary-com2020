@@ -380,14 +380,16 @@ def main():
                 try:
                     with conn.cursor() as cursor:
                         cursor.execute(sql)
-                        logger.info(f"{type_name[1]} created.")
+                        logger.info(f"{type_name[0].lower()} {type_name[1]} created.")
                 except Error as err:
-                    logger.error(f"Failed to create {type_name[1]}: {err}")
+                    logger.error(f"Failed to create {type_name[0]} {type_name[1]}: {err}")
                 conn.commit()
         case 2:
             # Show all tables
             with conn.cursor() as cursor:
-                cursor.execute("SHOW TABLES;")
+                cursor.execute("""SELECT table_name
+                                  FROM information_schema.tables
+                                  WHERE table_schema NOT IN ('pg_catalog', 'information_schema');""")
                 tables = cursor.fetchall()
                 logger.info("Current tables in the database:")
                 for table in tables:
@@ -405,7 +407,7 @@ def main():
                     continue
                 with conn.cursor() as cursor:
                     cursor.execute(f"DROP {type_name[0]} IF EXISTS {type_name[1]};")
-                    logger.info(f"{type_name[1]} removed.")
+                    logger.info(f"table {type_name[1]} removed.")
     conn.close()
     logger.info("Database connection closed.")
 
