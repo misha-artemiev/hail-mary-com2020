@@ -6,7 +6,7 @@ class DatabaseManager:
 
     def initialise(self) -> None | Exception:
         self.engine = create_engine(
-            f"mysql+mysqlconnector://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
+            f"postgresql+psycopg://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,
