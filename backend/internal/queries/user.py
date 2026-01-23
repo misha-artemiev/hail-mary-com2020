@@ -2,14 +2,22 @@
 # versions:
 #   sqlc v1.30.0
 # source: user.sql
+<<<<<<< HEAD
 from typing import Any, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
+=======
+import pydantic
+from typing import Optional
+
+import sqlalchemy
+>>>>>>> origin/release
 
 from . import models
 
 
+<<<<<<< HEAD
 CREATE_USER = """-- name: create_user \\:exec
 INSERT INTO users (email, pw_hash, role)
 VALUES (?, ?, ?)
@@ -20,26 +28,52 @@ GET_USER = """-- name: get_user \\:one
 SELECT user_id, email, pw_hash, role, created_at, last_login
 FROM users
 WHERE user_id=?
+=======
+GET_USER = """-- name: get_user \\:one
+SELECT user_id, email, pw_hash, role, created_at, last_login 
+FROM users
+WHERE user_id = :p1 
+>>>>>>> origin/release
 LIMIT 1
 """
 
 
+<<<<<<< HEAD
 GET_USER_BY_EMAIL = """-- name: get_user_by_email \\:one
 SELECT user_id, email, pw_hash, role, created_at, last_login
 FROM users
 WHERE email=?
+=======
+GET_USER_FOR_LOGIN = """-- name: get_user_for_login \\:one
+SELECT user_id, email, pw_hash 
+FROM users
+WHERE email = :p1
+>>>>>>> origin/release
 LIMIT 1
 """
 
 
+<<<<<<< HEAD
+=======
+class GetUserForLoginRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    pw_hash: str
+
+
+>>>>>>> origin/release
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
+<<<<<<< HEAD
     def create_user(self, *, email: Any, pw_hash: Any, role: Any) -> None:
         self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role})
 
     def get_user(self, *, user_id: Any) -> Optional[models.User]:
+=======
+    def get_user(self, *, user_id: int) -> Optional[models.User]:
+>>>>>>> origin/release
         row = self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id}).first()
         if row is None:
             return None
@@ -52,6 +86,7 @@ class Querier:
             last_login=row[5],
         )
 
+<<<<<<< HEAD
     def get_user_by_email(self, *, email: Any) -> Optional[models.User]:
         row = self._conn.execute(sqlalchemy.text(GET_USER_BY_EMAIL), {"p1": email}).first()
         if row is None:
@@ -97,4 +132,14 @@ class AsyncQuerier:
             role=row[3],
             created_at=row[4],
             last_login=row[5],
+=======
+    def get_user_for_login(self, *, email: str) -> Optional[GetUserForLoginRow]:
+        row = self._conn.execute(sqlalchemy.text(GET_USER_FOR_LOGIN), {"p1": email}).first()
+        if row is None:
+            return None
+        return GetUserForLoginRow(
+            user_id=row[0],
+            email=row[1],
+            pw_hash=row[2],
+>>>>>>> origin/release
         )
