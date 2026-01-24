@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException
 from sqlalchemy import Connection, create_engine, Engine, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 from internal.settings import database_settings
+from internal.logging import logger
 
 class DatabaseManager:
     engine: Engine
@@ -35,8 +36,10 @@ class DatabaseManager:
         except IntegrityError:
             raise HTTPException(409, "Conflict")
         except ValueError as err:
-            raise HTTPException(400, f"Validation Error: {err}")
-        except Exception:
+            logger.error(f"Validation Error: {err}")
+            raise HTTPException(400, "Validation Error")
+        except Exception as err:
+            logger.error(f"Internal Error: {err}")
             raise HTTPException(500, "Internal Error")
 
 database_manager = DatabaseManager()

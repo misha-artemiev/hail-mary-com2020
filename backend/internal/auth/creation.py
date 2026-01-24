@@ -7,6 +7,7 @@ from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.seller import CreateSellerParams, Querier as SellerQuerier
 from internal.queries.user import Querier as UserQuery, CreateUserRow
 
+# insert user into db
 def create_user(email: EmailStr, password: SecretStr, role: UserRole, conn: Connection) -> CreateUserRow:
     hash = hash_password(password.get_secret_value())
     user = UserQuery(conn).create_user(
@@ -18,24 +19,27 @@ def create_user(email: EmailStr, password: SecretStr, role: UserRole, conn: Conn
         raise ValueError("Failed to create user")
     return user
 
-class RegisterConsumerForm(BaseModel):
+# form to be passed into consumer creation api
+class CreateConsumerForm(BaseModel):
     email: EmailStr
     password: SecretStr
     first_name: str
     last_name: str
 
-def register_consumer(register_consumer_form: RegisterConsumerForm, conn: Connection) -> Consumer:
-    user = create_user(register_consumer_form.email, register_consumer_form.password, UserRole.CONSUMER, conn)
+# create consumer and user
+def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
+    user = create_user(form.email, form.password, UserRole.CONSUMER, conn)
     consumer = ConsumerQuerier(conn).create_consumer(
         user_id=user.user_id,
-        fname=register_consumer_form.first_name,
-        lname=register_consumer_form.last_name
+        fname=form.first_name,
+        lname=form.last_name
     )
     if not consumer:
         raise ValueError("Failed to create consumer")
     return consumer
 
-class RegisterSellerForm(BaseModel):
+# form to be passed into seller creation api
+class CreateSellerForm(BaseModel):
     email: EmailStr
     password: SecretStr
     seller_name: str
@@ -46,17 +50,18 @@ class RegisterSellerForm(BaseModel):
     region: Optional[str] = None
     country: str
 
-def register_seller(register_seller_form: RegisterSellerForm, conn: Connection) -> Seller:
-    user = create_user(register_seller_form.email, register_seller_form.password, UserRole.SELLER, conn)
+# register unverified seller and user
+def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
+    user = create_user(form.email, form.password, UserRole.SELLER, conn)
     seller = SellerQuerier(conn).create_seller(CreateSellerParams(
             user_id=user.user_id,
-            seller_name=register_seller_form.seller_name,
-            address_line1=register_seller_form.address_line1,
-            address_line2=register_seller_form.address_line2,
-            city=register_seller_form.city,
-            post_code=register_seller_form.post_code,
-            region=register_seller_form.region,
-            country=register_seller_form.country
+            seller_name=form.seller_name,
+            address_line1=form.address_line1,
+            address_line2=form.address_line2,
+            city=form.city,
+            post_code=form.post_code,
+            region=form.region,
+            country=form.country
     ))
     if not seller:
         raise ValueError("Failed to create seller")

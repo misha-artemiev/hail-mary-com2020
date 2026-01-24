@@ -3,7 +3,7 @@ from uvicorn import run
 from contextlib import asynccontextmanager
 from internal.settings import host_settings
 from internal.database import database_manager
-from external.router import register_routers
+from routers import register_routers
 from internal.logging import logger
 
 @asynccontextmanager
