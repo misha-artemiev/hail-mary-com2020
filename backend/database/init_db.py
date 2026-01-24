@@ -408,6 +408,7 @@ def main():
                 with conn.cursor() as cursor:
                     cursor.execute(f"DROP {type_name[0]} IF EXISTS {type_name[1]};")
                     logger.info(f"table {type_name[1]} removed.")
+            conn.commit()
     conn.close()
     logger.info("Database connection closed.")
 

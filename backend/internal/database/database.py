@@ -34,8 +34,8 @@ class DatabaseManager:
             raise HTTPException(503, "Service unavailable")
         except IntegrityError:
             raise HTTPException(409, "Conflict")
-        except ValueError:
-            raise HTTPException(400, "Validation Error")
+        except ValueError as err:
+            raise HTTPException(400, f"Validation Error: {err}")
         except Exception:
             raise HTTPException(500, "Internal Error")
 
