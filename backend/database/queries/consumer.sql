@@ -1,8 +1,8 @@
 -- name: GetConsumer :one
-SELECT users.user_id, email, fName, lName
-FROM consumers
-INNER JOIN users ON consumers.user_id=users.user_id
-WHERE users.user_id=$1
+SELECT u.user_id, u.email, c.fName, c.lName, u.last_login, u.created_at
+FROM consumers  c
+INNER JOIN users u ON c.user_id = u.user_id
+WHERE u.user_id=$1
 LIMIT 1;
 
 -- name: CreateConsumer :one

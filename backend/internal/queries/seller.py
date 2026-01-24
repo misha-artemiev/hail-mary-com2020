@@ -30,10 +30,10 @@ class CreateSellerParams(pydantic.BaseModel):
 
 
 GET_SELLER = """-- name: get_seller \\:one
-SELECT users.user_id, email, seller_name, address_line1, address_line2, city, post_code, region, country, verified_by, verification_date
-FROM sellers
-INNER JOIN users ON sellers.user_id=users.user_od
-WHERE users.user_id=:p1
+SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at
+FROM sellers s
+INNER JOIN users u ON s.user_id=u.user_od
+WHERE u.user_id=:p1
 LIMIT 1
 """
 
@@ -50,6 +50,8 @@ class GetSellerRow(pydantic.BaseModel):
     country: str
     verified_by: Optional[int]
     verification_date: Optional[datetime.datetime]
+    last_login: datetime.datetime
+    created_at: datetime.datetime
 
 
 class Querier:
@@ -98,4 +100,6 @@ class Querier:
             country=row[8],
             verified_by=row[9],
             verification_date=row[10],
+            last_login=row[11],
+            created_at=row[12],
         )

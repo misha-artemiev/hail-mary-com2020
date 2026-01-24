@@ -2,6 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: consumer.sql
+import datetime
 import pydantic
 from typing import Optional
 
@@ -18,10 +19,10 @@ RETURNING user_id, fname, lname
 
 
 GET_CONSUMER = """-- name: get_consumer \\:one
-SELECT users.user_id, email, fName, lName
-FROM consumers
-INNER JOIN users ON consumers.user_id=users.user_id
-WHERE users.user_id=:p1
+SELECT u.user_id, u.email, c.fName, c.lName, u.last_login, u.created_at
+FROM consumers  c
+INNER JOIN users u ON c.user_id = u.user_id
+WHERE u.user_id=:p1
 LIMIT 1
 """
 
@@ -31,6 +32,8 @@ class GetConsumerRow(pydantic.BaseModel):
     email: str
     fname: str
     lname: str
+    last_login: datetime.datetime
+    created_at: datetime.datetime
 
 
 class Querier:
@@ -56,4 +59,6 @@ class Querier:
             email=row[1],
             fname=row[2],
             lname=row[3],
+            last_login=row[4],
+            created_at=row[5],
         )
