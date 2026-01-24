@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 
 // Default profile picture
 import defaultProfile from "../assets/default-user.jpg";
+import logoFull from "../assets/logos/logo-full-512.png";
 
 export default function Navbar() {
     const user = {
@@ -12,8 +13,12 @@ export default function Navbar() {
 
     return (
         <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            <NavLink to="/" className="font-bold text-xl">
-                RescueMarket
+            <NavLink to="/">
+                <img
+                    src={logoFull}
+                    alt="Logo"
+                    className="h-16 w-auto hover:scale-102 transition"
+                />
             </NavLink>
 
             {/* Profile picture */}
