@@ -3,7 +3,7 @@ from internal.database import database_dependency
 from internal.queries.token import GetSessionByTokenRow
 from fastapi import APIRouter, Response, Security
 
-router = APIRouter(prefix="/consumers", tags=["consumers"])
+router = APIRouter(prefix="/session", tags=["session"])
 
 @router.post("")
 def create_session(conn: database_dependency, user_id: int = Security(basic_auth)):

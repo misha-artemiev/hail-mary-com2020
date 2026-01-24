@@ -2,7 +2,7 @@ from fastapi import APIRouter, Response
 from internal.auth import register_seller, RegisterSellerForm
 from internal.database import database_dependency
 
-router = APIRouter(prefix="/sellers", tags=["sellers"])
+router = APIRouter(prefix="/seller", tags=["seller"])
 
 @router.post("")
 async def register(register_seller_form: RegisterSellerForm, conn: database_dependency):
