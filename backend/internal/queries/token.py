@@ -4,7 +4,7 @@
 # source: token.sql
 import datetime
 import pydantic
-from typing import Iterator, Optional
+from typing import Optional
 
 import sqlalchemy
 
@@ -42,21 +42,6 @@ class GetSessionByTokenRow(pydantic.BaseModel):
     token: str
     expires_at: datetime.datetime
     created_at: datetime.datetime
-
-
-GET_TOKEN_BY_TOKEN = """-- name: get_token_by_token \\:one
-SELECT token_id, user_id, token, created_at, expires_at
-FROM token
-WHERE token = :p1
-LIMIT 1
-"""
-
-
-GET_TOKENS_BY_USER = """-- name: get_tokens_by_user \\:many
-SELECT token_id, user_id, token, created_at, expires_at
-FROM token
-WHERE user_id = :p1
-"""
 
 
 class Querier:
@@ -99,26 +84,3 @@ class Querier:
             expires_at=row[4],
             created_at=row[5],
         )
-
-    def get_token_by_token(self, *, token: str) -> Optional[models.Token]:
-        row = self._conn.execute(sqlalchemy.text(GET_TOKEN_BY_TOKEN), {"p1": token}).first()
-        if row is None:
-            return None
-        return models.Token(
-            token_id=row[0],
-            user_id=row[1],
-            token=row[2],
-            created_at=row[3],
-            expires_at=row[4],
-        )
-
-    def get_tokens_by_user(self, *, user_id: int) -> Iterator[models.Token]:
-        result = self._conn.execute(sqlalchemy.text(GET_TOKENS_BY_USER), {"p1": user_id})
-        for row in result:
-            yield models.Token(
-                token_id=row[0],
-                user_id=row[1],
-                token=row[2],
-                created_at=row[3],
-                expires_at=row[4],
-            )

@@ -54,7 +54,7 @@ class GetUserRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
-GET_USER_FOR_LOGIN = """-- name: get_user_for_login \\:one
+GET_USER_LOGIN = """-- name: get_user_login \\:one
 SELECT user_id, email, pw_hash 
 FROM users
 WHERE email = :p1
@@ -62,7 +62,7 @@ LIMIT 1
 """
 
 
-class GetUserForLoginRow(pydantic.BaseModel):
+class GetUserLoginRow(pydantic.BaseModel):
     user_id: int
     email: str
     pw_hash: str
@@ -105,11 +105,11 @@ class Querier:
             created_at=row[3],
         )
 
-    def get_user_for_login(self, *, email: str) -> Optional[GetUserForLoginRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_USER_FOR_LOGIN), {"p1": email}).first()
+    def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
+        row = self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email}).first()
         if row is None:
             return None
-        return GetUserForLoginRow(
+        return GetUserLoginRow(
             user_id=row[0],
             email=row[1],
             pw_hash=row[2],

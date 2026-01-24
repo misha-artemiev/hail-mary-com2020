@@ -1,4 +1,7 @@
-from sqlalchemy import create_engine, Engine, text
+from typing import Annotated, Generator
+from fastapi import Depends, HTTPException
+from sqlalchemy import Connection, create_engine, Engine, text
+from sqlalchemy.exc import IntegrityError, OperationalError
 from internal.settings import database_settings
 
 class DatabaseManager:
@@ -19,13 +22,22 @@ class DatabaseManager:
         except Exception:
             return Exception("Failed to initiate connection with database")
 
-    def get_engine(self) -> Engine:
-        if not self.engine:
-            raise Exception("No engine was found")
-        return self.engine
-
     def cleanup(self):
         if self.engine:
             self.engine.dispose()
 
+    def get_connection(self) -> Generator[Connection]:
+        try:
+            with self.engine.begin() as conn:
+                yield conn
+        except OperationalError:
+            raise HTTPException(503, "Service unavailable")
+        except IntegrityError:
+            raise HTTPException(409, "Conflict")
+        except ValueError:
+            raise HTTPException(400, "Validation Error")
+        except Exception:
+            raise HTTPException(500, "Internal Error")
+
 database_manager = DatabaseManager()
+database_dependency = Annotated[Connection, Depends(database_manager.get_connection)]
