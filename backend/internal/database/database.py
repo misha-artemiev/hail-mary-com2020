@@ -19,10 +19,8 @@ class DatabaseManager:
         except Exception:
             return Exception("Failed to initiate connection with database")
 
-    def get_engine(self) -> Engine | Exception:
-        if self.engine:
-            return self.engine
-        return Exception("No engine found")
+    def get_engine(self) -> Engine:
+        return self.engine
 
     def cleanup(self):
         if self.engine:
