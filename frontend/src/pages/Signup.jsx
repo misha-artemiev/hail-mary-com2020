@@ -1,12 +1,12 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-//Renders singup form for new consumers and sellers based on RBAC
+// Renders signup form for new consumers and sellers based on RBAC
 
 export default function Signup() {
     const navigate = useNavigate();
-    
-    //Centralised object that holds all fields for the form
+
+    // Centralised object that holds all fields for the form
     const [role, setRole] = useState("");
     const [form, setForm] = useState({
         email: "",
@@ -23,15 +23,18 @@ export default function Signup() {
         country: "",
     });
 
-const handleChange = (e) => { //Handles changes to form fields
-        const {name, value} = e.target;
-        setForm((prev) => ({...prev, [name]: value}));
+    const handleChange = (e) => {
+        // Handles changes to form fields
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => { //Handles form submission with basic validation. IMPROVE VALIDATION LATER!!!
+    const handleSubmit = (e) => {
+        // Handles form submission with basic validation. IMPROVE VALIDATION LATER!!!
         e.preventDefault();
 
-        if (form.password !== form.confirmPassword) { //Ensures passwords match
+        if (form.password !== form.confirmPassword) {
+            //Ensures passwords match
             alert("Please ensure that passwords match");
             return;
         }
@@ -42,7 +45,8 @@ const handleChange = (e) => { //Handles changes to form fields
         navigate("/login");
     };
 
-return ( // Page design
+    return (
+        // Page design
         <div className="max-w-xl mx-auto p-6">
             <div className="bg-white shadow-md rounded-lg p-6">
                 <h1 className="text-3xl font-bold text-green-700 mb-6">
@@ -270,7 +274,7 @@ return ( // Page design
                                hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Already have an account? Sign In
-</button>                
+                </button>
             </div>
         </div>
     );

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Login() { //Basic login page
+export default function Login() {
+    // Basic login page
     const [form, setForm] = useState({
         email: "",
         password: "",
@@ -9,17 +10,20 @@ export default function Login() { //Basic login page
 
     const navigate = useNavigate();
 
-const handleChange = (e) => { //handles changes to form
+    const handleChange = (e) => {
+        // Handles changes to form
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-const handleLogin = (e) => { //handles login submission
+    const handleLogin = (e) => {
+        // Handles login submission
         e.preventDefault();
         alert("Login submitted"); // REPLACE WITH ACTUAL LOGIN LOGIC
     };
 
-const handleSignupRedirect = () => { // Redirect to signup page
+    const handleSignupRedirect = () => {
+        // Redirect to signup page
         navigate("/signup");
     };
 
@@ -67,7 +71,7 @@ const handleSignupRedirect = () => { // Redirect to signup page
                     {/* Sign In button */}
                     <button
                         type="submit"
-className="w-full bg-green-600 text-white px-4 py-3 rounded-md font-semibold
+                        className="w-full bg-green-600 text-white px-4 py-3 rounded-md font-semibold
                                    hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 mt-2"
                     >
                         Sign In
@@ -84,7 +88,7 @@ className="w-full bg-green-600 text-white px-4 py-3 rounded-md font-semibold
                 {/* Create Account Button */}
                 <button
                     onClick={handleSignupRedirect}
-className="w-full border border-green-600 text-green-700 px-4 py-3 rounded-md font-semibold
+                    className="w-full border border-green-600 text-green-700 px-4 py-3 rounded-md font-semibold
                                hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                     Create an Account
