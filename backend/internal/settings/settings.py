@@ -21,5 +21,11 @@ class DatabaseSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="DATABASE_", case_sensitive=False, env_file=BASE_DIR/".env", extra="ignore")
 
+class AuthSettings(BaseSettings):
+    token_exparation: int = 360
+
+    model_config = SettingsConfigDict(env_prefix="AUTH", case_sensitive=False, env_file=BASE_DIR/".env", extra="ignore")
+
 host_settings = HostSettings()
 database_settings = DatabaseSettings()
+auth_settings = AuthSettings()

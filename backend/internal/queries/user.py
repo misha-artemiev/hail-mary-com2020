@@ -2,6 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: user.sql
+import datetime
 import pydantic
 from typing import Optional
 
@@ -10,15 +11,50 @@ import sqlalchemy
 from . import models
 
 
+CREATE_USER = """-- name: create_user \\:one
+INSERT INTO users (email, pw_hash, role)
+VALUES (:p1, :p2, :p3)
+RETURNING user_id, email, role, created_at
+"""
+
+
+class CreateUserRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+
+
+DELETE_USER = """-- name: delete_user \\:one
+DELETE FROM users
+WHERE user_id = :p1
+RETURNING user_id, email, role, created_at
+"""
+
+
+class DeleteUserRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+
+
 GET_USER = """-- name: get_user \\:one
-SELECT user_id, email, pw_hash, role, created_at, last_login 
+SELECT user_id, email, role, created_at
 FROM users
 WHERE user_id = :p1 
 LIMIT 1
 """
 
 
-GET_USER_FOR_LOGIN = """-- name: get_user_for_login \\:one
+class GetUserRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+
+
+GET_USER_LOGIN = """-- name: get_user_login \\:one
 SELECT user_id, email, pw_hash 
 FROM users
 WHERE email = :p1
@@ -26,7 +62,7 @@ LIMIT 1
 """
 
 
-class GetUserForLoginRow(pydantic.BaseModel):
+class GetUserLoginRow(pydantic.BaseModel):
     user_id: int
     email: str
     pw_hash: str
@@ -36,24 +72,44 @@ class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def get_user(self, *, user_id: int) -> Optional[models.User]:
+    def create_user(self, *, email: str, pw_hash: str, role: models.UserRole) -> Optional[CreateUserRow]:
+        row = self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role}).first()
+        if row is None:
+            return None
+        return CreateUserRow(
+            user_id=row[0],
+            email=row[1],
+            role=row[2],
+            created_at=row[3],
+        )
+
+    def delete_user(self, *, user_id: int) -> Optional[DeleteUserRow]:
+        row = self._conn.execute(sqlalchemy.text(DELETE_USER), {"p1": user_id}).first()
+        if row is None:
+            return None
+        return DeleteUserRow(
+            user_id=row[0],
+            email=row[1],
+            role=row[2],
+            created_at=row[3],
+        )
+
+    def get_user(self, *, user_id: int) -> Optional[GetUserRow]:
         row = self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id}).first()
         if row is None:
             return None
-        return models.User(
+        return GetUserRow(
             user_id=row[0],
             email=row[1],
-            pw_hash=row[2],
-            role=row[3],
-            created_at=row[4],
-            last_login=row[5],
+            role=row[2],
+            created_at=row[3],
         )
 
-    def get_user_for_login(self, *, email: str) -> Optional[GetUserForLoginRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_USER_FOR_LOGIN), {"p1": email}).first()
+    def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
+        row = self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email}).first()
         if row is None:
             return None
-        return GetUserForLoginRow(
+        return GetUserLoginRow(
             user_id=row[0],
             email=row[1],
             pw_hash=row[2],

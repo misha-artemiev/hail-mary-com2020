@@ -3,6 +3,7 @@ from uvicorn import run
 from contextlib import asynccontextmanager
 from internal.settings import host_settings
 from internal.database import database_manager
+from routers import register_routers
 from internal.logging import logger
 
 @asynccontextmanager
@@ -26,6 +27,8 @@ app = FastAPI(
     root_path="/api",
     lifespan=lifespan
 )
+
+register_routers(app)
 
 if __name__ == "__main__":
     run(app, host=host_settings.host, forwarded_allow_ips=host_settings.forward_from, port=host_settings.port, log_level="info")
