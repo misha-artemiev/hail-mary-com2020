@@ -8,6 +8,8 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 export default function App() {
     return (
@@ -19,6 +21,8 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<Home />}></Route>
                 <Route path="/profile" element={<Profile />}></Route>
+                <Route path="/login" element={<Login />}></Route>
+                <Route path="/signup" element={<Signup />}></Route>
 
                 {/* Catch-all (i.e. 404) */}
                 <Route path="*" element={<NotFound />}></Route>
