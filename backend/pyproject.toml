@@ -29,6 +29,9 @@ build-backend = "setuptools.build_meta"
 packages = ["routers", "internal", "database"]
 py-modules = ["main"]
 
+[tool.distutils.egg_info]
+egg_base = "build"
+
 [tool.ruff]
 line-length = 88
 indent-width = 4
