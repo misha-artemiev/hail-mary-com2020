@@ -1,11 +1,15 @@
-from typing import Optional
-from sqlalchemy import Connection
-from .security import hash_password
-from pydantic import BaseModel, EmailStr, SecretStr
+
+from internal.queries.consumer import CreateConsumerParams
+from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
-from internal.queries.consumer import Querier as ConsumerQuerier, CreateConsumerParams
-from internal.queries.seller import CreateSellerParams, Querier as SellerQuerier
-from internal.queries.user import Querier as UserQuery, CreateUserRow, CreateUserParams
+from internal.queries.seller import CreateSellerParams
+from internal.queries.seller import Querier as SellerQuerier
+from internal.queries.user import CreateUserParams, CreateUserRow
+from internal.queries.user import Querier as UserQuery
+from pydantic import BaseModel, EmailStr, SecretStr
+from sqlalchemy import Connection
+
+from .security import hash_password
 
 
 # insert user into db
@@ -48,10 +52,10 @@ class CreateSellerForm(BaseModel):
     password: SecretStr
     seller_name: str
     address_line1: str
-    address_line2: Optional[str] = None
+    address_line2: str | None = None
     city: str
     post_code: str
-    region: Optional[str] = None
+    region: str | None = None
     country: str
 
 

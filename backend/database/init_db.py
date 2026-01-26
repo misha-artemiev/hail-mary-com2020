@@ -1,9 +1,10 @@
-from psycopg import connect, Error, Connection
-from internal.settings import database_settings
-from uvicorn.config import LOGGING_CONFIG
-from logging.config import dictConfig
 from logging import getLogger
-from re import search, IGNORECASE
+from logging.config import dictConfig
+from re import IGNORECASE, search
+
+from internal.settings import database_settings
+from psycopg import Connection, Error, connect
+from uvicorn.config import LOGGING_CONFIG
 
 dictConfig(LOGGING_CONFIG)
 logger = getLogger("uvicorn.info")

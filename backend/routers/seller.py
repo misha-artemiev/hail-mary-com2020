@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Response
-from internal.auth import create_seller, CreateSellerForm
+from internal.auth import CreateSellerForm, create_seller
 from internal.database import database_dependency
 
 router = APIRouter(prefix="/seller", tags=["seller"])

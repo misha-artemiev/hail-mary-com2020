@@ -1,10 +1,11 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
-from internal.auth import create_token, delete_token, basic_auth, bearer_auth
+
+from fastapi import APIRouter, Response, Security
+from internal.auth import basic_auth, bearer_auth, create_token, delete_token
 from internal.database import database_dependency
 from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
-from fastapi import APIRouter, Response, Security
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/session", tags=["session"])
 

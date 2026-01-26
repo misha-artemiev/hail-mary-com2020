@@ -1,15 +1,6 @@
+from datetime import UTC, datetime, timedelta
+
 from fastapi import Security
-from sqlalchemy.engine import Connection
-from internal.queries.models import Token
-from internal.queries.token import (
-    Querier as TokenQuerier,
-    GetSessionByTokenRow,
-    CreateTokenParams,
-)
-from internal.queries.user import Querier as UserQuerier
-from .security import generate_token, check_password
-from datetime import datetime, timedelta, timezone
-from internal.settings import auth_settings
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBasic,
@@ -17,6 +8,14 @@ from fastapi.security import (
     HTTPBearer,
 )
 from internal.database import database_dependency
+from internal.queries.models import Token
+from internal.queries.token import CreateTokenParams, GetSessionByTokenRow
+from internal.queries.token import Querier as TokenQuerier
+from internal.queries.user import Querier as UserQuerier
+from internal.settings import auth_settings
+from sqlalchemy.engine import Connection
+
+from .security import check_password, generate_token
 
 
 # create and insert token into database
@@ -25,7 +24,7 @@ def create_token(user_id: int, conn: Connection) -> Token:
         CreateTokenParams(
             user_id=user_id,
             token=generate_token(),
-            expires_at=datetime.now(timezone.utc)
+            expires_at=datetime.now(UTC)
             + timedelta(seconds=auth_settings.token_exparation),
         )
     )

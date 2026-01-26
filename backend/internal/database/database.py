@@ -1,9 +1,11 @@
-from typing import Annotated, Generator
+from collections.abc import Generator
+from typing import Annotated
+
 from fastapi import Depends, HTTPException
-from sqlalchemy import Connection, create_engine, Engine, text
-from sqlalchemy.exc import IntegrityError, OperationalError
-from internal.settings import database_settings
 from internal.logging import logger
+from internal.settings import database_settings
+from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 
 class DatabaseManager:

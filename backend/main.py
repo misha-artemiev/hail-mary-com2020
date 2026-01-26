@@ -1,11 +1,12 @@
-from typing import AsyncIterator
-from fastapi import FastAPI
-from uvicorn import run
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from internal.settings import host_settings
+
+from fastapi import FastAPI
 from internal.database import database_manager
-from routers import register_routers
 from internal.logging import logger
+from internal.settings import host_settings
+from routers import register_routers
+from uvicorn import run
 
 
 @asynccontextmanager

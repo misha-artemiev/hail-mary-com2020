@@ -1,5 +1,6 @@
-from bcrypt import hashpw, gensalt, checkpw
 from secrets import token_urlsafe
+
+from bcrypt import checkpw, gensalt, hashpw
 
 
 # hash password, 12 rounds salt
