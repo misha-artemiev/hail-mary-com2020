@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 // Components
 import FormInput from "../components/forms/FormInput";
+import Divider from "../components/forms/Divider";
 
 // Config
 import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
@@ -110,12 +111,7 @@ export default function Signup() {
                     </button>
                 </form>
 
-                {/* Divider */}
-                <div className="flex items-center my-6">
-                    <div className="flex-grow border-t border-gray-300" />
-                    <span className="px-3 text-gray-500 text-sm">or</span>
-                    <div className="flex-grow border-t border-gray-300" />
-                </div>
+                <Divider text="or" />
 
                 {/* Login Redirect */}
                 <button

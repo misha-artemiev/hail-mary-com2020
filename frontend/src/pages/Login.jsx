@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 // Components
 import FormInput from "../components/forms/FormInput";
+import Divider from "../components/forms/Divider";
 
 // Config
 import { LOGIN_FORM_FIELDS } from "../config/loginFormFields";
@@ -69,12 +70,7 @@ export default function Login() {
                     </button>
                 </form>
 
-                {/* Divider line */}
-                <div className="flex items-center my-6">
-                    <div className="flex-grow border-t border-gray-300" />
-                    <span className="px-3 text-gray-500 text-sm">or</span>
-                    <div className="flex-grow border-t border-gray-300" />
-                </div>
+                <Divider text="or" />
 
                 {/* Create Account Button */}
                 <button
