@@ -2,16 +2,16 @@ from collections.abc import Generator
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
-from internal.logging import logger
+from internal.logger import logger
 from internal.settings import database_settings
 from sqlalchemy import Connection, Engine, create_engine, text
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
 
 class DatabaseManager:
     engine: Engine
 
-    def initialise(self) -> None | Exception:
+    def initialise(self) -> None:
         self.engine = create_engine(
             f"postgresql+psycopg://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
             pool_size=10,
@@ -23,9 +23,8 @@ class DatabaseManager:
         try:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-        except Exception:
-            return Exception("Failed to initiate connection with database")
-        return None
+        except SQLAlchemyError as err:
+            raise Exception(f"Failed to initiate connection with database: {err}")
 
     def cleanup(self) -> None:
         if self.engine:
@@ -42,9 +41,6 @@ class DatabaseManager:
         except ValueError as err:
             logger.error(f"Validation Error: {err}")
             raise HTTPException(400, "Validation Error")
-        except Exception as err:
-            logger.error(f"Internal Error: {err}")
-            raise HTTPException(500, "Internal Error")
 
 
 database_manager = DatabaseManager()

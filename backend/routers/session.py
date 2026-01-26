@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Response, Security
 from internal.auth import basic_auth, bearer_auth, create_token, delete_token
@@ -17,7 +18,7 @@ class TokenResponseModel(BaseModel):
 
 @router.post("", response_model=TokenResponseModel, status_code=201)
 def create_session(
-    conn: database_dependency, user_id: int = Security(basic_auth)
+    conn: database_dependency, user_id: Annotated[int, Security(basic_auth)]
 ) -> TokenResponseModel:
     token = create_token(user_id, conn)
     return TokenResponseModel(token=token.token, expires_at=token.expires_at)
@@ -32,7 +33,7 @@ class SessionResponseModel(BaseModel):
 
 @router.get("", response_model=SessionResponseModel, status_code=200)
 def get_session(
-    session: GetSessionByTokenRow = Security(bearer_auth),
+    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
 ) -> SessionResponseModel:
     return SessionResponseModel(
         email=session.email,
@@ -44,7 +45,8 @@ def get_session(
 
 @router.delete("", status_code=200)
 def delete_session(
-    conn: database_dependency, session: GetSessionByTokenRow = Security(bearer_auth)
+    conn: database_dependency,
+    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
 ) -> Response:
     delete_token(session.token, conn)
     return Response("Session was deleted", 200)

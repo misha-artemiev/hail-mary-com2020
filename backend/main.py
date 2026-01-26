@@ -1,21 +1,19 @@
+from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from internal.database import database_manager
-from internal.logging import logger
+from internal.logger import logger
 from internal.settings import host_settings
-from routers import register_routers
+from routers import consumer_router, sellers_router, session_router
 from uvicorn import run
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logger.info("Initialising database engine")
-    err = database_manager.initialise()
-    if err:
-        logger.error(err.args)
-        raise
+    await to_thread(database_manager.initialise)
     logger.info("Database ready")
 
     yield
@@ -30,6 +28,13 @@ app = FastAPI(
     root_path="/api",
     lifespan=lifespan,
 )
+
+
+def register_routers(app: FastAPI) -> None:
+    app.include_router(consumer_router)
+    app.include_router(sellers_router)
+    app.include_router(session_router)
+
 
 register_routers(app)
 

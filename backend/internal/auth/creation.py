@@ -1,4 +1,3 @@
-
 from internal.queries.consumer import CreateConsumerParams
 from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
@@ -16,9 +15,9 @@ from .security import hash_password
 def create_user(
     email: EmailStr, password: SecretStr, role: UserRole, conn: Connection
 ) -> CreateUserRow:
-    hash = hash_password(password.get_secret_value())
+    pw_hash = hash_password(password.get_secret_value())
     user = UserQuery(conn).create_user(
-        CreateUserParams(email=email, pw_hash=hash, role=role)
+        CreateUserParams(email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
         raise ValueError("Failed to create user")
