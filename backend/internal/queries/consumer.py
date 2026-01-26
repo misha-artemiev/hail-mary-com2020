@@ -8,7 +8,7 @@ from typing import Optional
 
 import sqlalchemy
 
-from . import models
+from internal.queries import models
 
 
 CREATE_CONSUMER = """-- name: create_consumer \\:one
@@ -16,6 +16,12 @@ INSERT INTO consumers (user_id, fName, lName)
 VALUES (:p1, :p2, :p3)
 RETURNING user_id, fname, lname
 """
+
+
+class CreateConsumerParams(pydantic.BaseModel):
+    user_id: int
+    fname: str
+    lname: str
 
 
 GET_CONSUMER = """-- name: get_consumer \\:one
@@ -40,8 +46,8 @@ class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_consumer(self, *, user_id: int, fname: str, lname: str) -> Optional[models.Consumer]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": user_id, "p2": fname, "p3": lname}).first()
+    def create_consumer(self, arg: CreateConsumerParams) -> Optional[models.Consumer]:
+        row = self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
         if row is None:
             return None
         return models.Consumer(

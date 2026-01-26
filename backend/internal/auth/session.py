@@ -1,7 +1,11 @@
 from fastapi import Security
 from sqlalchemy.engine import Connection
 from internal.queries.models import Token
-from internal.queries.token import Querier as TokenQuerier, GetSessionByTokenRow
+from internal.queries.token import (
+    Querier as TokenQuerier,
+    GetSessionByTokenRow,
+    CreateTokenParams,
+)
 from internal.queries.user import Querier as UserQuerier
 from .security import generate_token, check_password
 from datetime import datetime, timedelta, timezone
@@ -18,10 +22,12 @@ from internal.database import database_dependency
 # create and insert token into database
 def create_token(user_id: int, conn: Connection) -> Token:
     token = TokenQuerier(conn).create_token(
-        user_id=user_id,
-        token=generate_token(),
-        expires_at=datetime.now(timezone.utc)
-        + timedelta(seconds=auth_settings.token_exparation),
+        CreateTokenParams(
+            user_id=user_id,
+            token=generate_token(),
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(seconds=auth_settings.token_exparation),
+        )
     )
     if not token:
         raise ValueError("Failed to create token")
