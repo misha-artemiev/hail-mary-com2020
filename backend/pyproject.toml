@@ -19,6 +19,7 @@ dev = [
     "ruff>=0.14.14",
     "codespell>=2.4.1",
     "mypy>=1.19.1",
+    "pip-audit>=2.10.0",
 ]
 
 [build-system]
@@ -89,12 +90,6 @@ skip-magic-trailing-comma = true
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
-
-[tool.black]
-target-version = ["py314"]
-skip-magic-trailing-comma = true
-line-length = 88
-extend-exclude = "internal/queries"
 
 [tool.codespell]
 skip = [".internal/queries"]

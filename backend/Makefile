@@ -1,8 +1,11 @@
 SRC = main.py internal routers database
 
-.PHONY: default format lint
+.PHONY: default format lint install typecheck lint-fix init-db run
 
-default: format spell typecheck lint
+default: format spell typecheck lint audit
+
+install:
+	@pip install -e ".[dev]"
 
 format:
 	@echo "Running formatting"
@@ -23,6 +26,9 @@ lint:
 lint-fix:
 	@echo "Running lint FIX"
 	@ruff check --fix $(SRC)
+
+audit:
+	@pip-audit
 
 run:
 	@python -m main
