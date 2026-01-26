@@ -1,3 +1,4 @@
+from typing import AsyncIterator
 from fastapi import FastAPI
 from uvicorn import run
 from contextlib import asynccontextmanager
@@ -8,7 +9,7 @@ from internal.logging import logger
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logger.info("Initialising database engine")
     err = database_manager.initialise()
     if err:

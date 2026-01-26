@@ -29,7 +29,7 @@ def create_token(user_id: int, conn: Connection) -> Token:
 
 
 # delete token from database
-def delete_token(token: str, conn: Connection):
+def delete_token(token: str, conn: Connection) -> None:
     deleted_token = TokenQuerier(conn).delete_token(token=token)
     if not deleted_token:
         raise ValueError("Failed to delete token")

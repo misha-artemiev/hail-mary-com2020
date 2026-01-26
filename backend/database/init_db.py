@@ -23,6 +23,8 @@ def get_db_connection() -> Connection | None:
         if connection.closed == 0:
             logger.info("Connection to database successful.")
             return connection
+        logger.error("Connection is closed")
+        return None
     except Error as e:
         logger.error(f"Error while connecting to Postgres: {e}")
         return None
@@ -356,7 +358,7 @@ CREATE TABLE IF NOT EXISTS forecast_output (
 """)
 
 
-def main():
+def main() -> None:
     conn = get_db_connection()
     if not conn:
         return

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from internal.auth import create_consumer, CreateConsumerForm
 from internal.database import database_dependency
 
@@ -6,6 +6,8 @@ router = APIRouter(prefix="/consumer", tags=["consumer"])
 
 
 @router.post("", status_code=201)
-async def register_consumer(form: CreateConsumerForm, conn: database_dependency):
+async def register_consumer(
+    form: CreateConsumerForm, conn: database_dependency
+) -> Response:
     _ = create_consumer(form, conn)
-    return "Consumer was registered"
+    return Response("Consumer was registered", 201)

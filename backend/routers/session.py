@@ -4,7 +4,7 @@ from internal.auth import create_token, delete_token, basic_auth, bearer_auth
 from internal.database import database_dependency
 from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, Response, Security
 
 router = APIRouter(prefix="/session", tags=["session"])
 
@@ -15,7 +15,9 @@ class TokenResponseModel(BaseModel):
 
 
 @router.post("", response_model=TokenResponseModel, status_code=201)
-def create_session(conn: database_dependency, user_id: int = Security(basic_auth)):
+def create_session(
+    conn: database_dependency, user_id: int = Security(basic_auth)
+) -> TokenResponseModel:
     token = create_token(user_id, conn)
     return TokenResponseModel(token=token.token, expires_at=token.expires_at)
 
@@ -28,7 +30,9 @@ class SessionResponseModel(BaseModel):
 
 
 @router.get("", response_model=SessionResponseModel, status_code=200)
-def get_session(session: GetSessionByTokenRow = Security(bearer_auth)):
+def get_session(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> SessionResponseModel:
     return SessionResponseModel(
         email=session.email,
         role=session.role,
@@ -40,6 +44,6 @@ def get_session(session: GetSessionByTokenRow = Security(bearer_auth)):
 @router.delete("", status_code=200)
 def delete_session(
     conn: database_dependency, session: GetSessionByTokenRow = Security(bearer_auth)
-):
-    _ = delete_token(session.token, conn)
-    return "Session was deleted"
+) -> Response:
+    delete_token(session.token, conn)
+    return Response("Session was deleted", 200)

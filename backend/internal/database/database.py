@@ -23,8 +23,9 @@ class DatabaseManager:
                 conn.execute(text("SELECT 1"))
         except Exception:
             return Exception("Failed to initiate connection with database")
+        return None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         if self.engine:
             self.engine.dispose()
 
