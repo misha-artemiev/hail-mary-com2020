@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 // Components
 import FormInput from "../components/forms/FormInput";
 
+// Config
+import { LOGIN_FORM_FIELDS } from "../config/loginFormFields";
+
 export default function Login() {
     const navigate = useNavigate();
 
@@ -30,6 +33,19 @@ export default function Login() {
         navigate("/ ");
     };
 
+    const renderFields = (fields) =>
+        fields.map((field) => (
+            <FormInput
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={form[field.name]}
+                onChange={handleChange}
+                required={field.required}
+            />
+        ));
+
     return (
         <div className="max-w-md mx-auto p-6">
             {/* Login card container */}
@@ -41,23 +57,7 @@ export default function Login() {
 
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Email */}
-                    <FormInput
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange}
-                    />
-
-                    {/* Password */}
-                    <FormInput
-                        label="Password"
-                        name="password"
-                        type="password"
-                        value={form.password}
-                        onChange={handleChange}
-                    />
+                    {renderFields(LOGIN_FORM_FIELDS)}
 
                     {/* Sign In button */}
                     <button

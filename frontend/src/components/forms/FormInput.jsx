@@ -7,7 +7,6 @@ export default function FormInput({
     value,
     onChange,
     required = false,
-    placeholder = "",
 }) {
     return (
         <div>
@@ -29,7 +28,6 @@ export default function FormInput({
                 required={required}
                 value={value}
                 onChange={onChange}
-                placeholder={placeholder}
                 className="w-full border rounded-md px-3 py-2 focus:ring-2
                            focus:ring-green-500 focus:outline-none"
             />

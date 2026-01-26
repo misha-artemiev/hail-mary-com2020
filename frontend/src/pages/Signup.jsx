@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 // Components
 import FormInput from "../components/forms/FormInput";
 
+// Config
+import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
+
 // Renders signup form for new consumers and sellers based on RBAC
 
 export default function Signup() {
@@ -49,6 +52,19 @@ export default function Signup() {
         navigate("/");
     };
 
+    const renderFields = (fields) =>
+        fields.map((field) => (
+            <FormInput
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                value={form[field.name]}
+                onChange={handleChange}
+                required={field.required}
+            />
+        ));
+
     return (
         // Page design
         <div className="max-w-xl mx-auto p-6">
@@ -59,35 +75,7 @@ export default function Signup() {
 
                 {/* Signup Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {/* Email */}
-                    <FormInput
-                        label="Email"
-                        name="email"
-                        type="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        required
-                    />
-
-                    {/* Password */}
-                    <FormInput
-                        label="Password"
-                        name="password"
-                        type="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        required
-                    />
-
-                    {/* Confirm Password */}
-                    <FormInput
-                        label="Confirm Password"
-                        name="confirmPassword"
-                        type="password"
-                        value={form.confirmPassword}
-                        onChange={handleChange}
-                        required
-                    />
+                    {renderFields(SIGNUP_FORM_FIELDS.common)}
 
                     {/* Role */}
                     <div>
@@ -106,104 +94,11 @@ export default function Signup() {
                         </select>
                     </div>
 
-                    {/* Consumer fields */}
-                    {role === "consumer" && (
-                        <>
-                            {/* First name */}
-                            <FormInput
-                                label="First Name"
-                                name="firstName"
-                                type="text"
-                                value={form.firstName}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* Last name */}
-                            <FormInput
-                                label="Last Name"
-                                name="lastName"
-                                type="text"
-                                value={form.lastName}
-                                onChange={handleChange}
-                                required
-                            />
-                        </>
-                    )}
-
-                    {/* Seller fields */}
-                    {role === "seller" && (
-                        <>
-                            {/* Seller name */}
-                            <FormInput
-                                label="Seller Name"
-                                name="sellerName"
-                                type="text"
-                                value={form.sellerName}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* Address line 1 */}
-                            <FormInput
-                                label="Address Line 1"
-                                name="address1"
-                                type="text"
-                                value={form.address1}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* Address line 2 (not required) */}
-                            <FormInput
-                                label="Address Line 2"
-                                name="address2"
-                                type="text"
-                                value={form.address2}
-                                onChange={handleChange}
-                            />
-
-                            {/* City */}
-                            <FormInput
-                                label="City"
-                                name="city"
-                                type="text"
-                                value={form.city}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* Postcode */}
-                            <FormInput
-                                label="Postcode"
-                                name="postCode"
-                                type="text"
-                                value={form.postCode}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* County */}
-                            <FormInput
-                                label="County"
-                                name="county"
-                                type="text"
-                                value={form.county}
-                                onChange={handleChange}
-                                required
-                            />
-
-                            {/* Country */}
-                            <FormInput
-                                label="Country"
-                                name="country"
-                                type="text"
-                                value={form.country}
-                                onChange={handleChange}
-                                required
-                            />
-                        </>
-                    )}
+                    {/* Role-specific fields */}
+                    {role === "consumer" &&
+                        renderFields(SIGNUP_FORM_FIELDS.consumer)}
+                    {role === "seller" &&
+                        renderFields(SIGNUP_FORM_FIELDS.seller)}
 
                     {/* Submit */}
                     <button
