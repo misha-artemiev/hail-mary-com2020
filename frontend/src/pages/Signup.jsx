@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import FormInput from "../components/forms/FormInput";
 import RoleSelect from "../components/forms/RoleSelect";
 import Divider from "../components/forms/Divider";
+import SubmitButton from "../components/forms/SubmitButton";
+import Button from "../components/forms/Button";
 
 // Config
 import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
@@ -98,25 +100,15 @@ export default function Signup() {
                         renderFields(SIGNUP_FORM_FIELDS.seller)}
 
                     {/* Submit */}
-                    <button
-                        type="submit"
-                        className="w-full bg-green-600 text-white px-4 py-3 rounded-md font-semibold
-                                   hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 mt-4"
-                    >
-                        Sign Up
-                    </button>
+                    <SubmitButton />
                 </form>
 
                 <Divider text="or" />
 
-                {/* Login Redirect */}
-                <button
-                    onClick={() => navigate("/login")}
-                    className="w-full border border-green-600 text-green-700 px-4 py-3 rounded-md font-semibold
-                               hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
+                {/* Login redirect */}
+                <Button onClick={() => navigate("/login")}>
                     Already have an account? Sign In
-                </button>
+                </Button>
             </div>
         </div>
     );

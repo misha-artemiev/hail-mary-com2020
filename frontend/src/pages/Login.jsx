@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 // Components
 import FormInput from "../components/forms/FormInput";
 import Divider from "../components/forms/Divider";
+import SubmitButton from "../components/forms/SubmitButton";
+import Button from "../components/forms/Button";
 
 // Config
 import { LOGIN_FORM_FIELDS } from "../config/loginFormFields";
@@ -60,26 +62,16 @@ export default function Login() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {renderFields(LOGIN_FORM_FIELDS)}
 
-                    {/* Sign In button */}
-                    <button
-                        type="submit"
-                        className="w-full bg-green-600 text-white px-4 py-3 rounded-md font-semibold
-                                   hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 mt-2"
-                    >
-                        Sign In
-                    </button>
+                    {/* Submit */}
+                    <SubmitButton />
                 </form>
 
                 <Divider text="or" />
 
-                {/* Create Account Button */}
-                <button
-                    onClick={() => navigate("/signup")}
-                    className="w-full border border-green-600 text-green-700 px-4 py-3 rounded-md font-semibold
-                               hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
+                {/* Signup redirect */}
+                <Button onClick={() => navigate("/signup")}>
                     Create an Account
-                </button>
+                </Button>
             </div>
         </div>
     );
