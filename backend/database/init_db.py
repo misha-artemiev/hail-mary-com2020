@@ -323,7 +323,7 @@ CREATE TABLE IF NOT EXISTS inbox (
 );
 """)
 
-# Create forcast input table
+# Create forecast input table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS forecast_input (
     input_id SERIAL PRIMARY KEY,
@@ -341,7 +341,7 @@ CREATE TABLE IF NOT EXISTS forecast_input (
 );
 """)
 
-# Create forcast output table
+# Create forecast output table
 table_queries.append("""
 CREATE TABLE IF NOT EXISTS forecast_output (
     output_id SERIAL PRIMARY KEY,

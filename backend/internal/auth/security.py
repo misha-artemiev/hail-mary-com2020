@@ -9,7 +9,7 @@ def hash_password(password: str) -> str:
     return hashpw(pasword_bytes, salt).decode("utf-8")
 
 
-# chack password against the hash
+# check password against the hash
 def check_password(password: str, password_hash: str) -> bool:
     password_bytes = password.encode("utf-8")
     password_hash_bytes = password_hash.encode("utf-8")
