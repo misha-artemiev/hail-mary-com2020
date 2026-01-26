@@ -4,6 +4,7 @@ from internal.database import database_dependency
 
 router = APIRouter(prefix="/consumer", tags=["consumer"])
 
+
 @router.post("", status_code=201)
 async def register_consumer(form: CreateConsumerForm, conn: database_dependency):
     _ = create_consumer(form, conn)

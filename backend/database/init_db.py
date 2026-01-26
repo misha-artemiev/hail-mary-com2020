@@ -9,6 +9,7 @@ dictConfig(LOGGING_CONFIG)
 logger = getLogger("uvicorn.info")
 table_queries: list[str] = []
 
+
 # Connect to the database
 def get_db_connection() -> Connection | None:
     try:
@@ -17,7 +18,7 @@ def get_db_connection() -> Connection | None:
             port=database_settings.port,
             dbname=database_settings.database,
             user=database_settings.username,
-            password=database_settings.password
+            password=database_settings.password,
         )
         if connection.closed == 0:
             logger.info("Connection to database successful.")
@@ -25,25 +26,21 @@ def get_db_connection() -> Connection | None:
     except Error as e:
         logger.error(f"Error while connecting to Postgres: {e}")
         return None
- 
+
+
 # Get entity name and type
 def get_type_and_name(sql: str) -> tuple[str, str] | None:
     table_match = search(
-        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?", 
-        sql, 
-        IGNORECASE
+        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?", sql, IGNORECASE
     )
     if table_match:
         return ("TABLE", table_match.group(1))
 
-    enum_match = search(
-        r"CREATE\s+TYPE\s+`?(\w+)`?\s+AS\s+ENUM", 
-        sql, 
-        IGNORECASE
-    )
+    enum_match = search(r"CREATE\s+TYPE\s+`?(\w+)`?\s+AS\s+ENUM", sql, IGNORECASE)
     if enum_match:
         return ("ENUM", enum_match.group(1))
     return None
+
 
 # Create user role enum
 table_queries.append("""
@@ -358,14 +355,23 @@ CREATE TABLE IF NOT EXISTS forecast_output (
 );
 """)
 
+
 def main():
     conn = get_db_connection()
     if not conn:
         return
     option = 0
-    while option not in (1,2,3,4):
-        option = int(input("(1) Init all table, (2) Show all tables, (3) Drop all tables, (4) exit: "))
-    if option == 4 or input(f"confirm option {option} (y/N): ") not in ("y","Y","yes"):
+    while option not in (1, 2, 3, 4):
+        option = int(
+            input(
+                "(1) Init all table, (2) Show all tables, (3) Drop all tables, (4) exit: "
+            )
+        )
+    if option == 4 or input(f"confirm option {option} (y/N): ") not in (
+        "y",
+        "Y",
+        "yes",
+    ):
         conn.close()
         logger.info("Shutting down: database connection closed")
         return
@@ -382,7 +388,9 @@ def main():
                         cursor.execute(sql)
                         logger.info(f"{type_name[0].lower()} {type_name[1]} created.")
                 except Error as err:
-                    logger.error(f"Failed to create {type_name[0]} {type_name[1]}: {err}")
+                    logger.error(
+                        f"Failed to create {type_name[0]} {type_name[1]}: {err}"
+                    )
                 conn.commit()
         case 2:
             # Show all tables
@@ -411,6 +419,7 @@ def main():
             conn.commit()
     conn.close()
     logger.info("Database connection closed.")
+
 
 if __name__ == "__main__":
     main()

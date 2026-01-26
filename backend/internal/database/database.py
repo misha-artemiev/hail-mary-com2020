@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from internal.settings import database_settings
 from internal.logging import logger
 
+
 class DatabaseManager:
     engine: Engine
 
@@ -14,9 +15,9 @@ class DatabaseManager:
             pool_size=10,
             max_overflow=20,
             pool_pre_ping=True,
-            pool_recycle=2600
+            pool_recycle=2600,
         )
-    
+
         try:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
@@ -41,6 +42,7 @@ class DatabaseManager:
         except Exception as err:
             logger.error(f"Internal Error: {err}")
             raise HTTPException(500, "Internal Error")
+
 
 database_manager = DatabaseManager()
 database_dependency = Annotated[Connection, Depends(database_manager.get_connection)]
