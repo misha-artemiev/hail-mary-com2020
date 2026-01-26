@@ -1,12 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Components
+import FormInput from "../components/forms/FormInput";
+
 // Renders signup form for new consumers and sellers based on RBAC
 
 export default function Signup() {
     const navigate = useNavigate();
 
-    // Centralised object that holds all fields for the form
+    // State object: holds all fields for the form
     const [role, setRole] = useState("");
     const [form, setForm] = useState({
         email: "",
@@ -19,30 +22,31 @@ export default function Signup() {
         address2: "",
         city: "",
         postCode: "",
-        region: "",
+        county: "",
         country: "",
     });
 
     const handleChange = (e) => {
-        // Handles changes to form fields
+        // Handles changes to form
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e) => {
-        // Handles form submission with basic validation. IMPROVE VALIDATION LATER!!!
+        // Handles sign-up submission
         e.preventDefault();
 
         if (form.password !== form.confirmPassword) {
-            //Ensures passwords match
+            // Ensures passwords match
             alert("Please ensure that passwords match");
             return;
         }
 
-        // SUBMIT SIGNUP DATA TO BACKEND HERE
+        // TODO: sign-up logic
         alert("Signup submitted");
 
-        navigate("/login");
+        // Redirect to home page
+        navigate("/");
     };
 
     return (
@@ -53,51 +57,37 @@ export default function Signup() {
                     Create Account
                 </h1>
 
+                {/* Signup Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Email */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            required
-                            value={form.email}
-                            onChange={handleChange}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
+                    <FormInput
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        required
+                    />
 
                     {/* Password */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            name="password"
-                            required
-                            value={form.password}
-                            onChange={handleChange}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
+                    <FormInput
+                        label="Password"
+                        name="password"
+                        type="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        required
+                    />
 
                     {/* Confirm Password */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Re-enter Password
-                        </label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            required
-                            value={form.confirmPassword}
-                            onChange={handleChange}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
+                    <FormInput
+                        label="Confirm Password"
+                        name="confirmPassword"
+                        type="password"
+                        value={form.confirmPassword}
+                        onChange={handleChange}
+                        required
+                    />
 
                     {/* Role */}
                     <div>
@@ -119,134 +109,99 @@ export default function Signup() {
                     {/* Consumer fields */}
                     {role === "consumer" && (
                         <>
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    First Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    required
-                                    value={form.firstName}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* First name */}
+                            <FormInput
+                                label="First Name"
+                                name="firstName"
+                                type="text"
+                                value={form.firstName}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Last Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="lastName"
-                                    required
-                                    value={form.lastName}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Last name */}
+                            <FormInput
+                                label="Last Name"
+                                name="lastName"
+                                type="text"
+                                value={form.lastName}
+                                onChange={handleChange}
+                                required
+                            />
                         </>
                     )}
 
                     {/* Seller fields */}
                     {role === "seller" && (
                         <>
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Seller Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="sellerName"
-                                    required
-                                    value={form.sellerName}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Seller name */}
+                            <FormInput
+                                label="Seller Name"
+                                name="sellerName"
+                                type="text"
+                                value={form.sellerName}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Address Line 1
-                                </label>
-                                <input
-                                    type="text"
-                                    name="address1"
-                                    required
-                                    value={form.address1}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Address line 1 */}
+                            <FormInput
+                                label="Address Line 1"
+                                name="address1"
+                                type="text"
+                                value={form.address1}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Address Line 2
-                                </label>
-                                <input
-                                    type="text"
-                                    name="address2"
-                                    value={form.address2}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Address line 2 (not required) */}
+                            <FormInput
+                                label="Address Line 2"
+                                name="address2"
+                                type="text"
+                                value={form.address2}
+                                onChange={handleChange}
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    City
-                                </label>
-                                <input
-                                    type="text"
-                                    name="city"
-                                    required
-                                    value={form.city}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* City */}
+                            <FormInput
+                                label="City"
+                                name="city"
+                                type="text"
+                                value={form.city}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Post Code
-                                </label>
-                                <input
-                                    type="text"
-                                    name="postCode"
-                                    required
-                                    value={form.postCode}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Postcode */}
+                            <FormInput
+                                label="Postcode"
+                                name="postCode"
+                                type="text"
+                                value={form.postCode}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Region
-                                </label>
-                                <input
-                                    type="text"
-                                    name="region"
-                                    value={form.region}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* County */}
+                            <FormInput
+                                label="County"
+                                name="county"
+                                type="text"
+                                value={form.county}
+                                onChange={handleChange}
+                                required
+                            />
 
-                            <div>
-                                <label className="block font-semibold text-gray-700">
-                                    Country
-                                </label>
-                                <input
-                                    type="text"
-                                    name="country"
-                                    required
-                                    value={form.country}
-                                    onChange={handleChange}
-                                    className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
+                            {/* Country */}
+                            <FormInput
+                                label="Country"
+                                name="country"
+                                type="text"
+                                value={form.country}
+                                onChange={handleChange}
+                                required
+                            />
                         </>
                     )}
 

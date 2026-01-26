@@ -1,11 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 
-// Default profile picture
-import defaultProfile from "../assets/default-user.jpg";
-import logoFull from "../assets/logos/logo-full-512.png";
+import logoFull from "../assets/logos/logo-full-512.png"; // Home page logo
+import defaultProfile from "../assets/default-user.jpg"; // Default profile picture
 
 export default function Navbar() {
+    // TODO: get correct user profile picture
     const user = {
         displayName: "User0001",
         profilePic: defaultProfile,
@@ -13,6 +13,7 @@ export default function Navbar() {
 
     return (
         <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
+            {/* Home page logo */}
             <NavLink to="/">
                 <img
                     src={logoFull}

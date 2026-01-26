@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Components
+import FormInput from "../components/forms/FormInput";
+
 export default function Login() {
-    // Basic login page
+    const navigate = useNavigate();
+
+    // State object: holds all fields for the form
     const [form, setForm] = useState({
         email: "",
         password: "",
     });
-
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         // Handles changes to form
@@ -16,15 +19,15 @@ export default function Login() {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleLogin = (e) => {
+    const handleSubmit = (e) => {
         // Handles login submission
         e.preventDefault();
-        alert("Login submitted"); // REPLACE WITH ACTUAL LOGIN LOGIC
-    };
 
-    const handleSignupRedirect = () => {
-        // Redirect to signup page
-        navigate("/signup");
+        // TODO: sign-in logic
+        alert("Login submitted");
+
+        // Redirect to home page
+        navigate("/ ");
     };
 
     return (
@@ -37,36 +40,24 @@ export default function Login() {
                 </h1>
 
                 {/* Login Form */}
-                <form onSubmit={handleLogin} className="space-y-4">
-                    {/* Email field */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            required
-                            value={form.email}
-                            onChange={handleChange}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Email */}
+                    <FormInput
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                    />
 
-                    {/* Password field */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            name="password"
-                            required
-                            value={form.password}
-                            onChange={handleChange}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        />
-                    </div>
+                    {/* Password */}
+                    <FormInput
+                        label="Password"
+                        name="password"
+                        type="password"
+                        value={form.password}
+                        onChange={handleChange}
+                    />
 
                     {/* Sign In button */}
                     <button
@@ -87,7 +78,7 @@ export default function Login() {
 
                 {/* Create Account Button */}
                 <button
-                    onClick={handleSignupRedirect}
+                    onClick={() => navigate("/signup")}
                     className="w-full border border-green-600 text-green-700 px-4 py-3 rounded-md font-semibold
                                hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
