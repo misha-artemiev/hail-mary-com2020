@@ -1,10 +1,13 @@
+"""Manages authentication and creation/deletion of entities."""
+
 from .creation import (
     CreateConsumerForm,
     CreateSellerForm,
     create_consumer,
     create_seller,
 )
-from .session import basic_auth, bearer_auth, create_token, delete_token
+from .middleware import basic_auth, bearer_auth
+from .token import create_token, delete_token
 
 __all__ = [
     "CreateConsumerForm",

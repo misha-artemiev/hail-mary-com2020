@@ -1,3 +1,5 @@
+"""Fastapi server entrypoint."""
+
 from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -12,6 +14,7 @@ from uvicorn import run
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Manages startup and shutdown."""
     logger.info("Initialising database engine")
     await to_thread(database_manager.initialise)
     logger.info("Database ready")
@@ -31,6 +34,7 @@ app = FastAPI(
 
 
 def register_routers(app: FastAPI) -> None:
+    """Registers api routers with the app."""
     app.include_router(consumer_router)
     app.include_router(sellers_router)
     app.include_router(session_router)

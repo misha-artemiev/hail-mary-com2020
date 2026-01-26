@@ -1,3 +1,5 @@
+"""Creates seller and consumer entities."""
+
 from internal.queries.consumer import CreateConsumerParams
 from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
@@ -11,10 +13,23 @@ from sqlalchemy import Connection
 from .security import hash_password
 
 
-# insert user into db
 def create_user(
     email: EmailStr, password: SecretStr, role: UserRole, conn: Connection
 ) -> CreateUserRow:
+    """Create and insert base user entiry.
+
+    Args:
+      email: users email
+      password: users plain text password
+      role: users role, seller or consumer
+      conn: database connection
+
+    Returns:
+      row from database with created users information
+
+    Raises:
+      ValueError: if database failed to create user
+    """
     pw_hash = hash_password(password.get_secret_value())
     user = UserQuery(conn).create_user(
         CreateUserParams(email=email, pw_hash=pw_hash, role=role)
@@ -24,16 +39,28 @@ def create_user(
     return user
 
 
-# form to be passed into consumer creation api
 class CreateConsumerForm(BaseModel):
+    """Form with information to create consumer."""
+
     email: EmailStr
     password: SecretStr
     first_name: str
     last_name: str
 
 
-# create consumer and user
 def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
+    """Create and insert consumer and user entiry.
+
+    Args:
+      form: form with consumers information
+      conn: database connection
+
+    Returns:
+      row with created consumers information from the database
+
+    Raises:
+      ValueError: if database failed to create consumer
+    """
     user = create_user(form.email, form.password, UserRole.CONSUMER, conn)
     consumer = ConsumerQuerier(conn).create_consumer(
         CreateConsumerParams(
@@ -45,8 +72,9 @@ def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
     return consumer
 
 
-# form to be passed into seller creation api
 class CreateSellerForm(BaseModel):
+    """Form with information to create seller."""
+
     email: EmailStr
     password: SecretStr
     seller_name: str
@@ -58,8 +86,19 @@ class CreateSellerForm(BaseModel):
     country: str
 
 
-# register unverified seller and user
 def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
+    """Creates and inserts seller and user entiry.
+
+    Args:
+      form: form with information for seller creation
+      conn: database connection
+
+    Returns:
+     row with created sellers information from the database
+
+    Raises:
+      ValueError: database failed to create a seller
+    """
     user = create_user(form.email, form.password, UserRole.SELLER, conn)
     seller = SellerQuerier(conn).create_seller(
         CreateSellerParams(

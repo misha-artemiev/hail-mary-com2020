@@ -1,4 +1,7 @@
-**/__pycache__
-.venv
+**/__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cacheA/
+build/
+
 .env
-build

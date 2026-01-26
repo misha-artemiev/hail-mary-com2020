@@ -1,28 +1,40 @@
-from logging import getLogger
+"""Initialisation and deinitialisation of the database."""
+
+from logging import Logger, getLogger
 from logging.config import dictConfig
 from pathlib import Path
 from re import IGNORECASE, search, split
+from string.templatelib import Template
 
 from internal.settings import database_settings
 from psycopg import Connection, Error, connect
 from uvicorn.config import LOGGING_CONFIG
 
 dictConfig(LOGGING_CONFIG)
-logger = getLogger("uvicorn.info")
-schema_path = Path("database/migrations/schema.sql")
+SCHEMA_PATH = Path("database/migrations/schema.sql")
 
 
 def load_queries() -> list[str]:
-    content = schema_path.read_text(encoding="utf-8")
+    """Loads table creation queries from schema.
+
+    Returns:
+      list of separate queries
+    """
+    content = SCHEMA_PATH.read_text(encoding="utf-8")
     raw_queries = split(r"\n\s*\n", content)
     return [q.strip() for q in raw_queries if q.strip()]
 
 
-table_queries = load_queries()
-
-
 # Connect to the database
-def get_db_connection() -> Connection | None:
+def get_db_connection(logger: Logger) -> Connection | None:
+    """Opens connection to the database.
+
+    Args:
+      logger: configured logger
+
+    Returns:
+      Opened connection
+    """
     try:
         connection = connect(
             host=database_settings.host,
@@ -43,6 +55,14 @@ def get_db_connection() -> Connection | None:
 
 # Get entity name and type
 def get_type_and_name(sql: str) -> tuple[str, str] | None:
+    """Extracts name and type of the entity from the query.
+
+    Args:
+        sql: sql string
+
+    Returns:
+      tuple with table type and name
+    """
     table_match = search(
         r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?", sql, IGNORECASE
     )
@@ -55,7 +75,16 @@ def get_type_and_name(sql: str) -> tuple[str, str] | None:
     return None
 
 
-def create_all_tables(conn: Connection) -> None:
+def create_all_tables(
+    logger: Logger, table_queries: list[str], conn: Connection
+) -> None:
+    """Execute sql for each table.
+
+    Args:
+      logger: configured logger
+      table_queries: list of the queries for table craetion
+      conn: connection to the database
+    """
     for sql in table_queries:
         type_name = get_type_and_name(sql)
         if not type_name:
@@ -63,14 +92,20 @@ def create_all_tables(conn: Connection) -> None:
             continue
         try:
             with conn.cursor() as cursor:
-                cursor.execute(sql)
+                cursor.execute(Template(sql))
                 logger.info(f"{type_name[0].lower()} {type_name[1]} created.")
         except Error as err:
             logger.error(f"Failed to create {type_name[0]} {type_name[1]}: {err}")
         conn.commit()
 
 
-def show_all_tables(conn: Connection) -> None:
+def show_all_tables(logger: Logger, conn: Connection) -> None:
+    """Show all tables located in the database.
+
+    Args:
+      logger: configured logger
+      conn: connection to the database
+    """
     with conn.cursor() as cursor:
         cursor.execute("""
             SELECT table_name
@@ -83,7 +118,14 @@ def show_all_tables(conn: Connection) -> None:
             logger.info(table)
 
 
-def drop_all_tables(conn: Connection) -> None:
+def drop_all_tables(logger: Logger, table_queries: list[str], conn: Connection) -> None:
+    """Drops all created tables from database.
+
+    Args:
+      logger: configured logger
+      table_queries: list of the queries for table craetion
+      conn: connection to the database
+    """
     table_queries.reverse()
     for sql in table_queries:
         type_name = get_type_and_name(sql)
@@ -94,13 +136,17 @@ def drop_all_tables(conn: Connection) -> None:
             logger.warning(f"skipping {type_name[1]} as enum")
             continue
         with conn.cursor() as cursor:
-            cursor.execute(f"DROP {type_name[0]} IF EXISTS {type_name[1]};")
+            cursor.execute(Template(f"DROP {type_name[0]} IF EXISTS {type_name[1]};"))
             logger.info(f"table {type_name[1]} removed.")
     conn.commit()
 
 
 def main() -> None:
-    conn = get_db_connection()
+    """Entrypoint for database management script."""
+    dictConfig(LOGGING_CONFIG)
+    logger = getLogger("uvicorn.info")
+    table_queries = load_queries()
+    conn = get_db_connection(logger)
     if not conn:
         return
     option = 0
@@ -114,13 +160,13 @@ def main() -> None:
     match option:
         case 1:
             # Create all tables
-            create_all_tables(conn)
+            create_all_tables(logger, table_queries, conn)
         case 2:
             # Show all tables
-            show_all_tables(conn)
+            show_all_tables(logger, conn)
         case 3:
             # Drop all tables
-            drop_all_tables(conn)
+            drop_all_tables(logger, table_queries, conn)
         case 4:
             logger.info("Shutting down: database connection closed")
     conn.close()
