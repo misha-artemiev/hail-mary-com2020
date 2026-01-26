@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Components
+import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import RoleSelect from "../components/forms/RoleSelect";
 import Divider from "../components/forms/Divider";
@@ -72,7 +73,7 @@ export default function Signup() {
     return (
         // Page design
         <div className="max-w-xl mx-auto p-6">
-            <div className="bg-white shadow-md rounded-lg p-6">
+            <Card>
                 <h1 className="text-3xl font-bold text-green-700 mb-6">
                     Create Account
                 </h1>
@@ -109,7 +110,7 @@ export default function Signup() {
                 <Button onClick={() => navigate("/login")}>
                     Already have an account? Sign In
                 </Button>
-            </div>
+            </Card>
         </div>
     );
 }

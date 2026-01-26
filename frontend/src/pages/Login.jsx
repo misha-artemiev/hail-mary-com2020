@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Components
+import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import Divider from "../components/forms/Divider";
 import SubmitButton from "../components/forms/SubmitButton";
@@ -50,9 +51,9 @@ export default function Login() {
         ));
 
     return (
-        <div className="max-w-md mx-auto p-6">
+        <div className="max-w-xl mx-auto p-6">
             {/* Login card container */}
-            <div className="bg-white shadow-md rounded-lg p-6">
+            <Card>
                 {/* Header */}
                 <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">
                     Sign In
@@ -72,7 +73,7 @@ export default function Login() {
                 <Button onClick={() => navigate("/signup")}>
                     Create an Account
                 </Button>
-            </div>
+            </Card>
         </div>
     );
 }

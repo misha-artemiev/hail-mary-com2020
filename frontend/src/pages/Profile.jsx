@@ -1,5 +1,9 @@
 import React from "react";
 
+// Components
+import Card from "../components/Card";
+
+// Resources
 import defaultProfile from "../assets/default-user.jpg";
 
 // Generic profile info row
@@ -20,7 +24,7 @@ export default function Profile() {
     return (
         <div className="max-w-3xl mx-auto p-6">
             {/* Profile card */}
-            <div className="bg-white shadow-md rounded-lg p-6 mb-2">
+            <Card>
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-3xl font-bold text-green-700">
@@ -44,15 +48,15 @@ export default function Profile() {
                 <Info label="Display name" value="User0001" />
                 <Info label="Current rescue streak" value="0 weeks" />
                 <Info label="Bundles rescued" value="0" />
-            </div>
+            </Card>
 
             {/* Badges card */}
-            <div className="bg-white shadow-md rounded-lg p-6">
+            <Card>
                 <h2 className="text-2xl font-bold mb-4 text-green-700">
                     Badges
                 </h2>
                 <p>No badges yet...!</p>
-            </div>
+            </Card>
         </div>
     );
 }
