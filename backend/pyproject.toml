@@ -1,0 +1,23 @@
+[project]
+name = "rescue-marketplace"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi==0.128.0",
+    "uvicorn==0.40.0",
+    "pydantic==2.12.5",
+    "pydantic[email]==2.12.5",
+    "pydantic-settings==2.12.0",
+    "bcrypt==5.0.0",
+    "sqlalchemy==2.0.46",
+    "psycopg[binary]==3.3.2",
+]
+
+[build-system]
+requires = ["setuptools>=80.10.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["routers", "internal", "database"]
+py-modules = ["main"]
