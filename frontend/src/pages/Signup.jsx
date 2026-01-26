@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 // Components
 import FormInput from "../components/forms/FormInput";
+import RoleSelect from "../components/forms/RoleSelect";
 import Divider from "../components/forms/Divider";
 
 // Config
@@ -79,21 +80,16 @@ export default function Signup() {
                     {renderFields(SIGNUP_FORM_FIELDS.common)}
 
                     {/* Role */}
-                    <div>
-                        <label className="block font-semibold text-gray-700">
-                            Role
-                        </label>
-                        <select
-                            required
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                        >
-                            <option value="">Select role</option>
-                            <option value="consumer">Consumer</option>
-                            <option value="seller">Seller</option>
-                        </select>
-                    </div>
+                    <RoleSelect
+                        label="Role"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        options={[
+                            { value: "", label: "Select role" },
+                            { value: "consumer", label: "Consumer" },
+                            { value: "seller", label: "Seller" },
+                        ]}
+                    />
 
                     {/* Role-specific fields */}
                     {role === "consumer" &&
