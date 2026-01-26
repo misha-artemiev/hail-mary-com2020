@@ -20,8 +20,7 @@ lint:
 	@echo "Running lint"
 	@ruff check $(SRC)
 
-
-lint:
+lint-fix:
 	@echo "Running lint FIX"
 	@ruff check --fix $(SRC)
 
