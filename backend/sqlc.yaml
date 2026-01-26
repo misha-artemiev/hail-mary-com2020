@@ -12,7 +12,10 @@ sql:
       - plugin: "py"
         out: "internal/queries"
         options:
-          package: "."
+          package: "internal.queries"
           emit_sync_querier: true
+          emit_exact_table_names: false
           emit_pydantic_models: true
+          emit_str_enum: true
           emit_type_hints: true
+          query_parameter_limit: 1
