@@ -1,13 +1,85 @@
+CREATE TYPE user_role AS ENUM (
+    'seller',
+    'consumer',
+    'admin'
+);
+
+CREATE TYPE reservation_status AS ENUM (
+    'reserved',
+    'collected',
+    'no_show'
+);
+
+CREATE TYPE admin_issue_type AS ENUM (
+    'LOGIN_FAILED',
+    'ACCOUNT_LOCKED',
+    'PASSWORD_RESET_FAILED',
+    'PAYMENT_FAILED',
+    'QR_CODE_NOT_GENERATED',
+    'QR_CODE_SCAN_ERROR',
+    'APP_CRASH',
+    'DATA_INCONSISTENCY',
+    'PERMISSION_ERROR',
+    'OTHER'
+);
+
+CREATE TYPE seller_issue_type AS ENUM (
+    'ITEM_MISSING',
+    'ITEM_INCORRECT',
+    'ITEM_DAMAGED',
+    'SELLER_CLOSED',
+    'SELLER_REFUSED_PICKUP',
+    'PICKUP_DELAYED',
+    'BUNDLE_EXPIRED',
+    'RESERVATION_CANCELLED_BY_SELLER',
+    'RESERVATION_NOT_FOUND',
+    'CLAIM_CODE_INVALID',
+    'CLAIM_CODE_ALREADY_USED',
+    'OTHER'
+);
+
+CREATE TYPE issue_status AS ENUM (
+    'open',
+    'in_progress',
+    'closed'
+);
+
+CREATE TYPE day_of_week AS ENUM (
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+);
+
+CREATE TYPE weather_flag AS ENUM (
+    'sunny',
+    'cloudy',
+    'rainy',
+    'snowy',
+    'windy'
+);
+
 CREATE TABLE IF NOT EXISTS users (
-    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id SERIAL PRIMARY KEY,
     email VARCHAR(250) NOT NULL UNIQUE,
     pw_hash VARCHAR(255) NOT NULL,
-    role ENUM('seller','consumer','admin') NOT NULL DEFAULT 'consumer',
+    role user_role NOT NULL DEFAULT 'consumer',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS consumers (
+    user_id INT NOT NULL,
+    fName VARCHAR(100) NOT NULL,
+    lName VARCHAR(100) NOT NULL,
+    PRIMARY KEY (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS admins (
     user_id INT NOT NULL,
     fName VARCHAR(100) NOT NULL,
     lName VARCHAR(100) NOT NULL,
@@ -31,16 +103,8 @@ CREATE TABLE IF NOT EXISTS sellers (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS admins (
-    user_id INT NOT NULL,
-    fName VARCHAR(100) NOT NULL,
-    lName VARCHAR(100) NOT NULL,
-    PRIMARY KEY (user_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS bundles (
-    bundle_id INT AUTO_INCREMENT PRIMARY KEY,
+    bundle_id SERIAL PRIMARY KEY,
     seller_id INT NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
@@ -54,9 +118,8 @@ CREATE TABLE IF NOT EXISTS bundles (
 );
 
 CREATE TABLE IF NOT EXISTS allergens (
-    allergen_id INT AUTO_INCREMENT PRIMARY KEY,
-    allergen_name VARCHAR(100) NOT NULL UNIQUE
-);
+    allergen_id SERIAL PRIMARY KEY,
+    allergen_name VARCHAR(100) NOT NULL UNIQUE);
 
 CREATE TABLE IF NOT EXISTS bundle_allergens (
     bundle_id INT NOT NULL,
@@ -64,6 +127,11 @@ CREATE TABLE IF NOT EXISTS bundle_allergens (
     PRIMARY KEY (bundle_id, allergen_id),
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (allergen_id) REFERENCES allergens(allergen_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS category (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS bundle_category (
@@ -74,25 +142,20 @@ CREATE TABLE IF NOT EXISTS bundle_category (
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS category (
-    category_id INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL UNIQUE
-);
-
 CREATE TABLE IF NOT EXISTS reservations (
-    reservation_id INT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id SERIAL PRIMARY KEY,
     bundle_id INT NOT NULL,
     consumer_id INT NOT NULL,
     reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     claim_code VARCHAR(20) NOT NULL,
-    status ENUM('reserved', 'collected', 'no_show') NOT NULL DEFAULT 'reserved',
+    status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES consumers(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS badges (
-    badge_id INT AUTO_INCREMENT PRIMARY KEY,
+    badge_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description VARCHAR(255) NOT NULL
 );
@@ -107,51 +170,27 @@ CREATE TABLE IF NOT EXISTS badges_acquired (
 );
 
 CREATE TABLE IF NOT EXISTS admin_issue_reports (
-    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
-    issue_type ENUM(
-        'LOGIN_FAILED',
-        'ACCOUNT_LOCKED',
-        'PASSWORD_RESET_FAILED',
-        'PAYMENT_FAILED',
-        'QR_CODE_NOT_GENERATED',
-        'QR_CODE_SCAN_ERROR',
-        'APP_CRASH',
-        'DATA_INCONSISTENCY',
-        'PERMISSION_ERROR',
-        'OTHER'
-    ) NOT NULL,
+    issue_type admin_issue_type NOT NULL,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+    status issue_status NOT NULL DEFAULT 'open',
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS seller_issue_reports (
-    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL,
-    issue_type ENUM(
-        'ITEM_MISSING',
-        'ITEM_INCORRECT',
-        'ITEM_DAMAGED',
-        'SELLER_CLOSED',
-        'SELLER_REFUSED_PICKUP',
-        'PICKUP_DELAYED',
-        'BUNDLE_EXPIRED',
-        'RESERVATION_CANCELLED_BY_SELLER',
-        'RESERVATION_NOT_FOUND',
-        'CLAIM_CODE_INVALID',
-        'CLAIM_CODE_ALREADY_USED',
-        'OTHER'
-    ) NOT NULL,
+    issue_type seller_issue_type,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+    status issue_status NOT NULL DEFAULT 'open',
     FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS token (
-    token_id INT AUTO_INCREMENT PRIMARY KEY,
+    token_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     token VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -160,7 +199,7 @@ CREATE TABLE IF NOT EXISTS token (
 );
 
 CREATE TABLE IF NOT EXISTS inbox (
-    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    message_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     sender_id INT NOT NULL,
     message_subject VARCHAR(255) NOT NULL,
@@ -172,22 +211,22 @@ CREATE TABLE IF NOT EXISTS inbox (
 );
 
 CREATE TABLE IF NOT EXISTS forecast_input (
-    input_id INT AUTO_INCREMENT PRIMARY KEY,
+    input_id SERIAL PRIMARY KEY,
     seller_id INT NOT NULL,
     category_id INT NOT NULL,
-    day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+    day_of_week day_of_week NOT NULL,
     window_start_hour TIME NOT NULL,
     window_end_hour TIME NOT NULL,
     is_holiday BOOLEAN NOT NULL,
     temperature DECIMAL(5,2) NOT NULL,
-    weather_flag ENUM('sunny', 'cloudy', 'rainy', 'snowy', 'windy') NOT NULL,
+    weather_flag weather_flag NOT NULL,
     observed_reservations INT NOT NULL,
     observed_no_shows INT NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS forecast_output (
-    output_id INT AUTO_INCREMENT PRIMARY KEY,
+    output_id SERIAL PRIMARY KEY,
     bundle_id INT NOT NULL,
     predicted_reservations INT NOT NULL,
     predicted_no_show_prob DECIMAL(5,4) NOT NULL,

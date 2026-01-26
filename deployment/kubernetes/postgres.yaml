@@ -1,0 +1,23 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: hail-mary-postgres
+  namespace: hail-mary
+spec:
+  instances: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  bootstrap:
+    initdb:
+      database: hail-mary
+      owner: hail-mary
+      secret:
+        name: hail-mary-postgres-secret
+  storage:
+    storageClass: longhorn-local
+    size: 7Gi

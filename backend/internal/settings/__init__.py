@@ -1,3 +1,3 @@
-from .settings import Host_Settings, Database_Settings
+from .settings import host_settings, database_settings, auth_settings
 
-__all__ = ["Host_Settings", "Database_Settings"]
+__all__ = ["host_settings", "database_settings", "auth_settings"]

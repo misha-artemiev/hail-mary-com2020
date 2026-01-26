@@ -1,0 +1,14 @@
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: postgres-route
+  namespace: hail-mary
+spec:
+  parentRefs:
+  - name: noxbound-gateway
+    namespace: noxbound-edge
+    sectionName: hail-mary-postgres
+  rules:
+  - backendRefs:
+    - name: hail-mary-postgres-rw
+      port: 5432
