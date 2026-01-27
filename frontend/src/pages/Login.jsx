@@ -64,7 +64,7 @@ export default function Login() {
                     {renderFields(LOGIN_FORM_FIELDS)}
 
                     {/* Submit */}
-                    <SubmitButton />
+                    <SubmitButton>Sign in</SubmitButton>
                 </form>
 
                 <Divider text="or" />
