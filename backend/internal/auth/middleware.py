@@ -1,4 +1,4 @@
-"""Middlewares to include in routes for auto authorisation"""
+"""Middlewares to include in routes for auto authorisation."""
 
 from fastapi import Security
 from fastapi.security import (
@@ -9,37 +9,59 @@ from fastapi.security import (
 )
 from internal.auth.security import check_password
 from internal.database import database_dependency
+from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.token import Querier as TokenQuerier
 from internal.queries.user import Querier as UserQuerier
+from pydantic import BaseModel
+
+
+class BasicAuthResponse(BaseModel):
+    """Response when user got authorised with email and password."""
+
+    user_id: int
+    role: UserRole
 
 
 def basic_auth(
     conn: database_dependency, credentials: HTTPBasicCredentials = Security(HTTPBasic())
-) -> int:
-    """Fetches user id for endpoint with basic auth
+) -> BasicAuthResponse:
+    """Fetches user id for endpoint with basic auth.
 
     Args:
       conn: database connection
-      credentials: credentials passed from request header
+      credentials: credentials (email(username), password) passed from request header
 
     Returns:
-      user id that corresponds with given credentials
+      user id and role if user authenticated
 
     Raises:
+        ValueError: if user wasn't found in the database
     """
     user = UserQuerier(conn).get_user_login(email=credentials.username)
     if not user:
         raise ValueError("No user was found")
     if not check_password(credentials.password, user.pw_hash):
         raise ValueError("No user was found")
-    return user.user_id
+    return BasicAuthResponse(user_id=user.user_id, role=user.role)
 
 
 def bearer_auth(
     conn: database_dependency,
     credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
 ) -> GetSessionByTokenRow:
+    """Fetches user session from given token credentials.
+
+    Args:
+      conn: database connectionn
+      credentials: credentials (token) gotten from headers
+
+    Returns:
+      user session with user and session information
+
+    Raises:
+      ValueError: if user wasn't found in the database
+    """
     session = TokenQuerier(conn).get_session_by_token(token=credentials.credentials)
     if not session:
         raise ValueError("No user was found")

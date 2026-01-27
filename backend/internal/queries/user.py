@@ -61,7 +61,7 @@ class GetUserRow(pydantic.BaseModel):
 
 
 GET_USER_LOGIN = """-- name: get_user_login \\:one
-SELECT user_id, email, pw_hash 
+SELECT user_id, email, pw_hash, role
 FROM users
 WHERE email = :p1
 LIMIT 1
@@ -72,6 +72,7 @@ class GetUserLoginRow(pydantic.BaseModel):
     user_id: int
     email: str
     pw_hash: str
+    role: models.UserRole
 
 
 class Querier:
@@ -119,4 +120,5 @@ class Querier:
             user_id=row[0],
             email=row[1],
             pw_hash=row[2],
+            role=row[3],
         )
