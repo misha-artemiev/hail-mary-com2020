@@ -101,7 +101,7 @@ export default function Signup() {
                         renderFields(SIGNUP_FORM_FIELDS.seller)}
 
                     {/* Submit */}
-                    <SubmitButton />
+                    <SubmitButton>Sign up</SubmitButton>
                 </form>
 
                 <Divider text="or" />
