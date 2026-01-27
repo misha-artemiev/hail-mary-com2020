@@ -1,34 +1,52 @@
-from fastapi import FastAPI
-from uvicorn import run
+"""Fastapi server entrypoint."""
+
+from asyncio import to_thread
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from internal.settings import host_settings
+
+from fastapi import FastAPI
 from internal.database import database_manager
-from routers import register_routers
-from internal.logging import logger
+from internal.logger import logger
+from internal.settings import host_settings
+from routers import consumer_router, sellers_router, session_router
+from uvicorn import run
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Manages startup and shutdown."""
     logger.info("Initialising database engine")
-    err = database_manager.initialise()
-    if err:
-        logger.error(err.args)
-        raise
+    await to_thread(database_manager.initialise)
     logger.info("Database ready")
 
     yield
 
-
     logger.info("Cleaning database engine")
     database_manager.cleanup()
 
+
 app = FastAPI(
-    title = host_settings.name,
-    version = host_settings.version,
+    title=host_settings.name,
+    version=host_settings.version,
     root_path="/api",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
+
+
+def register_routers(app: FastAPI) -> None:
+    """Registers api routers with the app."""
+    app.include_router(consumer_router)
+    app.include_router(sellers_router)
+    app.include_router(session_router)
+
 
 register_routers(app)
 
 if __name__ == "__main__":
-    run(app, host=host_settings.host, forwarded_allow_ips=host_settings.forward_from, port=host_settings.port, log_level="info")
+    run(
+        app,
+        host=host_settings.host,
+        forwarded_allow_ips=host_settings.forward_from,
+        port=host_settings.port,
+        log_level="info",
+    )

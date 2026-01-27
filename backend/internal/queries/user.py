@@ -8,7 +8,7 @@ from typing import Optional
 
 import sqlalchemy
 
-from . import models
+from internal.queries import models
 
 
 CREATE_USER = """-- name: create_user \\:one
@@ -16,6 +16,12 @@ INSERT INTO users (email, pw_hash, role)
 VALUES (:p1, :p2, :p3)
 RETURNING user_id, email, role, created_at
 """
+
+
+class CreateUserParams(pydantic.BaseModel):
+    email: str
+    pw_hash: str
+    role: models.UserRole
 
 
 class CreateUserRow(pydantic.BaseModel):
@@ -55,7 +61,7 @@ class GetUserRow(pydantic.BaseModel):
 
 
 GET_USER_LOGIN = """-- name: get_user_login \\:one
-SELECT user_id, email, pw_hash 
+SELECT user_id, email, pw_hash, role
 FROM users
 WHERE email = :p1
 LIMIT 1
@@ -66,14 +72,15 @@ class GetUserLoginRow(pydantic.BaseModel):
     user_id: int
     email: str
     pw_hash: str
+    role: models.UserRole
 
 
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_user(self, *, email: str, pw_hash: str, role: models.UserRole) -> Optional[CreateUserRow]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": email, "p2": pw_hash, "p3": role}).first()
+    def create_user(self, arg: CreateUserParams) -> Optional[CreateUserRow]:
+        row = self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": arg.email, "p2": arg.pw_hash, "p3": arg.role}).first()
         if row is None:
             return None
         return CreateUserRow(
@@ -113,4 +120,5 @@ class Querier:
             user_id=row[0],
             email=row[1],
             pw_hash=row[2],
+            role=row[3],
         )

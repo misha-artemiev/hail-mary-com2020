@@ -8,7 +8,7 @@ from typing import Optional
 
 import sqlalchemy
 
-from . import models
+from internal.queries import models
 
 
 CREATE_SELLER = """-- name: create_seller \\:one

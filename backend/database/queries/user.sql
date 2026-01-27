@@ -5,7 +5,7 @@ WHERE user_id = $1
 LIMIT 1;
 
 -- name: GetUserLogin :one
-SELECT user_id, email, pw_hash 
+SELECT user_id, email, pw_hash, role
 FROM users
 WHERE email = $1
 LIMIT 1;

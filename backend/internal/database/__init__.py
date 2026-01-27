@@ -1,3 +1,5 @@
-from .database import database_manager, database_dependency
+"""Manages database connection for the entire server."""
 
-__all__ = ["database_manager", "database_dependency"]
+from .database import database_dependency, database_manager
+
+__all__ = ["database_dependency", "database_manager"]

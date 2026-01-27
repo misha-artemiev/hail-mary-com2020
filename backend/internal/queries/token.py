@@ -8,7 +8,7 @@ from typing import Optional
 
 import sqlalchemy
 
-from . import models
+from internal.queries import models
 
 
 CREATE_TOKEN = """-- name: create_token \\:one
@@ -16,6 +16,12 @@ INSERT INTO token (user_id, token, expires_at)
 VALUES (:p1, :p2, :p3)
 RETURNING token_id, user_id, token, created_at, expires_at
 """
+
+
+class CreateTokenParams(pydantic.BaseModel):
+    user_id: int
+    token: str
+    expires_at: datetime.datetime
 
 
 DELETE_TOKEN = """-- name: delete_token \\:one
@@ -48,8 +54,8 @@ class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
 
-    def create_token(self, *, user_id: int, token: str, expires_at: datetime.datetime) -> Optional[models.Token]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_TOKEN), {"p1": user_id, "p2": token, "p3": expires_at}).first()
+    def create_token(self, arg: CreateTokenParams) -> Optional[models.Token]:
+        row = self._conn.execute(sqlalchemy.text(CREATE_TOKEN), {"p1": arg.user_id, "p2": arg.token, "p3": arg.expires_at}).first()
         if row is None:
             return None
         return models.Token(

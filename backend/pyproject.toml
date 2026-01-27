@@ -1,0 +1,110 @@
+[project]
+name = "rescue-marketplace"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi==0.128.0",
+    "uvicorn==0.40.0",
+    "pydantic==2.12.5",
+    "pydantic[email]==2.12.5",
+    "pydantic-settings==2.12.0",
+    "bcrypt==5.0.0",
+    "sqlalchemy==2.0.46",
+    "psycopg[binary]==3.3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.14.14",
+    "codespell>=2.4.1",
+    "mypy>=1.19.1",
+    "pip-audit>=2.10.0",
+]
+
+[build-system]
+requires = ["setuptools>=80.10.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["routers", "internal", "database"]
+py-modules = ["main"]
+
+[tool.distutils.egg_info]
+egg_base = "build"
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py314"
+fix = false
+show-fixes = true
+src = ["internal", "routers", "database"]
+extend-exclude = ["internal/queries"]
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "FAST", # fastapi
+    "ANN", # flake8-annotations
+    "ASYNC", # flake8-async
+    "S", # flake8-bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "A", # flake8-builtins
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SIM", # flake8-simplify
+    "PTH", # flake8-use-pathlib
+    "I", # isor
+    "C90", # mccabe
+    "NPY", # NumPy-specific
+    "PD", # pandas-vet
+    "N", # pep8-naming
+    "E", "W", # pycodestyle
+    "DOC", # pydoclint
+    "D", # pydocstyle
+    "F", # pyflakes
+    "PL", # pylint,
+    "UP", # pyupgrade
+    "FURB", # refurb
+    "RUF", # ruff-specific
+]
+extend-ignore = [
+    "COM812", # missing-trailing-comma
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+preview = true
+indent-style = "space"
+quote-style = "double"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.codespell]
+skip = [".internal/queries"]
+count = true
+
+[tool.mypy]
+exclude_gitignore = true
+python_version = "3.14"
+disallow_untyped_defs = true
+implicit_optional = false
+warn_unreachable = true
+strict = true
+pretty = true
+warn_return_any = true
+warn_no_return = true
+warn_redundant_casts = true
+explicit_package_bases = true
+exclude = "^internal/queries"

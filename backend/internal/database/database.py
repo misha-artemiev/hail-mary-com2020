@@ -1,33 +1,56 @@
-from typing import Annotated, Generator
+"""Manages database connection for the entire server."""
+
+from collections.abc import Generator
+from typing import Annotated
+
 from fastapi import Depends, HTTPException
-from sqlalchemy import Connection, create_engine, Engine, text
-from sqlalchemy.exc import IntegrityError, OperationalError
+from internal.logger import logger
 from internal.settings import database_settings
-from internal.logging import logger
+from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
+
 
 class DatabaseManager:
+    """Starts, keeps and serves connections."""
+
     engine: Engine
 
-    def initialise(self) -> None | Exception:
+    def initialise(self) -> None:
+        """Starts and checks connection pool.
+
+        Raises:
+          Exception: if failed to connect to the database
+        """
+        credentials: str = f"{database_settings.username}:{database_settings.password}"
+        full_host: str = f"{database_settings.host}:{database_settings.port}"
         self.engine = create_engine(
-            f"postgresql+psycopg://{database_settings.username}:{database_settings.password}@{database_settings.host}:{database_settings.port}/{database_settings.database}",
-            pool_size=10,
-            max_overflow=20,
+            f"postgresql+psycopg://{credentials}@{full_host}/{database_settings.database}",
+            pool_size=database_settings.pool_size,
+            max_overflow=database_settings.max_overflow,
             pool_pre_ping=True,
-            pool_recycle=2600
+            pool_recycle=2600,
         )
-    
+
         try:
             with self.engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-        except Exception:
-            return Exception("Failed to initiate connection with database")
+        except SQLAlchemyError as err:
+            raise Exception(f"Failed to initiate connection with database: {err}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
+        """Closes database connection."""
         if self.engine:
             self.engine.dispose()
 
     def get_connection(self) -> Generator[Connection]:
+        """Gets connection session and returns it for dependency use.
+
+        Yields:
+          connection session with auto close and auto commit
+
+        Raises:
+          HTTPException: user facing error if failed to process database request
+        """
         try:
             with self.engine.begin() as conn:
                 yield conn
@@ -38,9 +61,7 @@ class DatabaseManager:
         except ValueError as err:
             logger.error(f"Validation Error: {err}")
             raise HTTPException(400, "Validation Error")
-        except Exception as err:
-            logger.error(f"Internal Error: {err}")
-            raise HTTPException(500, "Internal Error")
+
 
 database_manager = DatabaseManager()
 database_dependency = Annotated[Connection, Depends(database_manager.get_connection)]

@@ -1,3 +1,5 @@
-from .settings import host_settings, database_settings, auth_settings
+"""Loaded settings from environment."""
 
-__all__ = ["host_settings", "database_settings", "auth_settings"]
+from .settings import auth_settings, database_settings, host_settings
+
+__all__ = ["auth_settings", "database_settings", "host_settings"]
