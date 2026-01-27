@@ -10,5 +10,5 @@
     "arrowParens": "always",
     "bracketSpacing": true,
     "bracketSameLine": false,
-    "endOfLine": "crlf"
+    "endOfLine": "lf"
 }
