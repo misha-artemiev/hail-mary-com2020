@@ -1,6 +1,15 @@
+/**
+ * Home.jsx
+ * @author Thomas Noakes
+ */
+
 import React from "react";
 
-// Home page
+/**
+ * The main home page of the site, a feed of available bundles.
+ *
+ * @returns {JSX.Element} the home page
+ */
 export default function Home() {
     return (
         // TODO: expand home page

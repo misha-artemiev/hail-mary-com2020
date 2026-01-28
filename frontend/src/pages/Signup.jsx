@@ -1,3 +1,8 @@
+/**
+ * Signup.jsx
+ * @author Ed Brown
+ */
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,8 +17,13 @@ import Button from "../components/forms/Button";
 // Config
 import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
 
-// Renders signup form for new consumers and sellers based on RBAC
-
+/**
+ * The signup page of the site.
+ * Users can choose a role (seller or consumer).
+ * Required information changes according to role.
+ *
+ * @returns {JSX.Elements} the signup page
+ */
 export default function Signup() {
     const navigate = useNavigate();
 
@@ -34,18 +44,23 @@ export default function Signup() {
         country: "",
     });
 
+    /**
+     * Handles changes to the form.
+     */
     const handleChange = (e) => {
-        // Handles changes to form
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Handles submitting the form.
+     * Redirects to `/`
+     */
     const handleSubmit = (e) => {
-        // Handles sign-up submission
         e.preventDefault();
 
+        // Ensure passwords match
         if (form.password !== form.confirmPassword) {
-            // Ensures passwords match
             alert("Please ensure that passwords match");
             return;
         }
@@ -57,6 +72,12 @@ export default function Signup() {
         navigate("/");
     };
 
+    /**
+     * Dynamically renders given information fields.
+     *
+     * @param {Object} fields
+     * @returns {JSX.Element} a set of FormInput elements.
+     */
     const renderFields = (fields) =>
         fields.map((field) => (
             <FormInput
@@ -71,18 +92,20 @@ export default function Signup() {
         ));
 
     return (
-        // Page design
         <div className="max-w-xl mx-auto p-6">
+            {/* Signup container */}
             <Card>
+                {/* Header */}
                 <h1 className="text-3xl font-bold text-green-700 mb-6">
                     Create Account
                 </h1>
 
-                {/* Signup Form */}
+                {/* Signup form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Dynamically render all common fields */}
                     {renderFields(SIGNUP_FORM_FIELDS.common)}
 
-                    {/* Role */}
+                    {/* Role dropdown */}
                     <RoleSelect
                         label="Role"
                         value={role}

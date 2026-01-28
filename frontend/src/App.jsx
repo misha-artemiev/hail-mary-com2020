@@ -1,3 +1,8 @@
+/**
+ * App.jsx
+ * @author Thomas Noakes
+ */
+
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 
@@ -11,10 +16,14 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
+/**
+ * Uses the React Router to display a client-side rendered single-page application (SPA).
+ *
+ * @returns {JSX.Element} the full single-page application.
+ */
 export default function App() {
     return (
         <div className="bg-gray-50 min-h-screen">
-            {/* Display a navigation bar */}
             <Navbar />
 
             {/* Load pages in the React Router */}
