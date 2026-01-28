@@ -1,3 +1,11 @@
+/**
+ * loginFormFields.js
+ * @author Thomas Noakes
+ */
+
+/**
+ * Used to dynamically render form fields for Login page.
+ */
 export const LOGIN_FORM_FIELDS = [
     {
         name: "email",

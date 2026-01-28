@@ -1,3 +1,13 @@
+/**
+ * signupFormFields.js
+ * @author Thomas Noakes
+ */
+
+/**
+ * Used to dynamically render form fields for Signup page.
+ * Split into common and consumer/seller categories.
+ */
+
 export const SIGNUP_FORM_FIELDS = {
     common: [
         {
