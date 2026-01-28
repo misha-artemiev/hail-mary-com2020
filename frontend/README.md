@@ -82,8 +82,11 @@ npm run format:fix
 ├ src/
 │   ├ assets/           # Static assets (e.g. images, icons)
 │   ├ components/       # Reusable UI components
+│   ├ config/           # Configuration for dynamic elements
 │   ├ pages/            # Page components (used by Router)
 │   │   ├ Home.jsx
+│   │   ├ Login.jsx
+│   │   ├ Signup.jsx
 │   │   ├ Profile.jsx
 │   │   └ NotFound.jsx
 │   ├ App.jsx           # Loads the React Router

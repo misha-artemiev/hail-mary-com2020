@@ -1,3 +1,8 @@
+/**
+ * Login.jsx
+ * @author Ed Brown
+ */
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +16,12 @@ import Button from "../components/forms/Button";
 // Config
 import { LOGIN_FORM_FIELDS } from "../config/loginFormFields";
 
+/**
+ * The login page of the site.
+ * Allows users to login using their email and password.
+ *
+ * @returns {JSX.Element} the login page
+ */
 export default function Login() {
     const navigate = useNavigate();
 
@@ -20,23 +31,34 @@ export default function Login() {
         password: "",
     });
 
+    /**
+     * Handles changes to the form.
+     */
     const handleChange = (e) => {
-        // Handles changes to form
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Handles submitting the form.
+     * Redirects to `/`
+     */
     const handleSubmit = (e) => {
-        // Handles login submission
         e.preventDefault();
 
         // TODO: sign-in logic
         alert("Login submitted");
 
         // Redirect to home page
-        navigate("/ ");
+        navigate("/");
     };
 
+    /**
+     * Dynamically renders given information fields.
+     *
+     * @param {Object} fields
+     * @returns {JSX.Element} a set of FormInput elements.
+     */
     const renderFields = (fields) =>
         fields.map((field) => (
             <FormInput
@@ -52,7 +74,7 @@ export default function Login() {
 
     return (
         <div className="max-w-xl mx-auto p-6">
-            {/* Login card container */}
+            {/* Login container */}
             <Card>
                 {/* Header */}
                 <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">

@@ -1,5 +1,18 @@
+/**
+ * SubmitButton.jsx
+ * @author Thomas Noakes
+ */
+
 import React from "react";
 
+/**
+ * Submit button for forms.
+ *
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Content to be rendered inside the button (*i.e.* text).
+ *
+ * @returns {JSX.Element} the styled button with inner text.
+ */
 export default function SubmitButton({ children }) {
     return (
         <button
