@@ -1,6 +1,6 @@
 """Middlewares to include in routes for auto authorisation."""
 
-from fastapi import Security
+from fastapi import HTTPException, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBasic,
@@ -66,3 +66,60 @@ def bearer_auth(
     if not session:
         raise ValueError("No user was found")
     return session
+
+
+def consumer_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate consumer in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a consumer
+    """
+    if session.role == UserRole.CONSUMER:
+        return session
+    raise HTTPException(401, "Not authorised as consumer")
+
+
+def seller_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate seller in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a seller
+    """
+    if session.role == UserRole.SELLER:
+        return session
+    raise HTTPException(401, "Not authorised as seller")
+
+
+def admin_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate admin in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a admin
+    """
+    if session.role == UserRole.ADMIN:
+        return session
+    raise HTTPException(401, "Not authorised as admin")
