@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hail-mary-frontend
+  labels:
+    app: hail-mary-frontend
+spec:
+  ports:
+    - port: 8080
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: hail-mary-frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hail-mary-frontend
+  labels:
+    app: hail-mary-frontend
+    keel.sh/policy: all
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 5m"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hail-mary-frontend
+  template:
+    metadata:
+      labels:
+        app: hail-mary-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: ghcr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hail-mary-backend
+  labels:
+    app: hail-mary-backend
+spec:
+  ports:
+    - port: 8080
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: hail-mary-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hail-mary-backend
+  labels:
+    app: hail-mary-backend
+    keel.sh/policy: all
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 5m"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hail-mary-backend
+  template:
+    metadata:
+      labels:
+        app: hail-mary-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+      imagePullSecrets:
+        - name: ghcr-secret

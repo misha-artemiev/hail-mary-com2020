@@ -1,0 +1,107 @@
+---
+# Source: keel/templates/service-account.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: keel
+  namespace: hail-mary
+  labels:
+    app: keel
+    chart: keel-1.1.0
+    release: keel
+    heritage: Helm
+---
+# Source: keel/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keel
+  namespace: hail-mary
+  labels:
+    app: keel
+    chart: keel-1.1.0
+    release: keel
+    heritage: Helm
+type: Opaque
+data:
+---
+# Source: keel/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keel
+  namespace: hail-mary
+  labels:
+    app: keel
+    chart: keel-1.1.0
+    release: keel
+    heritage: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keel
+      release: keel
+  template:
+    metadata:
+      labels:
+        app: keel
+        release: keel
+    spec:
+      serviceAccountName: keel
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: keel
+          # Note that we use appVersion to get images tag.
+          image: "keelhq/keel:0.20"
+          imagePullPolicy: Always
+          command: ["/bin/keel"]
+          volumeMounts:
+            - mountPath: /data
+              name: keel-data
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            # Enable polling
+            - name: POLL
+              value: "true"
+            # Set default poll schedule
+            - name: POLL_DEFAULTSCHEDULE
+              value: "@every 1m"
+            - name: NOTIFICATION_LEVEL
+              value: "info"
+          envFrom:
+            - secretRef:
+                name: keel
+          ports:
+            - containerPort: 9300
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9300
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9300
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - emptyDir:
+            medium: ""
+          name: keel-data

@@ -59,3 +59,4 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ needs.create-tag.outputs.release_tag }}
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
