@@ -5,7 +5,7 @@ on:
       - release
 jobs:
   backend-checks:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
@@ -23,7 +23,7 @@ jobs:
       - name: run checks
         run: make check
   frontend-checks:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
