@@ -41,8 +41,3 @@ jobs:
         run: |
           npm run lint
           npm run format
-  all-passed:
-    needs: [backend-checks, frontend-checks]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "all checks passed"
