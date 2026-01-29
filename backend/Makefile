@@ -4,7 +4,9 @@ SRC = main.py internal routers database
 
 default: check
 
-check: format spell typecheck lint audit
+check-apply: format spell typecheck lint-fix audit
+
+check: format-check spell typecheck lint audit
 
 install:
 	@pip install -e ".[dev]"
@@ -12,6 +14,10 @@ install:
 format:
 	@echo "Running formatting"
 	@ruff format $(SRC)
+
+format-check:
+	@echo Running formatting checker
+	@ruff format --check $(SRC)
 
 spell:
 	@echo "Running spell check"
