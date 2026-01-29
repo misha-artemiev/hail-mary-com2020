@@ -12,9 +12,16 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 
+// Route types
+import ProtectedRoute from "./ProtectedRoute";
+import GuestRoot from "./GuestRoute";
+
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
  * Used by the router to build a single-page application (SPA).
+ *
+ * Handles routes that are 'protected' (need to be signed in to access) and
+ * 'guest' routes (cannot be accessed once logged in).
  */
 export const ROUTES = [
     {
@@ -23,15 +30,27 @@ export const ROUTES = [
     },
     {
         path: "/profile",
-        element: <Profile />,
+        element: (
+            <ProtectedRoute>
+                <Profile />
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/login",
-        element: <Login />,
+        element: (
+            <GuestRoot>
+                <Login />
+            </GuestRoot>
+        ),
     },
     {
         path: "/signup",
-        element: <Signup />,
+        element: (
+            <GuestRoot>
+                <Signup />
+            </GuestRoot>
+        ),
     },
     // Catch-all (i.e. 404)
     {
