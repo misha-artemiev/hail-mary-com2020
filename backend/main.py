@@ -49,4 +49,5 @@ if __name__ == "__main__":
         forwarded_allow_ips=host_settings.forward_from,
         port=host_settings.port,
         log_level="info",
+        loop="uvloop",
     )

@@ -1,0 +1,39 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hail-mary-backend-route
+  namespace: hail-mary
+spec:
+  parentRefs:
+    - name: noxbound-gateway
+      namespace: noxbound-edge
+  hostnames:
+    - "hailmary.noxbound.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/
+      backendRefs:
+        - name: hail-mary-backend
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hail-mary-frontend-route
+  namespace: hail-mary
+spec:
+  parentRefs:
+    - name: noxbound-gateway
+      namespace: noxbound-edge
+  hostnames:
+    - "hailmary.noxbound.com"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: hail-mary-frontend
+          port: 80
