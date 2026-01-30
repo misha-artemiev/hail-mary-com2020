@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hail-mary-frontend
+  namespace: hail-mary
   labels:
     app: hail-mary-frontend
 spec:
@@ -17,8 +18,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hail-mary-frontend
+  namespace: hail-mary
   labels:
     app: hail-mary-frontend
+  annotations:
     keel.sh/policy: all
     keel.sh/trigger: poll
     keel.sh/pollSchedule: "@every 5m"
@@ -45,6 +48,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hail-mary-backend
+  namespace: hail-mary
   labels:
     app: hail-mary-backend
 spec:
@@ -60,8 +64,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hail-mary-backend
+  namespace: hail-mary
   labels:
     app: hail-mary-backend
+  annotations:
     keel.sh/policy: all
     keel.sh/trigger: poll
     keel.sh/pollSchedule: "@every 5m"
@@ -79,6 +85,42 @@ spec:
         - name: backend
           image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:latest
           imagePullPolicy: Always
+          env:
+            - name: HOST_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: host-port
+            - name: HOST_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: host-host
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: database-host
+            - name: DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: database-port
+            - name: DATABASE_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: database-database
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-postgres-secret
+                  key: username
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-postgres-secret
+                  key: password
           ports:
             - containerPort: 80
       imagePullSecrets:
