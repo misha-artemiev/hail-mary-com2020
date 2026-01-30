@@ -1,0 +1,60 @@
+/**
+ * routes.jsx
+ * @author Thomas Noakes
+ */
+
+import React from "react";
+
+// Routes (individual pages)
+import Home from "../pages/Home";
+import Profile from "../pages/Profile";
+import NotFound from "../pages/NotFound";
+import Login from "../pages/Login";
+import Signup from "../pages/Signup";
+
+// Route types
+import ProtectedRoute from "./ProtectedRoute";
+import GuestRoot from "./GuestRoute";
+
+/**
+ * Dynamically maps routes (i.e. pages) to their paths.
+ * Used by the router to build a single-page application (SPA).
+ *
+ * Handles routes that are 'protected' (need to be signed in to access) and
+ * 'guest' routes (cannot be accessed once logged in).
+ */
+export const ROUTES = [
+    {
+        path: "/",
+        element: <Home />,
+    },
+    {
+        path: "/profile",
+        element: (
+            <ProtectedRoute>
+                <Profile />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/login",
+        element: (
+            <GuestRoot>
+                <Login />
+            </GuestRoot>
+        ),
+    },
+    {
+        path: "/signup",
+        element: (
+            <GuestRoot>
+                <Signup />
+            </GuestRoot>
+        ),
+    },
+    // Catch-all (i.e. 404)
+    {
+        path: "*",
+        element: <NotFound />,
+    },
+];
