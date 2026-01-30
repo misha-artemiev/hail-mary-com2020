@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import RoleSelect from "../components/forms/RoleSelect";
-import Divider from "../components/forms/Divider";
+import Divider from "../components/Divider";
 import SubmitButton from "../components/forms/SubmitButton";
 import Button from "../components/forms/Button";
 
