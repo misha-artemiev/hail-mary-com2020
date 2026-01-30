@@ -11,6 +11,7 @@ import Card from "../components/Card";
 import Tooltip from "../components/Tooltip";
 import InfoLine from "../components/InfoLine";
 import Divider from "../components/Divider";
+import Listing from "../components/Listing";
 
 // Resources
 import defaultProfile from "../assets/default-user.jpg";
@@ -30,7 +31,7 @@ export default function User() {
     const seller = true;
 
     return (
-        <div className="max-w-3xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto p-6">
             {/* User info container */}
             <Card>
                 <div className="text-center mb-6">
@@ -70,6 +71,36 @@ export default function User() {
                         <InfoLine label="Opening hours" value="9am-5pm daily" />
                     </>
                 )}
+            </Card>
+
+            {/* Listings container */}
+            <Card>
+                {/* Header */}
+                <h2 className="text-2xl font-bold mb-4 text-green-700">
+                    Listings
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* TODO: get user's listings properly */}
+                    <Listing
+                        title="Item 1"
+                        info={[{ label: "Pickup", value: "13:00-15:00" }]}
+                        footer={<span className="text-green-600">3 left</span>}
+                    />
+                    <Listing
+                        title="Item 2"
+                        info={[{ label: "Pickup", value: "09:00-10:00" }]}
+                        footer={
+                            <span className="text-red-600">
+                                Collection only
+                            </span>
+                        }
+                    />
+                    <Listing
+                        title="Item 3"
+                        info={[{ label: "Pickup", value: "13:00-13:30" }]}
+                    />
+                </div>
             </Card>
 
             {/* Badges container */}
