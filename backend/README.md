@@ -18,5 +18,5 @@ make init-db
 
 ## Pre pull request checks
 ```
-make check
+make check-apply
 ```
