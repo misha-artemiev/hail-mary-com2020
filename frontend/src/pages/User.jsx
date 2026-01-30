@@ -29,6 +29,7 @@ export default function User() {
 
     // TODO: get user role properly
     const seller = true;
+    const categories = ["Fast Food", "Tacos", "Mexican", "Spicy"];
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -58,6 +59,23 @@ export default function User() {
                         Selling quality items with fast delivery and trusted
                         service.
                     </p>
+
+                    {/* Categories */}
+                    {seller && categories.length > 0 && (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                            {categories.map((category) => (
+                                <span
+                                    key={category}
+                                    className="px-3 py-1 rounded-full
+                                               text-sm font-medium text-green-700
+                                               bg-green-100 hover:bg-green-200
+                                               transition"
+                                >
+                                    {category}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Seller-specific */}
