@@ -12,6 +12,7 @@ import Tooltip from "../components/Tooltip";
 import InfoLine from "../components/InfoLine";
 import Divider from "../components/Divider";
 import Listing from "../components/Listing";
+import Category from "../components/Category";
 
 // Resources
 import defaultProfile from "../assets/default-user.jpg";
@@ -122,6 +123,11 @@ export default function User() {
             />
         ));
 
+    const renderCategories = (categories) =>
+        categories.map((category) => (
+            <Category key={category}>{category}</Category>
+        ));
+
     return (
         <div className="max-w-4xl mx-auto p-6">
             {/* User info container */}
@@ -153,17 +159,7 @@ export default function User() {
                     {/* Categories */}
                     {isSeller && user.categories.length > 0 && (
                         <div className="mt-4 flex flex-wrap justify-center gap-2">
-                            {user.categories.map((category) => (
-                                <span
-                                    key={category}
-                                    className="px-3 py-1 rounded-full
-                                               text-sm font-medium text-green-700
-                                               bg-green-100 hover:bg-green-200
-                                               transition"
-                                >
-                                    {category}
-                                </span>
-                            ))}
+                            {renderCategories(user.categories)}
                         </div>
                     )}
                 </div>
