@@ -127,7 +127,7 @@ export default function Signup() {
                     <SubmitButton>Sign up</SubmitButton>
                 </form>
 
-                <Divider text="or" />
+                <Divider>or</Divider>
 
                 {/* Login redirect */}
                 <Button onClick={() => navigate("/login")}>
