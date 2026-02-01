@@ -29,8 +29,10 @@ export default function User() {
 
     // State object: stores the user information
     const [user, setUser] = useState(null);
+    const [listings, setListings] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Fetch user information
     useEffect(() => {
         // TODO: get user information properly
         async function fetchUser() {
@@ -55,6 +57,43 @@ export default function User() {
         fetchUser();
     }, [username]);
 
+    // Fetch user listings
+    useEffect(() => {
+        // TODO: get user listings properly
+        async function fetchListings() {
+            // const res = await fetch(`/api/listings?user=&{username}`);
+            // const data = await res.json();
+            // setListings(data);
+
+            // TODO: remove
+            setListings([
+                {
+                    title: "Item 1",
+                    image: "",
+                    info: [
+                        { label: "Pickup", value: "13:00-15:00" },
+                        { label: "", value: "3 left" },
+                    ],
+                },
+                {
+                    title: "Item 2",
+                    image: "",
+                    info: [
+                        { label: "Pickup", value: "09:00-10:00" },
+                        { label: "", value: "Collection only" },
+                    ],
+                },
+                {
+                    title: "Item 3",
+                    image: "",
+                    info: [{ label: "Pickup", value: "13:00-15:00" }],
+                },
+            ]);
+        }
+
+        fetchListings();
+    }, [username]);
+
     if (loading) {
         return (
             <div className="max-w-4xl mx-auto p-6">
@@ -73,6 +112,15 @@ export default function User() {
     }
 
     const isSeller = user.role === "seller";
+
+    const renderListings = (listings) =>
+        listings.map((listing) => (
+            <Listing
+                key={listing.title}
+                title={listing.title}
+                info={listing.info}
+            />
+        ));
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -98,7 +146,9 @@ export default function User() {
                     </h1>
 
                     {/* Bio */}
-                    <p className="mt-4 text-gray-700">{user.bio}</p>
+                    {user.bio !== "" && (
+                        <p className="mt-4 text-gray-700">{user.bio}</p>
+                    )}
 
                     {/* Categories */}
                     {isSeller && user.categories.length > 0 && (
@@ -145,25 +195,7 @@ export default function User() {
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* TODO: get user's listings properly */}
-                    <Listing
-                        title="Item 1"
-                        info={[{ label: "Pickup", value: "13:00-15:00" }]}
-                        footer={<span className="text-green-600">3 left</span>}
-                    />
-                    <Listing
-                        title="Item 2"
-                        info={[{ label: "Pickup", value: "09:00-10:00" }]}
-                        footer={
-                            <span className="text-red-600">
-                                Collection only
-                            </span>
-                        }
-                    />
-                    <Listing
-                        title="Item 3"
-                        info={[{ label: "Pickup", value: "13:00-13:30" }]}
-                    />
+                    {renderListings(listings)}
                 </div>
             </Card>
 
