@@ -95,6 +95,7 @@ export default function User() {
         fetchListings();
     }, [username]);
 
+    // Display a temporary loading indicator
     if (loading) {
         return (
             <div className="max-w-4xl mx-auto p-6">
@@ -103,6 +104,7 @@ export default function User() {
         );
     }
 
+    // Display an error if the user can't be found
     if (!user) {
         return (
             // TODO: better error page
@@ -114,6 +116,12 @@ export default function User() {
 
     const isSeller = user.role === "seller";
 
+    /**
+     * Dynamically renders given listings.
+     *
+     * @param {Object} listings - The listings to display.
+     * @returns {JSX.Element} a set of Listing elements
+     */
     const renderListings = (listings) =>
         listings.map((listing) => (
             <Listing
@@ -123,6 +131,12 @@ export default function User() {
             />
         ));
 
+    /**
+     * Dynamically renders given categories.
+     *
+     * @param {Object} categories - The categories to display.
+     * @returns {JSX.Element} a set of Category elements
+     */
     const renderCategories = (categories) =>
         categories.map((category) => (
             <Category key={category}>{category}</Category>
@@ -184,16 +198,19 @@ export default function User() {
             </Card>
 
             {/* Listings container */}
-            <Card>
-                {/* Header */}
-                <h2 className="text-2xl font-bold mb-4 text-green-700">
-                    Listings
-                </h2>
+            {isSeller && (
+                <Card>
+                    {/* Header */}
+                    <h2 className="text-2xl font-bold mb-4 text-green-700">
+                        Listings
+                    </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {renderListings(listings)}
-                </div>
-            </Card>
+                    {/* Active listings */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {renderListings(listings)}
+                    </div>
+                </Card>
+            )}
 
             {/* Badges container */}
             <Card>
