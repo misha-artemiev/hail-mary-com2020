@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 // Components
@@ -27,9 +27,52 @@ export default function User() {
     // Get the selected user from the URL
     const { username } = useParams();
 
-    // TODO: get user role properly
-    const seller = true;
-    const categories = ["Fast Food", "Tacos", "Mexican", "Spicy"];
+    // State object: stores the user information
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // TODO: get user information properly
+        async function fetchUser() {
+            // const res = await fetch(`/api/user/&{username}`);
+            // const data = await res.json();
+            // setUser(data);
+
+            // TODO: REMOVE
+            setUser({
+                username: username,
+                bio: "Selling quality items with fast delivery and trusted service.",
+                activeSince: "1st Jan, 2026",
+                location: "Exeter, England",
+                openingHours: "9am-5pm daily",
+                role: "seller",
+                categories: ["Fast Food", "Tacos", "Mexican", "Spicy"],
+            });
+
+            setLoading(false);
+        }
+
+        fetchUser();
+    }, [username]);
+
+    if (loading) {
+        return (
+            <div className="max-w-4xl mx-auto p-6">
+                <Card>Loading user...</Card>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            // TODO: better error page
+            <div className="max-w-4xl mx-auto p-6">
+                <Card>User {username} not found!</Card>
+            </div>
+        );
+    }
+
+    const isSeller = user.role === "seller";
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -47,7 +90,7 @@ export default function User() {
                     {/* Header */}
                     <h1 className="flex items-center justify-center gap-2 mt-4 text-4xl font-bold text-green-700">
                         {username}
-                        {seller && (
+                        {isSeller && (
                             <Tooltip text="Verified Seller">
                                 <span className="text-2xl">🏪</span>
                             </Tooltip>
@@ -55,15 +98,12 @@ export default function User() {
                     </h1>
 
                     {/* Bio */}
-                    <p className="mt-4 text-gray-700">
-                        Selling quality items with fast delivery and trusted
-                        service.
-                    </p>
+                    <p className="mt-4 text-gray-700">{user.bio}</p>
 
                     {/* Categories */}
-                    {seller && categories.length > 0 && (
+                    {isSeller && user.categories.length > 0 && (
                         <div className="mt-4 flex flex-wrap justify-center gap-2">
-                            {categories.map((category) => (
+                            {user.categories.map((category) => (
                                 <span
                                     key={category}
                                     className="px-3 py-1 rounded-full
@@ -79,14 +119,20 @@ export default function User() {
                 </div>
 
                 {/* Seller-specific */}
-                {seller && (
+                {isSeller && (
                     <>
                         <Divider>About us</Divider>
 
                         {/* User info */}
-                        <InfoLine label="Active since" value="1st Jan, 2026" />
-                        <InfoLine label="Located in" value="Exeter, England" />
-                        <InfoLine label="Opening hours" value="9am-5pm daily" />
+                        <InfoLine
+                            label="Active since"
+                            value={user.activeSince}
+                        />
+                        <InfoLine label="Located in" value={user.location} />
+                        <InfoLine
+                            label="Opening hours"
+                            value={user.openingHours}
+                        />
                     </>
                 )}
             </Card>
