@@ -3,5 +3,6 @@
 .mypy_cache/
 .ruff_cacheA/
 build/
+docs/
 
 .env
