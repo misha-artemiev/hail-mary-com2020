@@ -1,4 +1,96 @@
-"""Endpoint for session."""
+"""Endpoint for session.
+
+```mermaid
+---
+config:
+  mirrorActors: false
+---
+sequenceDiagram
+    title Session Creation
+    actor User
+    box ./routers
+    participant session.py@{ "type" : "boundary" }
+    end
+    box ./internal/database
+    participant database.py
+    end
+    box ./internal/auth
+    participant middleware.py
+    participant token.py
+    participant security.py
+    end
+    box ./internal/queries
+    participant tq as token.py
+    participant uq as user.py
+    end
+    participant database@{ "type" : "database" }
+
+    User->>session.py: create session
+    activate session.py
+    session.py->>middleware.py: basic_auth()
+    activate middleware.py
+    database.py->>middleware.py: yield connection
+    activate database.py
+    middleware.py->>uq: get_user_login()
+    activate uq
+    uq->>database: select user
+    activate database
+    database-->>uq: found user
+    deactivate database
+    uq-->>middleware.py: found user
+    deactivate uq
+    middleware.py-->>session.py: user and role
+    middleware.py-->>database.py: return connection
+    deactivate middleware.py
+    deactivate database.py
+    database.py->>session.py: yield connection
+    activate database.py
+    session.py->>token.py: create_token()
+    activate token.py
+    token.py->>security.py: generate_token()
+    activate security.py
+    security.py-->>token.py: generated token
+    deactivate security.py
+    token.py->>tq: Querier.create_token()
+    activate tq
+    tq->>database: insert token
+    activate database
+    database-->>tq: inserted token
+    deactivate database
+    tq-->>token.py: inserted token
+    deactivate tq
+    token.py-->>session.py: inserted token
+    deactivate token.py
+    session.py-->>User: 201 OK + token
+    session.py-->>database.py: return connection
+    deactivate database.py
+    deactivate session.py
+```
+
+```mermaid
+---
+config:
+  mirrorActors: false
+---
+sequenceDiagram
+    title Session Deletion
+    actor User
+    box ./routers
+    participant session.py@{ "type" : "boundary" }
+    end
+    box ./internal/database
+    participant database.py
+    end
+    box ./internal/auth
+    participant middleware.py
+    participant token.py
+    end
+    box ./internal/queries
+    participant tq as token.py
+    end
+    participant database@{ "type" : "database" }
+```
+"""
 
 from datetime import datetime
 from typing import Annotated

@@ -1,22 +1,24 @@
 """Endpoint for consumer.
+
 ```mermaid
 ---
 config:
   mirrorActors: false
 ---
 sequenceDiagram
+    title Consumer Registration
     actor user
-    box routers
+    box ./routers
     participant consumer.py@{ "type" : "boundary" }
     end
-    box internal/database
+    box ./internal/database
     participant dd as database.py
     end
-    box internal/auth
+    box ./internal/auth
     participant creation.py
     participant security.py
     end
-    box internal/queries
+    box ./internal/queries
     participant user.py
     participant cq as consumer.py
     end
@@ -24,7 +26,7 @@ sequenceDiagram
 
     user->>consumer.py: register consumer
     activate consumer.py
-    dd->>consumer.py: begin connection
+    dd->>consumer.py: yield connection
     activate dd
     consumer.py->>creation.py: create_consumer()
     activate creation.py
@@ -33,7 +35,7 @@ sequenceDiagram
     activate security.py
     security.py-->>creation.py: password hash
     deactivate security.py
-    creation.py->>user.py: Queries.create_user() 
+    creation.py->>user.py: Queries.create_user()
     activate user.py
     user.py->>database: insert user
     activate database
@@ -42,7 +44,7 @@ sequenceDiagram
     user.py-->>creation.py: created user
     deactivate user.py
     creation.py-->>creation.py: created user
-    creation.py->>cq: Queries.create_consumer() 
+    creation.py->>cq: Queries.create_consumer()
     activate cq
     cq->>database: insert consumer
     activate database
@@ -53,7 +55,7 @@ sequenceDiagram
     creation.py-->>consumer.py: created consumer
     deactivate creation.py
     consumer.py-->>user: 201 OK
-    consumer.py-->>dd: close connection
+    consumer.py-->>dd: return connection
     deactivate dd
     deactivate consumer.py
 ```
