@@ -2,7 +2,5 @@
 .venv/
 .mypy_cache/
 .ruff_cacheA/
-build/
-docs/
-
+dist/
 .env
