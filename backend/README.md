@@ -36,7 +36,7 @@ make check
 ```bash
 make check-apply
 ```
-## environmental variables
+## environmental variables (.env)
 ```dotenv
 HOST_HOST="localhost"
 HOST_PORT=8080
@@ -57,9 +57,4 @@ AUTH_TOKEN_EXPARATION=360
 ## Database management
 ```
 make init-db
-```
-
-## Pre pull request checks
-```
-make check-apply
 ```
