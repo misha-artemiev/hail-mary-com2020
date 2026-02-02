@@ -45,8 +45,10 @@ init-db:
 	@python -m database.init_db
 
 docs:
+	@mv .env .env.bak || true
 	@pdoc --docformat google \
 		--mermaid \
 		--math \
 		-o ./docs \
 		main.py internal routers database
+	@mv .env.bak .env || true
