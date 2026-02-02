@@ -3,6 +3,7 @@
 from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
 from fastapi import FastAPI
 from internal.database import database_manager
@@ -27,7 +28,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=host_settings.name,
-    version=host_settings.version,
+    version=version("rescue-marketplace"),
     root_path="/api",
     lifespan=lifespan,
 )
