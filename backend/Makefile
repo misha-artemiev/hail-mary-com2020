@@ -1,6 +1,6 @@
 SRC = main.py internal routers database
 
-.PHONY: default format lint install typecheck lint-fix init-db run
+.PHONY: default format lint install typecheck lint-fix init-db run docs
 
 default: check
 
@@ -43,3 +43,10 @@ run:
 
 init-db:
 	@python -m database.init_db
+
+docs:
+	@pdoc --docformat google \
+		--mermaid \
+		--math \
+		-o ./docs \
+		main.py internal routers database
