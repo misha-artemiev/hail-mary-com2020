@@ -133,9 +133,9 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Response, Security
-from internal.auth import basic_auth, bearer_auth, create_token, delete_token
-from internal.auth.middleware import BasicAuthResponse
-from internal.database import database_dependency
+from internal.auth.middleware import BasicAuthResponse, basic_auth, bearer_auth
+from internal.auth.token import create_token, delete_token
+from internal.database.dependency import database_dependency
 from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel

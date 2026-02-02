@@ -62,8 +62,8 @@ sequenceDiagram
 """
 
 from fastapi import APIRouter, Response
-from internal.auth import CreateConsumerForm, create_consumer
-from internal.database import database_dependency
+from internal.auth.creation import CreateConsumerForm, create_consumer
+from internal.database.dependency import database_dependency
 
 router = APIRouter(prefix="/consumer", tags=["consumer"])
 
