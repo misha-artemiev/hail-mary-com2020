@@ -52,7 +52,7 @@ sequenceDiagram
     deactivate cq
     creation.py-->>consumer.py: created consumer
     deactivate creation.py
-    consumer.py-->>user: 202 OK
+    consumer.py-->>user: 201 OK
     consumer.py-->>dd: close connection
     deactivate dd
     deactivate consumer.py
