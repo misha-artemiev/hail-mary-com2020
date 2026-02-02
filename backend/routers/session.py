@@ -89,6 +89,43 @@ sequenceDiagram
     participant tq as token.py
     end
     participant database@{ "type" : "database" }
+
+    User->>session.py: delete session
+    activate session.py
+    session.py->>middleware.py: bearer_auth()
+    activate middleware.py
+    database.py->>middleware.py: yield connection
+    activate database.py
+    middleware.py->>tq: get_session_by_token()
+    activate tq
+    tq->>database: select token
+    activate database
+    database-->>tq: found token
+    deactivate database
+    tq-->>middleware.py: found token
+    deactivate tq
+    middleware.py-->>session.py: found token
+    middleware.py-->>database.py: return connection
+    deactivate middleware.py
+    deactivate database.py
+    database.py->>session.py: yield connection
+    activate database.py
+    session.py->>token.py: delete_token()
+    activate token.py
+    token.py->>tq: Querier.delete_token()
+    activate tq
+    tq->>database: delete token
+    activate database
+    database-->>tq: deleted token
+    deactivate database
+    tq-->>token.py: deleted token
+    deactivate tq
+    token.py-->>session.py: deleted token
+    deactivate token.py
+    session.py-->>User: 200 OK
+    session.py-->>database.py: return connection
+    deactivate session.py
+    deactivate database.py
 ```
 """
 
