@@ -13,7 +13,6 @@ class HostSettings(BaseSettings):
     host: str = "localhost"
     port: int = 8080
     name: str = "hail mary"
-    version: str = "0.0.1"
     forward_from: str = "*"
 
     model_config = SettingsConfigDict(
