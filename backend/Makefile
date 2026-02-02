@@ -1,6 +1,6 @@
 SRC = main.py internal routers database
 
-.PHONY: default format lint install typecheck lint-fix init-db run docs
+.PHONY: default format lint install typecheck lint-fix init-db run docs check check-apply sql
 
 default: check
 
@@ -52,3 +52,6 @@ docs:
 		-o ./docs \
 		main.py internal routers database
 	@mv .env.bak .env || true
+
+sql:
+	@sqlc generate
