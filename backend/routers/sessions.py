@@ -1,4 +1,4 @@
-"""Endpoint for session.
+"""Endpoint for sessions.
 
 ```mermaid
 ---
@@ -9,7 +9,7 @@ sequenceDiagram
     title Session Creation
     actor User
     box ./routers
-    participant session.py@{ "type" : "boundary" }
+    participant sessions.py@{ "type" : "boundary" }
     end
     box ./internal/database
     participant database.py
@@ -25,9 +25,9 @@ sequenceDiagram
     end
     participant database@{ "type" : "database" }
 
-    User->>session.py: create session
-    activate session.py
-    session.py->>middleware.py: basic_auth()
+    User->>sessions.py: create session
+    activate sessions.py
+    sessions.py->>middleware.py: basic_auth()
     activate middleware.py
     database.py->>middleware.py: yield connection
     activate database.py
@@ -39,13 +39,13 @@ sequenceDiagram
     deactivate database
     uq-->>middleware.py: found user
     deactivate uq
-    middleware.py-->>session.py: user and role
+    middleware.py-->>sessions.py: user and role
     middleware.py-->>database.py: return connection
     deactivate middleware.py
     deactivate database.py
-    database.py->>session.py: yield connection
+    database.py->>sessions.py: yield connection
     activate database.py
-    session.py->>token.py: create_token()
+    sessions.py->>token.py: create_token()
     activate token.py
     token.py->>security.py: generate_token()
     activate security.py
@@ -59,12 +59,12 @@ sequenceDiagram
     deactivate database
     tq-->>token.py: inserted token
     deactivate tq
-    token.py-->>session.py: inserted token
+    token.py-->>sessions.py: inserted token
     deactivate token.py
-    session.py-->>User: 201 OK + token
-    session.py-->>database.py: return connection
+    sessions.py-->>User: 201 OK + token
+    sessions.py-->>database.py: return connection
     deactivate database.py
-    deactivate session.py
+    deactivate sessions.py
 ```
 
 ```mermaid
@@ -76,7 +76,7 @@ sequenceDiagram
     title Session Deletion
     actor User
     box ./routers
-    participant session.py@{ "type" : "boundary" }
+    participant sessions.py@{ "type" : "boundary" }
     end
     box ./internal/database
     participant database.py
@@ -90,9 +90,9 @@ sequenceDiagram
     end
     participant database@{ "type" : "database" }
 
-    User->>session.py: delete session
-    activate session.py
-    session.py->>middleware.py: bearer_auth()
+    User->>sessions.py: delete session
+    activate sessions.py
+    sessions.py->>middleware.py: bearer_auth()
     activate middleware.py
     database.py->>middleware.py: yield connection
     activate database.py
@@ -104,13 +104,13 @@ sequenceDiagram
     deactivate database
     tq-->>middleware.py: found token
     deactivate tq
-    middleware.py-->>session.py: found token
+    middleware.py-->>sessions.py: found token
     middleware.py-->>database.py: return connection
     deactivate middleware.py
     deactivate database.py
-    database.py->>session.py: yield connection
+    database.py->>sessions.py: yield connection
     activate database.py
-    session.py->>token.py: delete_token()
+    sessions.py->>token.py: delete_token()
     activate token.py
     token.py->>tq: Querier.delete_token()
     activate tq
@@ -120,11 +120,11 @@ sequenceDiagram
     deactivate database
     tq-->>token.py: deleted token
     deactivate tq
-    token.py-->>session.py: deleted token
+    token.py-->>sessions.py: deleted token
     deactivate token.py
-    session.py-->>User: 200 OK
-    session.py-->>database.py: return connection
-    deactivate session.py
+    sessions.py-->>User: 200 OK
+    sessions.py-->>database.py: return connection
+    deactivate sessions.py
     deactivate database.py
 ```
 """
@@ -140,7 +140,7 @@ from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/session", tags=["session"])
+router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 
 class TokenResponseModel(BaseModel):
