@@ -1,13 +1,13 @@
 """Manages database connection for the entire server."""
 
 from collections.abc import Generator
-from typing import Annotated
 
-from fastapi import Depends, HTTPException
-from internal.logger import logger
-from internal.settings import database_settings
+from fastapi import HTTPException
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
+
+from internal.logger.logger import logger
+from internal.settings.env import database_settings
 
 
 class DatabaseManager:
@@ -64,4 +64,3 @@ class DatabaseManager:
 
 
 database_manager = DatabaseManager()
-database_dependency = Annotated[Connection, Depends(database_manager.get_connection)]

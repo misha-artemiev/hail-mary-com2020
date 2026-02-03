@@ -20,6 +20,7 @@ dev = [
     "codespell>=2.4.1",
     "mypy>=1.19.1",
     "pip-audit>=2.10.0",
+    "pdoc>=16.0.0",
 ]
 
 [build-system]

@@ -7,13 +7,14 @@ from fastapi.security import (
     HTTPBasicCredentials,
     HTTPBearer,
 )
+from pydantic import BaseModel
+
 from internal.auth.security import check_password
-from internal.database import database_dependency
+from internal.database.dependency import database_dependency
 from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.token import Querier as TokenQuerier
 from internal.queries.user import Querier as UserQuerier
-from pydantic import BaseModel
 
 
 class BasicAuthResponse(BaseModel):
