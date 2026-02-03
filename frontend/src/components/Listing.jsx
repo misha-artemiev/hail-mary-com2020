@@ -48,7 +48,9 @@ export default function Listing({ title, info, footer, onClick }) {
                 <div className="space-y-1 text-sm text-gray-700">
                     {info.map(({ label, value }, index) => (
                         <p key={index}>
-                            <span className="font-semibold">{label}:</span>{" "}
+                            {label && (
+                                <span className="font-semibold">{label}: </span>
+                            )}
                             {value}
                         </p>
                     ))}
