@@ -1,4 +1,4 @@
-"""Endpoints for seller.
+"""Endpoint for consumers.
 
 ```mermaid
 ---
@@ -6,10 +6,10 @@ config:
   mirrorActors: false
 ---
 sequenceDiagram
-    title Seller Registration
+    title Consumer Registration
     actor user
     box ./routers
-    participant seller.py@{ "type" : "boundary" }
+    participant consumers.py@{ "type" : "boundary" }
     end
     box ./internal/database
     participant dd as database.py
@@ -20,15 +20,15 @@ sequenceDiagram
     end
     box ./internal/queries
     participant user.py
-    participant sq as seller.py
+    participant cq as consumer.py
     end
     participant database@{ "type" : "database" }
 
-    user->>seller.py: register seller
-    activate seller.py
-    dd->>seller.py: yield connection
+    user->>consumer.py: register consumer
+    activate consumers.py
+    dd->>consumers.py: yield connection
     activate dd
-    seller.py->>creation.py: create_seller()
+    consumers.py->>creation.py: create_consumer()
     activate creation.py
     creation.py->>creation.py: create_user()
     creation.py->>security.py: hash_password()
@@ -44,42 +44,42 @@ sequenceDiagram
     user.py-->>creation.py: created user
     deactivate user.py
     creation.py-->>creation.py: created user
-    creation.py->>sq: Queries.create_seller()
-    activate sq
-    sq->>database: insert seller
+    creation.py->>cq: Queries.create_consumer()
+    activate cq
+    cq->>database: insert consumer
     activate database
-    database-->>sq: created seller
+    database-->>cq: created consumer
     deactivate database
-    sq-->>creation.py: created seller
-    deactivate sq
-    creation.py-->>seller.py: created seller
+    cq-->>creation.py: created consumer
+    deactivate cq
+    creation.py-->>consumers.py: created consumer
     deactivate creation.py
-    seller.py-->>user: 201 OK
-    seller.py-->>dd: return connection
+    consumers.py-->>user: 201 OK
+    consumers.py-->>dd: return connection
     deactivate dd
-    deactivate seller.py
+    deactivate consumers.py
 ```
 """
 
 from fastapi import APIRouter, Response
-from internal.auth.creation import CreateSellerForm, create_seller
+from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.database.dependency import database_dependency
 
-router = APIRouter(prefix="/seller", tags=["seller"])
+router = APIRouter(prefix="/consumers", tags=["consumers"])
 
 
 @router.post("", status_code=201)
-async def register_seller(
-    form: CreateSellerForm, conn: database_dependency
+async def register_consumer(
+    form: CreateConsumerForm, conn: database_dependency
 ) -> Response:
-    """Creates seller and coressponding user.
+    """Register consumer and corresponding user.
 
     Args:
-      form: signup form from user
+      form: signup information for the user
       conn: database connection
 
     Returns:
-      if seller was registered
+      if consumer was registered
     """
-    _ = create_seller(form, conn)
-    return Response("Seller was registered", 201)
+    _ = create_consumer(form, conn)
+    return Response("Consumer was registered", 201)

@@ -9,9 +9,9 @@ from fastapi import FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
 from internal.settings.env import host_settings
-from routers.consumer import router as consumer_router
-from routers.seller import router as seller_router
-from routers.session import router as session_router
+from routers.consumers import router as consumers_router
+from routers.sellers import router as sellers_router
+from routers.sessions import router as sessions_router
 from uvicorn import run
 
 
@@ -38,9 +38,9 @@ app = FastAPI(
 
 def register_routers(app: FastAPI) -> None:
     """Registers api routers with the app."""
-    app.include_router(consumer_router)
-    app.include_router(seller_router)
-    app.include_router(session_router)
+    app.include_router(consumers_router)
+    app.include_router(sellers_router)
+    app.include_router(sessions_router)
 
 
 register_routers(app)
