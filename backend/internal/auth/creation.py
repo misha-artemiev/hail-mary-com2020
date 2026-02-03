@@ -1,5 +1,8 @@
 """Creates seller and consumer entities."""
 
+from pydantic import BaseModel, EmailStr, SecretStr
+from sqlalchemy import Connection
+
 from internal.queries.consumer import CreateConsumerParams
 from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
@@ -7,8 +10,6 @@ from internal.queries.seller import CreateSellerParams
 from internal.queries.seller import Querier as SellerQuerier
 from internal.queries.user import CreateUserParams, CreateUserRow
 from internal.queries.user import Querier as UserQuery
-from pydantic import BaseModel, EmailStr, SecretStr
-from sqlalchemy import Connection
 
 from .security import hash_password
 
