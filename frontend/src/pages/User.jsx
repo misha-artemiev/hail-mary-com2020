@@ -3,8 +3,12 @@
  * @author Thomas Noakes
  */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
+
+// Hooks
+import { useUser } from "../hooks/useUser";
+import { useUserListings } from "../hooks/useUserListings";
 
 // Components
 import Card from "../components/Card";
@@ -28,72 +32,9 @@ export default function User() {
     // Get the selected user from the URL
     const { username } = useParams();
 
-    // State object: stores the user information
-    const [user, setUser] = useState(null);
-    const [listings, setListings] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    // Fetch user information
-    useEffect(() => {
-        // TODO: get user information properly
-        async function fetchUser() {
-            // const res = await fetch(`/api/user/&{username}`);
-            // const data = await res.json();
-            // setUser(data);
-
-            // TODO: REMOVE
-            setUser({
-                username: username,
-                bio: "Selling quality items with fast delivery and trusted service.",
-                activeSince: "1st Jan, 2026",
-                location: "Exeter, England",
-                openingHours: "9am-5pm daily",
-                role: "seller",
-                categories: ["Fast Food", "Tacos", "Mexican", "Spicy"],
-            });
-
-            setLoading(false);
-        }
-
-        fetchUser();
-    }, [username]);
-
-    // Fetch user listings
-    useEffect(() => {
-        // TODO: get user listings properly
-        async function fetchListings() {
-            // const res = await fetch(`/api/listings?user=&{username}`);
-            // const data = await res.json();
-            // setListings(data);
-
-            // TODO: remove
-            setListings([
-                {
-                    title: "Item 1",
-                    image: "",
-                    info: [
-                        { label: "Pickup", value: "13:00-15:00" },
-                        { label: "", value: "3 left" },
-                    ],
-                },
-                {
-                    title: "Item 2",
-                    image: "",
-                    info: [
-                        { label: "Pickup", value: "09:00-10:00" },
-                        { label: "", value: "Collection only" },
-                    ],
-                },
-                {
-                    title: "Item 3",
-                    image: "",
-                    info: [{ label: "Pickup", value: "13:00-15:00" }],
-                },
-            ]);
-        }
-
-        fetchListings();
-    }, [username]);
+    // Use custom hooks
+    const { user, loading } = useUser(username);
+    const listings = useUserListings(username);
 
     // Display a temporary loading indicator
     if (loading) {
