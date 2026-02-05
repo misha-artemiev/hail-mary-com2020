@@ -5,6 +5,20 @@
 
 import { useEffect, useState } from "react";
 
+/**
+ * Custom React hook for fetching user's listings
+ *
+ * @param {string} username - The name of the user to fetch listings for.
+ *
+ * @returns {Array<Object>|null} the array of listings objects.
+ *
+ * ---
+ * @example
+ * const listings = useUserListings("seller_123");
+ *
+ * if (!listings) return <Loading />;
+ * return <ListingsGrid listings={listings} />;
+ */
 export function useUserListings(username) {
     // State object: stores the listing information
     const [listings, setListings] = useState(null);

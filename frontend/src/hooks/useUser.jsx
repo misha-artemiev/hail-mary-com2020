@@ -5,10 +5,26 @@
 
 import { useEffect, useState } from "react";
 
+/**
+ * Custom React hook for fetching and managing user data.
+ *
+ * @param {string} username - The name of the user to fetch.
+ *
+ * @returns {{ user: Object|null, loading: boolean }}
+ *          the object of user data and/or loading state.
+ *
+ * ---
+ * @example
+ * const { user, loading } = useUser("john_doe");
+ *
+ * if (loading) return <Spinner />;
+ * if (!user) return <NotFound />;
+ * return <UserProfile user={user} />
+ */
 export function useUser(username) {
     // State object: stores the user information
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     // Fetch user information
     useEffect(() => {
