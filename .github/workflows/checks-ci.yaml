@@ -6,7 +6,6 @@ on:
       - dev/backend
 jobs:
   check-version-bump:
-    id: check-version-bump
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
