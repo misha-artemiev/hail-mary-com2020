@@ -2,9 +2,27 @@ name: pull request checks
 on:
   pull_request:
     branches:
-      - 'dev/*'
+      - release
+      - dev/backend
 jobs:
+  check-version-bump:
+    id: check-version-bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: check for version bump
+        run: |
+          set -e
+          OLD_VER=$(git show origin/release:frontend/package.json | jq -r .version)
+          NEW_VER=$(jq -r .version frontend/package.json)
+          LOWEST=$(printf '%s\n' "$OLD_VER" "$NEW_VER" | sort -V | head -n1)
+          if [ "$LOWEST" = "$NEW_VER" ]; then
+             exit 1
+          fi
   backend-checks:
+    needs: check-version-bump
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -27,12 +45,12 @@ jobs:
       - name: check docs
         run: |
           if [ -n "$(git status --porcelain docs)" ]; then
-            git diff docs
             exit 1
           else
             exit 0
           fi
   frontend-checks:
+    needs: check-version-bump
     runs-on: ubuntu-latest
     defaults:
       run:

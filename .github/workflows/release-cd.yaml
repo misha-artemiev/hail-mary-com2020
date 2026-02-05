@@ -8,6 +8,7 @@ permissions:
   packages: write
 jobs:
   create-tag:
+    id: create-tag
     runs-on: ubuntu-latest
     outputs:
       release_tag: ${{ steps.tagger.outputs.release_tag }}
