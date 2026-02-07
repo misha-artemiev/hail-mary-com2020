@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
-import Divider from "../components/forms/Divider";
+import Divider from "../components/Divider";
 import SubmitButton from "../components/forms/SubmitButton";
 import Button from "../components/forms/Button";
 
@@ -100,7 +100,7 @@ export default function Login() {
                     <SubmitButton>Sign in</SubmitButton>
                 </form>
 
-                <Divider text="or" />
+                <Divider>or</Divider>
 
                 {/* Signup redirect */}
                 <Button onClick={() => navigate("/signup")}>

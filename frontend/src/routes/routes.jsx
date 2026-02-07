@@ -11,6 +11,7 @@ import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import User from "../pages/User";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -51,6 +52,10 @@ export const ROUTES = [
                 <Signup />
             </GuestRoot>
         ),
+    },
+    {
+        path: "/user/:username",
+        element: <User />,
     },
     // Catch-all (i.e. 404)
     {
