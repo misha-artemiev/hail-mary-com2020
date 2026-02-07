@@ -63,7 +63,7 @@ sequenceDiagram
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
@@ -99,7 +99,7 @@ async def register_consumer(
 async def update_password(
     form: UpdatePasswordForm,
     conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, consumer_auth],
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
 ) -> Response:
     """Update users password.
 
@@ -119,7 +119,7 @@ async def update_password(
 async def update_email(
     email: EmailStr,
     conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, consumer_auth],
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
 ) -> Response:
     """Update users email.
 
@@ -147,7 +147,7 @@ async def update_consumer(
     first_name: str,
     last_name: str,
     conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, consumer_auth],
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
 ) -> Response:
     """Update consumer.
 
