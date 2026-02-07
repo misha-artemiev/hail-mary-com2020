@@ -3,4 +3,5 @@
 .mypy_cache/
 .ruff_cacheA/
 dist/
+docs/
 .env
