@@ -11,7 +11,7 @@ router = APIRouter(prefix="/bundles", tags=["bundles"])
 
 
 @router.get("/", tags=["bundles"])
-async def get_bundles(conn: database_dependency) -> Iterator[Bundle]:
+async def get_bundles(conn: database_dependency) -> List[Bundle]:
     """Get all bundles.
 
     Args:
