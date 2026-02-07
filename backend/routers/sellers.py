@@ -189,7 +189,7 @@ async def update_bundle(
 async def update_password(
     form: UpdatePasswordForm,
     conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, seller_auth],
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
 ) -> Response:
     """Update users password.
 
@@ -209,7 +209,7 @@ async def update_password(
 async def update_email(
     email: EmailStr,
     conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, seller_auth],
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
 ) -> Response:
     """Update users email.
 
