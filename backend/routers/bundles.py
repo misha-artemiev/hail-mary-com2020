@@ -8,7 +8,7 @@ from internal.queries.models import Bundle
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
 
-@router.get("/", tags=["bundles"])
+@router.get("/")
 async def get_bundles(conn: database_dependency) -> list[Bundle]:
     """Get all bundles.
 
@@ -27,7 +27,7 @@ async def get_bundles(conn: database_dependency) -> list[Bundle]:
     return list(bundles)
 
 
-@router.get("/{bundle_id}", tags=["bundles"])
+@router.get("/{bundle_id}")
 async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     """Get bundle.
 
