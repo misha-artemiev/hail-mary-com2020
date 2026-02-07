@@ -61,9 +61,19 @@ sequenceDiagram
 ```
 """
 
-from fastapi import APIRouter, Response
+from datetime import datetime
+from decimal import Decimal
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateSellerForm, create_seller
+from internal.auth.middleware import seller_auth
 from internal.database.dependency import database_dependency
+from internal.queries.bundle import CreateBundleParams, UpdateBundleParams
+from internal.queries.bundle import Querier as BundleQuerier
+from internal.queries.models import Bundle
+from internal.queries.token import GetSessionByTokenRow
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -83,3 +93,90 @@ async def register_seller(
     """
     _ = create_seller(form, conn)
     return Response("Seller was registered", 201)
+
+
+class BundleForm(BaseModel):
+    """User form for bundles."""
+
+    bundle_name: str
+    description: str
+    total_qty: int
+    price: Decimal = Field(decimal_places=2, gt=0)
+    discount_percentage: int = Field(max_digits=100, gt=0)
+    window_start: datetime
+    window_end: datetime
+
+
+@router.post("/me/bundles", tags=["sellers", "bundles"])
+async def create_bundle(
+    form: BundleForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Bundle:
+    """Create bundle.
+
+    Args:
+      form: bundle info form
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      created bundle
+
+    Raises:
+      HTTPException: if failed to create bundle
+    """
+    bundle = BundleQuerier(conn).create_bundle(
+        CreateBundleParams(
+            seller_id=seller.user_id,
+            bundle_name=form.bundle_name,
+            description=form.description,
+            total_qty=form.total_qty,
+            price=form.price,
+            discount_percentage=form.discount_percentage,
+            window_start=form.window_start,
+            window_end=form.window_end,
+        )
+    )
+    if not bundle:
+        raise HTTPException(500, "failed to crete bundle")
+    return bundle
+
+
+@router.put("/me/bundles/{bundle_id}")
+async def update_bundle(
+    bundle_id: str,
+    form: BundleForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Bundle:
+    """Update bundle.
+
+    Args:
+      bundle_id: bundle id
+      form: updated bundle info form
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      updated bundle
+
+    Raises:
+      HTTPException: if failed to update bundle
+    """
+    bundle = BundleQuerier(conn).update_bundle(
+        UpdateBundleParams(
+            bundle_id=int(bundle_id),
+            seller_id=seller.user_id,
+            bundle_name=form.bundle_name,
+            description=form.description,
+            total_qty=form.total_qty,
+            price=form.price,
+            discount_percentage=form.discount_percentage,
+            window_start=form.window_start,
+            window_end=form.window_end,
+        )
+    )
+    if not bundle:
+        raise HTTPException(406, "failed to update bundle")
+    return bundle
