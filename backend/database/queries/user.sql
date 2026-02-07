@@ -19,3 +19,15 @@ RETURNING user_id, email, role, created_at;
 DELETE FROM users
 WHERE user_id = $1
 RETURNING user_id, email, role, created_at;
+
+-- name: UpdateUserEmail :one
+UPDATE users
+SET email=$2
+WHERE user_id=$1
+RETURNING user_id, email, role, created_at;
+
+-- name: UpdateUserPassword :one
+UPDATE users
+SET pw_hash=$2
+WHERE user_id=$1
+RETURNING user_id, email, role, created_at;

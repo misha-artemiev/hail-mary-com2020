@@ -6,7 +6,7 @@ from pathlib import Path
 from re import IGNORECASE, search, split
 from string.templatelib import Template
 
-from internal.settings import database_settings
+from internal.settings.env import database_settings
 from psycopg import Connection, Error, connect
 from uvicorn.config import LOGGING_CONFIG
 
