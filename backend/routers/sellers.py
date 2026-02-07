@@ -107,7 +107,7 @@ class BundleForm(BaseModel):
     window_end: datetime
 
 
-@router.post("/me/bundles", tags=["sellers", "bundles"])
+@router.post("/me/bundles", tags=["bundles"])
 async def create_bundle(
     form: BundleForm,
     conn: database_dependency,
@@ -143,7 +143,7 @@ async def create_bundle(
     return bundle
 
 
-@router.put("/me/bundles/{bundle_id}")
+@router.put("/me/bundles/{bundle_id}", tags=["bundles"])
 async def update_bundle(
     bundle_id: str,
     form: BundleForm,
