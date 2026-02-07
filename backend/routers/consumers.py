@@ -63,17 +63,12 @@ sequenceDiagram
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, Response, Security
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
-from internal.queries.consumer import Querier as ConsumerQuerier
-from internal.queries.consumer import UpdateConsumerParams
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.user import Querier as UserQuerier
-from internal.queries.user import UpdateUserEmailParams
-from pydantic import EmailStr
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
@@ -113,61 +108,3 @@ async def update_password(
     """
     _ = update_pw(consumer.email, form, conn)
     return Response("Password was updated", 202)
-
-
-@router.put("/me/email", status_code=202)
-async def update_email(
-    email: EmailStr,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> Response:
-    """Update users email.
-
-    Args:
-      email: new users email
-      conn: database connection
-      consumer: consumers session
-
-    Returns:
-      if consumer email was updated
-
-    Raises:
-      HTTPException: failed to update user email
-    """
-    user = UserQuerier(conn).update_user_email(
-        UpdateUserEmailParams(user_id=consumer.user_id, email=email)
-    )
-    if not user:
-        raise HTTPException(500, "failed to update users email")
-    return Response("user email was updated", 201)
-
-
-@router.put("/me", status_code=202)
-async def update_consumer(
-    first_name: str,
-    last_name: str,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> Response:
-    """Update consumer.
-
-    Args:
-      first_name: consumers first name
-      last_name: consumers last name
-      conn: database connection
-      consumer: consumers session
-
-    Returns:
-      if consumer was updated
-
-    Raises:
-      HTTPException: failed to update consumer
-    """
-    user = ConsumerQuerier(conn).update_consumer(
-        UpdateConsumerParams(
-            user_id=consumer.user_id, fname=first_name, lname=last_name
-        )
-    )
-    if not user:
-        raise HTTPException(500, "failed to update consumer")
-    return Response("consumer was updated", 201)
