@@ -9,10 +9,10 @@ from fastapi import FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
 from internal.settings.env import host_settings
+from routers.bundles import router as bundle_router
 from routers.consumers import router as consumers_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
-from routers.bundles import router as bundle_router
 from uvicorn import run
 
 
