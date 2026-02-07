@@ -1,7 +1,5 @@
 """Endpoints for bundles."""
 
-from collections.abc import Iterator
-
 from fastapi import APIRouter, HTTPException
 from internal.database.dependency import database_dependency
 from internal.queries.bundle import Querier as BundleQuerier
@@ -11,7 +9,7 @@ router = APIRouter(prefix="/bundles", tags=["bundles"])
 
 
 @router.get("/", tags=["bundles"])
-async def get_bundles(conn: database_dependency) -> List[Bundle]:
+async def get_bundles(conn: database_dependency) -> list[Bundle]:
     """Get all bundles.
 
     Args:
@@ -26,7 +24,7 @@ async def get_bundles(conn: database_dependency) -> List[Bundle]:
     bundles = BundleQuerier(conn).get_bundles()
     if not bundles:
         raise HTTPException(500, "failed to find bundles")
-    return bundles
+    return list(bundles)
 
 
 @router.get("/{bundle_id}", tags=["bundles"])
