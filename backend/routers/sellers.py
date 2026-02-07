@@ -61,9 +61,22 @@ sequenceDiagram
 ```
 """
 
-from fastapi import APIRouter, Response
+from datetime import datetime
+from decimal import Decimal
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateSellerForm, create_seller
+from internal.auth.middleware import seller_auth
+from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
+from internal.queries.bundle import CreateBundleParams, UpdateBundleParams
+from internal.queries.bundle import Querier as BundleQuerier
+from internal.queries.models import Bundle
+from internal.queries.token import GetSessionByTokenRow
+from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import UpdateUserEmailParams
+from pydantic import BaseModel, EmailStr, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -83,3 +96,137 @@ async def register_seller(
     """
     _ = create_seller(form, conn)
     return Response("Seller was registered", 201)
+
+
+class BundleForm(BaseModel):
+    """User form for bundles."""
+
+    bundle_name: str
+    description: str
+    total_qty: int
+    price: Decimal = Field(decimal_places=2, gt=0)
+    discount_percentage: int = Field(max_digits=100, gt=0)
+    window_start: datetime
+    window_end: datetime
+
+
+@router.post("/me/bundles", tags=["bundles"])
+async def create_bundle(
+    form: BundleForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Bundle:
+    """Create bundle.
+
+    Args:
+      form: bundle info form
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      created bundle
+
+    Raises:
+      HTTPException: if failed to create bundle
+    """
+    bundle = BundleQuerier(conn).create_bundle(
+        CreateBundleParams(
+            seller_id=seller.user_id,
+            bundle_name=form.bundle_name,
+            description=form.description,
+            total_qty=form.total_qty,
+            price=form.price,
+            discount_percentage=form.discount_percentage,
+            window_start=form.window_start,
+            window_end=form.window_end,
+        )
+    )
+    if not bundle:
+        raise HTTPException(500, "failed to crete bundle")
+    return bundle
+
+
+@router.put("/me/bundles/{bundle_id}", tags=["bundles"])
+async def update_bundle(
+    bundle_id: str,
+    form: BundleForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Bundle:
+    """Update bundle.
+
+    Args:
+      bundle_id: bundle id
+      form: updated bundle info form
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      updated bundle
+
+    Raises:
+      HTTPException: if failed to update bundle
+    """
+    bundle = BundleQuerier(conn).update_bundle(
+        UpdateBundleParams(
+            bundle_id=int(bundle_id),
+            seller_id=seller.user_id,
+            bundle_name=form.bundle_name,
+            description=form.description,
+            total_qty=form.total_qty,
+            price=form.price,
+            discount_percentage=form.discount_percentage,
+            window_start=form.window_start,
+            window_end=form.window_end,
+        )
+    )
+    if not bundle:
+        raise HTTPException(406, "failed to update bundle")
+    return bundle
+
+
+@router.put("/me/password", status_code=202)
+async def update_password(
+    form: UpdatePasswordForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, seller_auth],
+) -> Response:
+    """Update users password.
+
+    Args:
+      form: form for password change
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      if password was changed
+    """
+    _ = update_pw(seller.email, form, conn)
+    return Response("Password was updated", 202)
+
+
+@router.put("/me/email", status_code=202)
+async def update_email(
+    email: EmailStr,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, seller_auth],
+) -> Response:
+    """Update users email.
+
+    Args:
+      email: new users email
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      if sellers email was updated
+
+    Raises:
+      HTTPException: failed to update user email
+    """
+    user = UserQuerier(conn).update_user_email(
+        UpdateUserEmailParams(user_id=seller.user_id, email=email)
+    )
+    if not user:
+        raise HTTPException(500, "failed to update users email")
+    return Response("user email was updated", 201)

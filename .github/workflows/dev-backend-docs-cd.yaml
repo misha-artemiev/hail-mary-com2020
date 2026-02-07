@@ -8,6 +8,13 @@ permissions:
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     defaults:
       run:
         working-directory: ./backend
@@ -22,11 +29,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ".[dev]"
-      - name: Build documentation
+      - name: build documentation
         run: make docs
-      - name: deploy to github pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: setup pages
+        uses: actions/configure-pages@v4
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: backend/docs
-          branch: gh/backend-docs
-          clean: true
+          path: "./backend/docs"
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4
