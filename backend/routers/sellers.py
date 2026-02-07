@@ -68,12 +68,15 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
+from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
 from internal.queries.bundle import CreateBundleParams, UpdateBundleParams
 from internal.queries.bundle import Querier as BundleQuerier
 from internal.queries.models import Bundle
 from internal.queries.token import GetSessionByTokenRow
-from pydantic import BaseModel, Field
+from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import UpdateUserEmailParams
+from pydantic import BaseModel, EmailStr, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -180,3 +183,50 @@ async def update_bundle(
     if not bundle:
         raise HTTPException(406, "failed to update bundle")
     return bundle
+
+
+@router.put("/me/password", status_code=202)
+async def update_password(
+    form: UpdatePasswordForm,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, seller_auth],
+) -> Response:
+    """Update users password.
+
+    Args:
+      form: form for password change
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      if password was changed
+    """
+    _ = update_pw(seller.email, form, conn)
+    return Response("Password was updated", 202)
+
+
+@router.put("/me/email", status_code=202)
+async def update_email(
+    email: EmailStr,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, seller_auth],
+) -> Response:
+    """Update users email.
+
+    Args:
+      email: new users email
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      if sellers email was updated
+
+    Raises:
+      HTTPException: failed to update user email
+    """
+    user = UserQuerier(conn).update_user_email(
+        UpdateUserEmailParams(user_id=seller.user_id, email=email)
+    )
+    if not user:
+        raise HTTPException(500, "failed to update users email")
+    return Response("user email was updated", 201)
