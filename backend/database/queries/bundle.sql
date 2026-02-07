@@ -8,3 +8,13 @@ SELECT *
 FROM bundles
 WHERE bundle_id=$1
 LIMIT 1;
+
+-- name: GetBundles :many
+SELECT *
+FROM bundles;
+
+-- name: UpdateBundle :one
+UPDATE bundles
+SET bundle_name=$3, description=$4, total_qty=$5, price=$6, discount_percentage=$7, window_start=$8, window_end=$9
+WHERE bundle_id=$1 AND seller_id=$2
+RETURNING *;
