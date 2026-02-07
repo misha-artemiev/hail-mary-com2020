@@ -42,6 +42,20 @@ class GetConsumerRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
+UPDATE_CONSUMER = """-- name: update_consumer \\:one
+UPDATE consumers
+SET fName=:p2, lName=:p3
+WHERE user_id=:p1
+RETURNING user_id, fname, lname
+"""
+
+
+class UpdateConsumerParams(pydantic.BaseModel):
+    user_id: int
+    fname: str
+    lname: str
+
+
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
@@ -67,4 +81,14 @@ class Querier:
             lname=row[3],
             last_login=row[4],
             created_at=row[5],
+        )
+
+    def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
+        row = self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
+        if row is None:
+            return None
+        return models.Consumer(
+            user_id=row[0],
+            fname=row[1],
+            lname=row[2],
         )
