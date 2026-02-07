@@ -3,12 +3,16 @@
 from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
 from fastapi import FastAPI
-from internal.database import database_manager
-from internal.logger import logger
-from internal.settings import host_settings
-from routers import consumer_router, sellers_router, session_router
+from internal.database.manager import database_manager
+from internal.logger.logger import logger
+from internal.settings.env import host_settings
+from routers.bundles import router as bundle_router
+from routers.consumers import router as consumers_router
+from routers.sellers import router as sellers_router
+from routers.sessions import router as sessions_router
 from uvicorn import run
 
 
@@ -27,7 +31,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title=host_settings.name,
-    version=host_settings.version,
+    version=version("rescue-marketplace"),
     root_path="/api",
     lifespan=lifespan,
 )
@@ -35,9 +39,10 @@ app = FastAPI(
 
 def register_routers(app: FastAPI) -> None:
     """Registers api routers with the app."""
-    app.include_router(consumer_router)
+    app.include_router(consumers_router)
     app.include_router(sellers_router)
-    app.include_router(session_router)
+    app.include_router(sessions_router)
+    app.include_router(bundle_router)
 
 
 register_routers(app)

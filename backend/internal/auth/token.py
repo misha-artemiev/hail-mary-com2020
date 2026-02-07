@@ -2,11 +2,12 @@
 
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.engine import Connection
+
 from internal.queries.models import Token
 from internal.queries.token import CreateTokenParams
 from internal.queries.token import Querier as TokenQuerier
-from internal.settings import auth_settings
-from sqlalchemy.engine import Connection
+from internal.settings.env import auth_settings
 
 from .security import generate_token
 

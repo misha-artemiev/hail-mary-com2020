@@ -1,0 +1,42 @@
+name: dev-backend-docs-after-merge
+on:
+  push:
+    branches:
+      - dev/backend
+permissions:
+  contents: write
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+      - name: setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+      - name: install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+      - name: build documentation
+        run: make docs
+      - name: setup pages
+        uses: actions/configure-pages@v4
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./backend/docs"
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4
