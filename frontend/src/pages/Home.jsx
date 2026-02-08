@@ -11,6 +11,7 @@ import React, { useState } from "react";
  * @returns {JSX.Element} the home page
  */
 export default function Home() {
+    // State object: holds all fields for the form
     const [filters, setFilters] = useState({
         restaurant: "",
         category: "",
@@ -19,14 +20,19 @@ export default function Home() {
         maxDistance: "",
     });
 
+    /**
+     * Handles changes to the filters.
+     */
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Handles submitting a search.
+     */
     const handleSearch = () => {
-        console.log("Filters used:", filters);
-        // TODO: FETCH BUNDLES WITH FILTERS FROM BACKEND HERE
+        // TODO: fetch filters
     };
 
     return (
@@ -39,7 +45,8 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">
                     Filters
                 </h2>
-                {/* Restaurant Filter */}
+
+                {/* Restaurant filter */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input
                         type="text"
@@ -49,7 +56,8 @@ export default function Home() {
                         onChange={handleChange}
                         className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                     />
-                    {/* Category Filter */}
+
+                    {/* Category filter */}
                     <select
                         name="category"
                         value={filters.category}
@@ -60,9 +68,9 @@ export default function Home() {
                         <option value="bakery">Bakery</option>
                         <option value="grocery">Supermarket</option>
                         <option value="restaurant">Restaurant</option>
-                        {/*MORE CATEGORIES CAN BE ADDED HERE*/}
                     </select>
-                    {/* Allergen Filter */}
+
+                    {/* Allergen filter */}
                     <select
                         name="allergen"
                         value={filters.allergen}
@@ -74,9 +82,9 @@ export default function Home() {
                         <option value="dairy">Dairy</option>
                         <option value="gluten">Gluten</option>
                         <option value="shellfish">Shellfish</option>
-                        {/*MORE ALLERGENS CAN BE ADDED HERE*/}
                     </select>
-                    {/* Max Price Filter */}
+
+                    {/* Max price filter */}
                     <input
                         type="number"
                         name="maxPrice"
@@ -85,7 +93,8 @@ export default function Home() {
                         onChange={handleChange}
                         className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                     />
-                    {/* Max Distance Filter */}
+
+                    {/* Max distance filter */}
                     <input
                         type="number"
                         name="maxDistance"
@@ -101,15 +110,12 @@ export default function Home() {
                     className="mt-6 bg-green-600 text-white px-6 py-3 rounded-md font-semibold
                                 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
-                    Search Bundles{" "}
+                    Search Bundles
                 </button>
             </div>
 
             <div className="bg-white shadow-md rounded-lg p-6">
                 <p className="text-gray-600">No bundles yet</p>
-                <p className="text-gray-500 text-sm mt-2">
-                    RESULTS WILL BE DISPLAYED HERE AFTER BACKEND CONNECTION
-                </p>
             </div>
         </div>
     );
