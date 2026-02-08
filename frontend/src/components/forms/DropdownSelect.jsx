@@ -5,6 +5,18 @@
 
 import React, { useState } from "react";
 
+/**
+ * A dropdown menu that allows choosing toggling given options.
+ *
+ * @param {Object} props
+ * @param {Array<{ value: string, label: string }>} props.options
+ *          - List of selectable options.
+ * @param {string[]} props.value - List of currently selected values.
+ * @param {(event: React.ChangeEvent<HTMLButtonElement>) => void} props.onChange
+ *          - Change event handler.
+ *
+ * @returns {JSX.Element} a dropdown select area.
+ */
 export default function DropdownSelect({ options, value, onChange }) {
     // State object: if the dropdown is open
     const [open, setOpen] = useState(false);
