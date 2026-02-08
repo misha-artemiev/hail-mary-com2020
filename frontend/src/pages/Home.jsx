@@ -126,27 +126,6 @@ export default function Home() {
                         onChange={handleChange}
                     />
 
-                    {/* Allergen filter */}
-                    <select
-                        name="allergen"
-                        value={filters.allergen}
-                        onChange={handleChange}
-                        className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    >
-                        <option value="">No allergen filter</option>
-                        <option value="nuts">Nuts</option>
-                        <option value="dairy">Dairy</option>
-                        <option value="gluten">Gluten</option>
-                        <option value="shellfish">Shellfish</option>
-                    </select>
-
-                    <DropdownSelect
-                        value={filters.allergens}
-                        name="allergen"
-                        onChange={handleAllergensChange}
-                        options={ALLERGENS}
-                    />
-
                     {/* Max price filter */}
                     <FormInput
                         placeholder="Max Price (£)"
@@ -163,6 +142,14 @@ export default function Home() {
                         type="number"
                         value={filters.maxDistance}
                         onChange={handleChange}
+                    />
+
+                    {/* Allergen filter */}
+                    <DropdownSelect
+                        value={filters.allergens}
+                        name="allergen"
+                        onChange={handleAllergensChange}
+                        options={ALLERGENS}
                     />
                 </div>
 
