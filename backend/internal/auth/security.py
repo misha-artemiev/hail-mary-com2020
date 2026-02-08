@@ -1,6 +1,6 @@
 """Sensitive information manimulation."""
 
-from secrets import token_urlsafe, choice
+from secrets import choice, token_urlsafe
 
 from bcrypt import checkpw, gensalt, hashpw
 from fastapi import HTTPException
@@ -90,7 +90,12 @@ def update_pw(
         raise HTTPException(500)
     return user_updated
 
+
 def generate_claim_code() -> str:
+    """Generate claim code.
+
+    Returns:
+        claim code
+    """
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    code = ''.join(choice(alphabet) for _ in range(6))
-    return code
+    return "".join(choice(alphabet) for _ in range(6))
