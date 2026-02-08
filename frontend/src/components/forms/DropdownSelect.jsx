@@ -64,22 +64,32 @@ export default function DropdownSelect({ options, value, name, onChange }) {
 
             {/* Dropdown menu */}
             {open && (
-                <div className="absolute z-10 mt-2 w-full rounded-lg shadow-lg">
-                    {options.map((opt) => (
-                        <label
-                            key={opt.value}
-                            className="flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm"
-                        >
-                            {/* Checkbox */}
-                            <input
-                                type="checkbox"
-                                checked={value.includes(opt.value)}
-                                onChange={() => toggle(opt.value)}
-                                className="h-4 w-4 accent-green-400"
-                            />
-                            {opt.label}
-                        </label>
-                    ))}
+                <div
+                    className="absolute z-10 mt-2
+                               w-full rounded-lg shadow-lg overflow-hidden
+                               border border-gray-200 bg-white"
+                >
+                    {/* Extra div to cap size, enables scrolling */}
+                    <div className="max-h-60 overflow-y-auto">
+                        {options.map((opt) => (
+                            <label
+                                key={opt.value}
+                                className="flex items-center gap-3 px-4 py-2.5
+                                           cursor-pointer text-sm
+                                           hover:bg-green-100 transition
+                                           border-b border-gray-100 last:border-b-0"
+                            >
+                                {/* Checkbox */}
+                                <input
+                                    type="checkbox"
+                                    checked={value.includes(opt.value)}
+                                    onChange={() => toggle(opt.value)}
+                                    className="h-4 w-4 accent-green-400"
+                                />
+                                {opt.label}
+                            </label>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
