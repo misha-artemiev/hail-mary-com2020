@@ -10,6 +10,7 @@ import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import Button from "../components/forms/Button";
 import Category from "../components/Category";
+import DropdownSelect from "../components/forms/DropdownSelect";
 
 /**
  * The main home page of the site, a feed of available bundles.
@@ -21,7 +22,7 @@ export default function Home() {
     const [filters, setFilters] = useState({
         restaurant: "",
         category: "",
-        allergen: "",
+        allergens: [],
         maxPrice: "",
         maxDistance: "",
     });
@@ -39,6 +40,13 @@ export default function Home() {
         setFilters((prev) => ({
             ...prev,
             category: prev.category === category ? "" : category, // Can toggle on/off
+        }));
+    };
+
+    const handleAllergensChange = (nextAllergens) => {
+        setFilters((prev) => ({
+            ...prev,
+            allergens: nextAllergens,
         }));
     };
 
@@ -82,6 +90,25 @@ export default function Home() {
         },
     ];
 
+    const ALLERGENS = [
+        {
+            value: "nuts",
+            label: "Nuts",
+        },
+        {
+            value: "dairy",
+            label: "Dairy",
+        },
+        {
+            value: "gluten",
+            label: "Gluten",
+        },
+        {
+            value: "shellfish",
+            label: "Shellfish",
+        },
+    ];
+
     return (
         <div className="max-w-8xl mx-auto p-6">
             <Card>
@@ -112,6 +139,12 @@ export default function Home() {
                         <option value="gluten">Gluten</option>
                         <option value="shellfish">Shellfish</option>
                     </select>
+
+                    <DropdownSelect
+                        value={filters.allergens}
+                        onChange={handleAllergensChange}
+                        options={ALLERGENS}
+                    />
 
                     {/* Max price filter */}
                     <FormInput
