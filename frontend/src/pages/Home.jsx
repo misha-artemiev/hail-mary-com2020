@@ -5,6 +5,10 @@
 
 import React, { useState } from "react";
 
+// Components
+import Card from "../components/Card";
+import FormInput from "../components/forms/FormInput";
+
 /**
  * The main home page of the site, a feed of available bundles.
  *
@@ -36,25 +40,20 @@ export default function Home() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <h1 className="text-3xl font-bold text-green-700 mb-6">
-                Rescue Marketplace
-            </h1>
-
-            <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+        <div className="max-w-8xl mx-auto p-6">
+            <Card>
                 <h2 className="text-xl font-semibold text-gray-700 mb-4">
                     Filters
                 </h2>
 
                 {/* Restaurant filter */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input
-                        type="text"
+                    <FormInput
+                        label="Restaurant Name"
                         name="restaurant"
-                        placeholder="Restaurant Name"
+                        type="text"
                         value={filters.restaurant}
                         onChange={handleChange}
-                        className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                     />
 
                     {/* Category filter */}
@@ -85,23 +84,21 @@ export default function Home() {
                     </select>
 
                     {/* Max price filter */}
-                    <input
-                        type="number"
+                    <FormInput
+                        label="Max Price (£)"
                         name="maxPrice"
-                        placeholder="Max Price (£)"
+                        type="number"
                         value={filters.maxPrice}
                         onChange={handleChange}
-                        className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                     />
 
                     {/* Max distance filter */}
-                    <input
-                        type="number"
+                    <FormInput
+                        label="Max Distance (km)"
                         name="maxDistance"
-                        placeholder="Max Distance (km)"
+                        type="number"
                         value={filters.maxDistance}
                         onChange={handleChange}
-                        className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                     />
                 </div>
 
@@ -112,11 +109,11 @@ export default function Home() {
                 >
                     Search Bundles
                 </button>
-            </div>
+            </Card>
 
-            <div className="bg-white shadow-md rounded-lg p-6">
+            <Card>
                 <p className="text-gray-600">No bundles yet</p>
-            </div>
+            </Card>
         </div>
     );
 }
