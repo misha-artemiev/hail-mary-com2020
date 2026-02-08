@@ -67,7 +67,8 @@ export default function DropdownSelect({ options, value, name, onChange }) {
                 <div
                     className="absolute z-10 mt-2
                                w-full rounded-lg shadow-lg overflow-hidden
-                               border border-gray-200 bg-white"
+                               border border-gray-200 bg-white
+                               animate-in"
                 >
                     {/* Extra div to cap size, enables scrolling */}
                     <div className="max-h-60 overflow-y-auto">
