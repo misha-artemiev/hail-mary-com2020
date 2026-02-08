@@ -8,6 +8,7 @@ import React, { useState } from "react";
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
+import Button from "../components/forms/Button";
 
 /**
  * The main home page of the site, a feed of available bundles.
@@ -36,6 +37,7 @@ export default function Home() {
      * Handles submitting a search.
      */
     const handleSearch = () => {
+        console.log(filters);
         // TODO: fetch filters
     };
 
@@ -102,13 +104,9 @@ export default function Home() {
                     />
                 </div>
 
-                <button
-                    onClick={handleSearch}
-                    className="mt-6 bg-green-600 text-white px-6 py-3 rounded-md font-semibold
-                                hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
+                <Button onClick={handleSearch} className="w-md mt-4">
                     Search Bundles
-                </button>
+                </Button>
             </Card>
 
             <Card>
