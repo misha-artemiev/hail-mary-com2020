@@ -69,9 +69,10 @@ from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
 from internal.database.dependency import database_dependency
-from internal.queries.bundle import CreateBundleParams, UpdateBundleParams
+from internal.queries.bundle import CreateBundleParams, GetSellersBundleParams, UpdateBundleParams
 from internal.queries.bundle import Querier as BundleQuerier
-from internal.queries.models import Bundle
+from internal.queries.reservations import Querier as ReservationsQuerier, UpdateReservationStatusParams
+from internal.queries.models import Bundle, Reservation, ReservationStatus
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
@@ -180,3 +181,42 @@ async def update_bundle(
     if not bundle:
         raise HTTPException(406, "failed to update bundle")
     return bundle
+
+@router.get("/me/bundles")
+async def get_bundles(conn: database_dependency, seller: Annotated[GetSessionByTokenRow, Security(seller_auth)]) -> list[Bundle]:
+    bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
+    if not bundles:
+        raise HTTPException(500, "failed to get bundles")
+    return list(bundles)
+
+@router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])
+async def get_reservations(bundle_id: str, conn: database_dependency, seller: Annotated[GetSessionByTokenRow, Security(seller_auth)]) -> list[Reservation]:
+    bundle = BundleQuerier(conn).get_sellers_bundle(GetSellersBundleParams(
+        bundle_id=int(bundle_id),
+        seller_id=seller.user_id,
+    ))
+    if not bundle:
+        raise HTTPException(500, "faild to find bundle")
+    reservations = ReservationsQuerier(conn).get_bundle_reservations(bundle_id=bundle.bundle_id)
+    if not reservations:
+        raise HTTPException(500, "failed to find bundle reservations")
+    return list(reservations)
+
+@router.put("/me/reservations/{reservation_id}/collection", tags=["reservations"])
+async def reservation_collection(reservation_id: str, collection_code: str, conn: database_dependency, seller: Annotated[GetSessionByTokenRow, Security(seller_auth)]) -> Reservation:
+    reservation_querier = ReservationsQuerier(conn)
+    reservation = reservation_querier.get_reservation(reservation_id=int(reservation_id))
+    if not reservation:
+        raise HTTPException(500, "failed to find reservation")
+    bundle = BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
+    if not bundle:
+        raise HTTPException(500, "failed to find bundle")
+    if reservation.claim_code != collection_code or bundle.seller_id != seller.user_id:
+        raise HTTPException(500, "failed to collect bundle")
+    claimed_reservation = reservation_querier.update_reservation_status(UpdateReservationStatusParams(
+        reservation_id=reservation.reservation_id,
+        status=ReservationStatus.COLLECTED,
+    ))
+    if not claimed_reservation:
+        raise HTTPException(500, "failed to update reservation status")
+    return claimed_reservation

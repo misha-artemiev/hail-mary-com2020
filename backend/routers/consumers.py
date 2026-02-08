@@ -63,12 +63,13 @@ sequenceDiagram
 
 from typing import Annotated
 
-from fastapi import APIRouter, Response, Security
+from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
-from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
+from internal.queries.models import Reservation
 from internal.queries.token import GetSessionByTokenRow
+from internal.queries.reservations import Querier as ReservationsQuerier
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
@@ -89,22 +90,9 @@ async def register_consumer(
     _ = create_consumer(form, conn)
     return Response("Consumer was registered", 201)
 
-
-@router.put("/me/password", status_code=202)
-async def update_password(
-    form: UpdatePasswordForm,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> Response:
-    """Update users password.
-
-    Args:
-      form: form for password change
-      conn: database connection
-      consumer: consumers session
-
-    Returns:
-      if password was changed
-    """
-    _ = update_pw(consumer.email, form, conn)
-    return Response("Password was updated", 202)
+@router.get("/me/reservations", tags=["reservations"])
+async def get_reservations(conn: database_dependency, consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)]) -> list[Reservation]:
+    reservations = ReservationsQuerier(conn).get_consumers_reservations(consumer_id=consumer.user_id)
+    if not reservations:
+        raise HTTPException(500, "failed to get reservations")
+    return list(reservations)

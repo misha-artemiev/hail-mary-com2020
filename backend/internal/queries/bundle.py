@@ -38,9 +38,38 @@ LIMIT 1
 """
 
 
+GET_BUNDLE_LOCK = """-- name: get_bundle_lock \\:one
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+FROM bundles
+WHERE bundle_id=:p1
+FOR UPDATE
+LIMIT 1
+"""
+
+
 GET_BUNDLES = """-- name: get_bundles \\:many
 SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
+"""
+
+
+GET_SELLERS_BUNDLE = """-- name: get_sellers_bundle \\:one
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+FROM bundles
+WHERE seller_id=:p1 AND bundle_id=:p2
+LIMIT 1
+"""
+
+
+class GetSellersBundleParams(pydantic.BaseModel):
+    seller_id: int
+    bundle_id: int
+
+
+GET_SELLERS_BUNDLES = """-- name: get_sellers_bundles \\:many
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+FROM bundles
+WHERE seller_id=:p1
 """
 
 
@@ -111,8 +140,58 @@ class Querier:
             created_at=row[9],
         )
 
+    def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = self._conn.execute(sqlalchemy.text(GET_BUNDLE_LOCK), {"p1": bundle_id}).first()
+        if row is None:
+            return None
+        return models.Bundle(
+            bundle_id=row[0],
+            seller_id=row[1],
+            bundle_name=row[2],
+            description=row[3],
+            total_qty=row[4],
+            price=row[5],
+            discount_percentage=row[6],
+            window_start=row[7],
+            window_end=row[8],
+            created_at=row[9],
+        )
+
     def get_bundles(self) -> Iterator[models.Bundle]:
         result = self._conn.execute(sqlalchemy.text(GET_BUNDLES))
+        for row in result:
+            yield models.Bundle(
+                bundle_id=row[0],
+                seller_id=row[1],
+                bundle_name=row[2],
+                description=row[3],
+                total_qty=row[4],
+                price=row[5],
+                discount_percentage=row[6],
+                window_start=row[7],
+                window_end=row[8],
+                created_at=row[9],
+            )
+
+    def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
+        row = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLE), {"p1": arg.seller_id, "p2": arg.bundle_id}).first()
+        if row is None:
+            return None
+        return models.Bundle(
+            bundle_id=row[0],
+            seller_id=row[1],
+            bundle_name=row[2],
+            description=row[3],
+            total_qty=row[4],
+            price=row[5],
+            discount_percentage=row[6],
+            window_start=row[7],
+            window_end=row[8],
+            created_at=row[9],
+        )
+
+    def get_sellers_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
+        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLES), {"p1": seller_id})
         for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
