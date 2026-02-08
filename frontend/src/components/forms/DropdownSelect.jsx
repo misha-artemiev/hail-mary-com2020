@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 /**
  * A dropdown menu that allows choosing toggling given options.
@@ -22,6 +22,30 @@ export default function DropdownSelect({ options, value, name, onChange }) {
     // State object: if the dropdown is open
     const [open, setOpen] = useState(false);
 
+    // Reference object to the the dropdown
+    const dropdownRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setOpen(false);
+            }
+        };
+
+        // Once opened, start listening for clicks outside
+        if (open) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [open]);
+
     const toggle = (v) => {
         onChange(
             // Converts objects to list of values
@@ -32,7 +56,7 @@ export default function DropdownSelect({ options, value, name, onChange }) {
     };
 
     return (
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
             {/* Open button */}
             <button
                 type="button"
