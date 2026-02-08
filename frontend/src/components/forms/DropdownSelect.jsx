@@ -12,12 +12,13 @@ import React, { useState } from "react";
  * @param {Array<{ value: string, label: string }>} props.options
  *          - List of selectable options.
  * @param {string[]} props.value - List of currently selected values.
+ * @param {string} props.name - Description text (*i.e.* type) to give the button.
  * @param {(event: React.ChangeEvent<HTMLButtonElement>) => void} props.onChange
  *          - Change event handler.
  *
  * @returns {JSX.Element} a dropdown select area.
  */
-export default function DropdownSelect({ options, value, onChange }) {
+export default function DropdownSelect({ options, value, name, onChange }) {
     // State object: if the dropdown is open
     const [open, setOpen] = useState(false);
 
@@ -41,8 +42,24 @@ export default function DropdownSelect({ options, value, onChange }) {
                            focus:ring-2 focus:ring-green-500 focus:outline-none"
             >
                 {value.length > 0
-                    ? `${value.length} selected`
-                    : `Select options`}
+                    ? `${value.length} ${name}${value.length === 1 ? "" : "s"} selected`
+                    : `Select ${name} options`}
+
+                {/* Spinning arrow */}
+                <svg
+                    className={`w-5 h-5 text-gray-400 transition
+                                ${open ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                    />
+                </svg>
             </button>
 
             {/* Dropdown menu */}

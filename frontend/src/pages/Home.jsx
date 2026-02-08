@@ -142,6 +142,7 @@ export default function Home() {
 
                     <DropdownSelect
                         value={filters.allergens}
+                        name="allergen"
                         onChange={handleAllergensChange}
                         options={ALLERGENS}
                     />
