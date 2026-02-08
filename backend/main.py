@@ -13,6 +13,7 @@ from routers.bundles import router as bundle_router
 from routers.consumers import router as consumers_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
+from routers.users import router as users_router
 from uvicorn import run
 
 
@@ -43,6 +44,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(sellers_router)
     app.include_router(sessions_router)
     app.include_router(bundle_router)
+    app.include_router(users_router)
 
 
 register_routers(app)
