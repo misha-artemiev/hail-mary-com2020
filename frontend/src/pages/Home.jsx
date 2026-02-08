@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import Button from "../components/forms/Button";
+import Category from "../components/Category";
 
 /**
  * The main home page of the site, a feed of available bundles.
@@ -33,6 +34,14 @@ export default function Home() {
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleCategoryClick = (category) => {
+        console.log(filters);
+        setFilters((prev) => ({
+            ...prev,
+            category: prev.category === category ? "" : category, // Can toggle on/off
+        }));
+    };
+
     /**
      * Handles submitting a search.
      */
@@ -40,6 +49,38 @@ export default function Home() {
         console.log(filters);
         // TODO: fetch filters
     };
+
+    /**
+     * Dynamically renders given categories.
+     *
+     * @param {Object} categories - The categories to display.
+     * @returns {JSX.Element} a set of Category elements
+     */
+    const renderCategories = (categories) =>
+        categories.map((category) => (
+            <Category
+                key={category.value}
+                selected={filters.category === category.value}
+                onClick={() => handleCategoryClick(category.value)}
+            >
+                {category.label}
+            </Category>
+        ));
+
+    const CATEGORIES = [
+        {
+            value: "bakery",
+            label: "Bakery",
+        },
+        {
+            value: "grocery",
+            label: "Grocery",
+        },
+        {
+            value: "restaurant",
+            label: "Restaurant",
+        },
+    ];
 
     return (
         <div className="max-w-8xl mx-auto p-6">
@@ -57,19 +98,6 @@ export default function Home() {
                         value={filters.restaurant}
                         onChange={handleChange}
                     />
-
-                    {/* Category filter */}
-                    <select
-                        name="category"
-                        value={filters.category}
-                        onChange={handleChange}
-                        className="border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
-                    >
-                        <option value="">All categories</option>
-                        <option value="bakery">Bakery</option>
-                        <option value="grocery">Supermarket</option>
-                        <option value="restaurant">Restaurant</option>
-                    </select>
 
                     {/* Allergen filter */}
                     <select
@@ -102,6 +130,11 @@ export default function Home() {
                         value={filters.maxDistance}
                         onChange={handleChange}
                     />
+                </div>
+
+                {/* Categories div */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                    {renderCategories(CATEGORIES)}
                 </div>
 
                 <Button onClick={handleSearch} className="w-md mt-4">
