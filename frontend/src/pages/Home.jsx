@@ -49,7 +49,7 @@ export default function Home() {
                 {/* Restaurant filter */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormInput
-                        label="Restaurant Name"
+                        placeholder="Restaurant Name"
                         name="restaurant"
                         type="text"
                         value={filters.restaurant}
@@ -85,7 +85,7 @@ export default function Home() {
 
                     {/* Max price filter */}
                     <FormInput
-                        label="Max Price (£)"
+                        placeholder="Max Price (£)"
                         name="maxPrice"
                         type="number"
                         value={filters.maxPrice}
@@ -94,7 +94,7 @@ export default function Home() {
 
                     {/* Max distance filter */}
                     <FormInput
-                        label="Max Distance (km)"
+                        placeholder="Max Distance (km)"
                         name="maxDistance"
                         type="number"
                         value={filters.maxDistance}
