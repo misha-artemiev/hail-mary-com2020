@@ -62,6 +62,7 @@ def generate_profiles(users_df):
             'verified_by': random.choice(admin_ids),
             'verification_date': START_DATE - timedelta(days=15),
             'address_line1': fake.street_address(),
+            'address_line2': fake.secondary_address(),
             'city': fake.city(),
             'post_code': fake.postcode(),
             'region': fake.county(),
@@ -74,8 +75,8 @@ def generate_profiles(users_df):
     for unique_id in consumer_ids:
         consumers.append({
             'user_id': unique_id,
-            'f_name': fake.first_name(),
-            'l_name': fake.last_name()
+            'fName': fake.first_name(),
+            'lName': fake.last_name()
         })
         
     #handling admins
@@ -90,8 +91,8 @@ def generate_profiles(users_df):
     for unique_id, (first, last) in zip(admin_ids, admin_names.items()):
         admins.append({
             'user_id': unique_id,
-            'f_name': first,
-            'l_name': last
+            'fName': first,
+            'lName': last
         })
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
@@ -107,7 +108,7 @@ def generate_inventory(seller_ids):
                 bundles.append({
                     'bundle_id': bundle_id,
                     'seller_id': seller_id,
-                    'bundle_name': ("Surplus ", fake.word().capitalize()," Bag"),
+                    'bundle_name': f"Surplus {fake.word().capitalize()} Bag",
                     'description': fake.sentence(nb_words=10),
                     'total_qty': random.randint(1, 5),
                     'price': round(random.uniform(3.00, 7.50), 2),
