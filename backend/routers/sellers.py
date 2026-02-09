@@ -68,15 +68,18 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
-from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
-from internal.queries.bundle import CreateBundleParams, UpdateBundleParams
+from internal.queries.bundle import (
+    CreateBundleParams,
+    GetSellersBundleParams,
+    UpdateBundleParams,
+)
 from internal.queries.bundle import Querier as BundleQuerier
-from internal.queries.models import Bundle
+from internal.queries.models import Bundle, Reservation
+from internal.queries.reservations import GetReservationCollectionParams
+from internal.queries.reservations import Querier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.user import Querier as UserQuerier
-from internal.queries.user import UpdateUserEmailParams
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -105,7 +108,7 @@ class BundleForm(BaseModel):
     description: str
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
-    discount_percentage: int = Field(max_digits=100, gt=0)
+    discount_percentage: int = Field(lt=100, gt=0)
     window_start: datetime
     window_end: datetime
 
@@ -146,7 +149,7 @@ async def create_bundle(
     return bundle
 
 
-@router.put("/me/bundles/{bundle_id}", tags=["bundles"])
+@router.patch("/me/bundles/{bundle_id}", tags=["bundles"])
 async def update_bundle(
     bundle_id: str,
     form: BundleForm,
@@ -185,48 +188,94 @@ async def update_bundle(
     return bundle
 
 
-@router.put("/me/password", status_code=202)
-async def update_password(
-    form: UpdatePasswordForm,
+@router.get("/me/bundles")
+async def get_bundles(
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
-) -> Response:
-    """Update users password.
+) -> list[Bundle]:
+    """Get sellers bundles.
 
     Args:
-      form: form for password change
       conn: database connection
-      seller: sellers session
+      seller: sellers connection
 
     Returns:
-      if password was changed
-    """
-    _ = update_pw(seller.email, form, conn)
-    return Response("Password was updated", 202)
-
-
-@router.put("/me/email", status_code=202)
-async def update_email(
-    email: EmailStr,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
-) -> Response:
-    """Update users email.
-
-    Args:
-      email: new users email
-      conn: database connection
-      seller: sellers session
-
-    Returns:
-      if sellers email was updated
+      list of sellers bundles
 
     Raises:
-      HTTPException: failed to update user email
+      HTTPException: if failed to get bundles
     """
-    user = UserQuerier(conn).update_user_email(
-        UpdateUserEmailParams(user_id=seller.user_id, email=email)
+    bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
+    if not bundles:
+        raise HTTPException(500, "failed to get bundles")
+    return list(bundles)
+
+
+@router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])
+async def get_reservations(
+    bundle_id: str,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> list[Reservation]:
+    """Get reservations for sellers bundle.
+
+    Args:
+      bundle_id: bundle id
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+        list of reservations for specific bundle
+
+    Raises:
+        HTTPException: if failed to get reservations
+    """
+    bundle = BundleQuerier(conn).get_sellers_bundle(
+        GetSellersBundleParams(bundle_id=int(bundle_id), seller_id=seller.user_id)
     )
-    if not user:
-        raise HTTPException(500, "failed to update users email")
-    return Response("user email was updated", 201)
+    if not bundle:
+        raise HTTPException(500, "failed to find bundle")
+    reservations = ReservationsQuerier(conn).get_bundle_reservations(
+        bundle_id=bundle.bundle_id
+    )
+    if not reservations:
+        raise HTTPException(500, "failed to find bundle reservations")
+    return list(reservations)
+
+
+@router.patch("/me/bundles/{bundle_id}/reservations/collect", tags=["reservations"])
+async def reservation_collection(
+    bundle_id: str,
+    claim_code: str,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Reservation:
+    """Confirm reservation collection.
+
+    Args:
+        bundle_id: bundle_id
+        claim_code: claim code
+        conn: database connection
+        seller: sellers session
+
+    Returns:
+      confirmed claimed reservation
+
+    Raises:
+      HTTPException: if failed to collect reservation
+    """
+    reservation_querier = ReservationsQuerier(conn)
+    reservation = reservation_querier.get_reservation_collection(
+        GetReservationCollectionParams(bundle_id=int(bundle_id), claim_code=claim_code)
+    )
+    if not reservation:
+        raise HTTPException(500, "failed to find reservation")
+    bundle = BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
+    if not bundle or bundle.seller_id != seller.user_id:
+        raise HTTPException(500, "failed to find bundle")
+    claimed_reservation = reservation_querier.collect_reservation(
+        reservation_id=reservation.reservation_id
+    )
+    if not claimed_reservation:
+        raise HTTPException(500, "failed to update reservation status")
+    return claimed_reservation

@@ -9,9 +9,27 @@ FROM bundles
 WHERE bundle_id=$1
 LIMIT 1;
 
+-- name: GetBundleLock :one
+SELECT *
+FROM bundles
+WHERE bundle_id=$1
+FOR UPDATE
+LIMIT 1;
+
 -- name: GetBundles :many
 SELECT *
 FROM bundles;
+
+-- name: GetSellersBundles :many
+SELECT *
+FROM bundles
+WHERE seller_id=$1;
+
+-- name: GetSellersBundle :one
+SELECT *
+FROM bundles
+WHERE seller_id=$1 AND bundle_id=$2
+LIMIT 1;
 
 -- name: UpdateBundle :one
 UPDATE bundles
