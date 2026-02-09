@@ -5,6 +5,7 @@ ask if you have any questions if you need to understand.'''
 import pandas as pd
 import numpy as np
 import random
+import string
 from datetime import datetime, timedelta
 from faker import Faker
 
@@ -119,3 +120,52 @@ def generate_inventory(seller_ids):
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
+
+def generate_reservations(bundles_df, consumers_df):
+    """creates reservations with collected, no-show, and expired (reserved) states"""
+    statuses = (
+        ['no-show'] * NUM_NO_SHOWS
+        + ['reserved'] * NUM_EXPIRIES
+        + ['collected'] * (NUM_RESERVATIONS - NUM_NO_SHOWS - NUM_EXPIRIES)
+    )
+    random.shuffle(statuses)
+
+    reservations = []
+    claim_codes = set()
+    # create a list of bundle records from the bundles dataframe
+    bundle_records = bundles_df.to_dict('records')
+    # create a list of consumer ids from the consumers dataframe
+    consumer_ids = consumers_df['user_id'].tolist()
+
+    for reservation_id, status in enumerate(statuses, start=1):
+        bundle = random.choice(bundle_records)
+        reserved_at = bundle['window_start'] - timedelta(hours=random.randint(1, 24))
+        if reserved_at > bundle['window_end']:
+            reserved_at = bundle['window_start']
+
+        if status == 'collected':
+            window_minutes = int((bundle['window_end'] - bundle['window_start']).total_seconds() / 60)
+            collected_at = bundle['window_start'] + timedelta(
+                minutes=random.randint(10, max(10, window_minutes))
+            )
+        else:
+            collected_at = None
+
+        while True:
+            # create a unique claim code (10 uppercase characters long)
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+            if code not in claim_codes:
+                claim_codes.add(code)
+                break
+
+        reservations.append({
+            'reservation_id': reservation_id,
+            'bundle_id': bundle['bundle_id'],
+            'consumer_id': random.choice(consumer_ids),
+            'reserved_at': reserved_at,
+            'claim_code': code,
+            'status': status,
+            'collected_at': collected_at
+        })
+
+    return pd.DataFrame(reservations)
