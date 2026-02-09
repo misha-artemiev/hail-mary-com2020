@@ -10,6 +10,14 @@ import sqlalchemy
 from internal.queries import models
 
 
+COLLECT_RESERVATION = """-- name: collect_reservation \\:one
+UPDATE reservations
+SET status='collected', collected_at=NOW()
+WHERE reservation_id=:p1
+RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+"""
+
+
 CREATE_RESERVATION = """-- name: create_reservation \\:one
 INSERT INTO reservations (bundle_id, consumer_id, claim_code)
 VALUES (:p1,:p2,:p3)
@@ -44,22 +52,36 @@ WHERE reservation_id=:p1
 """
 
 
-UPDATE_RESERVATION_STATUS = """-- name: update_reservation_status \\:one
-UPDATE reservations
-SET status=:p2
-WHERE reservation_id=:p1
-RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+GET_RESERVATION_COLLECTION = """-- name: get_reservation_collection \\:one
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+FROM reservations
+WHERE bundle_id=:p1 AND claim_code=:p2 AND status='reserved'
+LIMIT 1
 """
 
 
-class UpdateReservationStatusParams(pydantic.BaseModel):
-    reservation_id: int
-    status: models.ReservationStatus
+class GetReservationCollectionParams(pydantic.BaseModel):
+    bundle_id: int
+    claim_code: str
 
 
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
+
+    def collect_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
+        row = self._conn.execute(sqlalchemy.text(COLLECT_RESERVATION), {"p1": reservation_id}).first()
+        if row is None:
+            return None
+        return models.Reservation(
+            reservation_id=row[0],
+            bundle_id=row[1],
+            consumer_id=row[2],
+            reserved_at=row[3],
+            claim_code=row[4],
+            status=row[5],
+            collected_at=row[6],
+        )
 
     def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
         row = self._conn.execute(sqlalchemy.text(CREATE_RESERVATION), {"p1": arg.bundle_id, "p2": arg.consumer_id, "p3": arg.claim_code}).first()
@@ -115,8 +137,8 @@ class Querier:
             collected_at=row[6],
         )
 
-    def update_reservation_status(self, arg: UpdateReservationStatusParams) -> Optional[models.Reservation]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_RESERVATION_STATUS), {"p1": arg.reservation_id, "p2": arg.status}).first()
+    def get_reservation_collection(self, arg: GetReservationCollectionParams) -> Optional[models.Reservation]:
+        row = self._conn.execute(sqlalchemy.text(GET_RESERVATION_COLLECTION), {"p1": arg.bundle_id, "p2": arg.claim_code}).first()
         if row is None:
             return None
         return models.Reservation(

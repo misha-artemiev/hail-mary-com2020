@@ -75,9 +75,9 @@ from internal.queries.bundle import (
     UpdateBundleParams,
 )
 from internal.queries.bundle import Querier as BundleQuerier
-from internal.queries.models import Bundle, Reservation, ReservationStatus
+from internal.queries.models import Bundle, Reservation
+from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.reservations import Querier as ReservationsQuerier
-from internal.queries.reservations import UpdateReservationStatusParams
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
@@ -108,7 +108,7 @@ class BundleForm(BaseModel):
     description: str
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
-    discount_percentage: int = Field(max_digits=100, gt=0)
+    discount_percentage: int = Field(lt=100, gt=0)
     window_start: datetime
     window_end: datetime
 
@@ -243,18 +243,18 @@ async def get_reservations(
     return list(reservations)
 
 
-@router.patch("/me/reservations/{reservation_id}", tags=["reservations"])
+@router.patch("/me/bundles/{bundle_id}/reservations/collect", tags=["reservations"])
 async def reservation_collection(
-    reservation_id: str,
-    collection_code: str,
+    bundle_id: str,
+    claim_code: str,
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
 ) -> Reservation:
     """Confirm reservation collection.
 
     Args:
-        reservation_id: reservation id
-        collection_code: claim code
+        bundle_id: bundle_id
+        claim_code: claim code
         conn: database connection
         seller: sellers session
 
@@ -265,21 +265,16 @@ async def reservation_collection(
       HTTPException: if failed to collect reservation
     """
     reservation_querier = ReservationsQuerier(conn)
-    reservation = reservation_querier.get_reservation(
-        reservation_id=int(reservation_id)
+    reservation = reservation_querier.get_reservation_collection(
+        GetReservationCollectionParams(bundle_id=int(bundle_id), claim_code=claim_code)
     )
     if not reservation:
         raise HTTPException(500, "failed to find reservation")
     bundle = BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
-    if not bundle:
+    if not bundle or bundle.seller_id != seller.user_id:
         raise HTTPException(500, "failed to find bundle")
-    if reservation.claim_code != collection_code or bundle.seller_id != seller.user_id:
-        raise HTTPException(500, "failed to collect bundle")
-    claimed_reservation = reservation_querier.update_reservation_status(
-        UpdateReservationStatusParams(
-            reservation_id=reservation.reservation_id,
-            status=ReservationStatus.COLLECTED,
-        )
+    claimed_reservation = reservation_querier.collect_reservation(
+        reservation_id=reservation.reservation_id
     )
     if not claimed_reservation:
         raise HTTPException(500, "failed to update reservation status")

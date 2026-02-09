@@ -18,8 +18,14 @@ SELECT *
 FROM reservations
 WHERE reservation_id=$1;
 
--- name: UpdateReservationStatus :one
+-- name: CollectReservation :one
 UPDATE reservations
-SET status=$2
+SET status='collected', collected_at=NOW()
 WHERE reservation_id=$1
 RETURNING *;
+
+-- name: GetReservationCollection :one
+SELECT *
+FROM reservations
+WHERE bundle_id=$1 AND claim_code=$2 AND status='reserved'
+LIMIT 1;

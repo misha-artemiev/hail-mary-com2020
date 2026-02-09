@@ -98,4 +98,4 @@ def generate_claim_code() -> str:
         claim code
     """
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    return "".join(choice(alphabet) for _ in range(6))
+    return "".join(choice(alphabet) for _ in range(4))
