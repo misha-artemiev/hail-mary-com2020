@@ -95,3 +95,26 @@ def generate_profiles(users_df):
         })
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
+
+def generate_inventory(seller_ids):
+    """makes 2 bundles for each seller every day for the 6 weeks"""
+    bundles = []
+    bundle_id = 1
+    for day in range(WEEKS * 7):
+        current_date = START_DATE + timedelta(days=day)
+        for seller_id in seller_ids:
+            for _ in range(2): # 2 Daily
+                bundles.append({
+                    'bundle_id': bundle_id,
+                    'seller_id': seller_id,
+                    'bundle_name': ("Surplus ", fake.word().capitalize()," Bag"),
+                    'description': fake.sentence(nb_words=10),
+                    'total_qty': random.randint(1, 5),
+                    'price': round(random.uniform(3.00, 7.50), 2),
+                    'discount_percentage': random.choice([50, 60, 70]),
+                    'window_start': current_date.replace(hour=17, minute=0),
+                    'window_end': current_date.replace(hour=19, minute=0),
+                    'created_at': current_date.replace(hour=17, minute=0) - timedelta(hours=4)
+                })
+                bundle_id += 1
+    return pd.DataFrame(bundles)
