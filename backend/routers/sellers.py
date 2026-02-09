@@ -149,7 +149,7 @@ async def create_bundle(
     return bundle
 
 
-@router.put("/me/bundles/{bundle_id}", tags=["bundles"])
+@router.patch("/me/bundles/{bundle_id}", tags=["bundles"])
 async def update_bundle(
     bundle_id: str,
     form: BundleForm,
@@ -243,7 +243,7 @@ async def get_reservations(
     return list(reservations)
 
 
-@router.put("/me/reservations/{reservation_id}/collection", tags=["reservations"])
+@router.patch("/me/reservations/{reservation_id}", tags=["reservations"])
 async def reservation_collection(
     reservation_id: str,
     collection_code: str,
