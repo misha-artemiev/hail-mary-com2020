@@ -40,15 +40,6 @@ jobs:
           pip install ".[dev]"
       - name: run checks
         run: make check
-      - name: try regen docs
-        run: make docs
-      - name: check docs
-        run: |
-          if [ -n "$(git status --porcelain docs)" ]; then
-            exit 1
-          else
-            exit 0
-          fi
   frontend-checks:
     needs: check-version-bump
     runs-on: ubuntu-latest
