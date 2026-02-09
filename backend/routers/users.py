@@ -14,7 +14,7 @@ from pydantic import EmailStr
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.put("/me/password", status_code=202)
+@router.patch("/me/password", status_code=202)
 async def update_password(
     form: UpdatePasswordForm,
     conn: database_dependency,
@@ -34,7 +34,7 @@ async def update_password(
     return Response("Password was updated", 202)
 
 
-@router.put("/me/email", status_code=202)
+@router.patch("/me/email", status_code=202)
 async def update_email(
     email: EmailStr,
     conn: database_dependency,
