@@ -103,6 +103,6 @@ def generate_claim_code(used_codes: list[str]) -> str:
     while True:
         alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
         raw_code = "".join(choice(alphabet) for _ in range(4))
-        code = f"{raw_code[:2]}:{raw_code[2:]}"
+        code = f"{raw_code[:2]}-{raw_code[2:]}"
         if code not in used_codes:
             return code
