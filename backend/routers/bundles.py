@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Security
+from pydantic import BaseModel, Field
 from internal.auth.middleware import consumer_auth
 from internal.auth.security import generate_claim_code
 from internal.database.dependency import database_dependency
@@ -11,6 +12,8 @@ from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.reservations import Querier as ReservationQuerier
 from internal.queries.token import GetSessionByTokenRow
+from internal.geolocation.distance import dist_safe_box
+from internal.geolocation.types import LocationModel
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
