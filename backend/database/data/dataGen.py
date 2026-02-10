@@ -20,9 +20,23 @@ NUM_RESERVATIONS = 400
 NUM_NO_SHOWS = 80
 NUM_EXPIRIES = 50
 NUM_REPORTS = 150
+NUM_CATEGORIES = 6
+NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 #random start date can be changed
 START_DATE = datetime(2024, 1, 1)
+
+#default product category names (easily changeable if needed)
+DEFAULT_CATEGORY_NAMES = [
+    'Bakery',
+    'Produce',
+    'Deli',
+    'Prepared Meals',
+    'Dairy',
+    'Drinks',
+    'Pantry',
+    'Snacks'
+]
 
 random.seed(42)
 np.random.seed(42)
@@ -120,6 +134,30 @@ def generate_inventory(seller_ids):
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
+
+def generate_categories():
+    """creates product categories from the default category names giving a unique id to each category"""
+    category_names = DEFAULT_CATEGORY_NAMES[:NUM_CATEGORIES]
+    if len(category_names) < NUM_CATEGORIES:
+        for _ in range(NUM_CATEGORIES - len(category_names)):
+            category_names.append(fake.unique.word().capitalize())
+
+    categories = []
+    for category_id, name in enumerate(category_names, start=1):
+        categories.append({
+            'category_id': category_id,
+            'category_name': name
+        })
+    return pd.DataFrame(categories)
+
+def generate_pickup_windows():
+    """creates a list of pickup time windows from 8am in 1 hour increments for the 10 windows"""
+    windows = []
+    start_hour = 8
+    for _ in range(NUM_PICKUP_WINDOWS):
+        windows.append({'window_start': start_hour, 'window_end': start_hour + 1})
+        start_hour += 1
+    return pd.DataFrame(windows)
 
 def generate_reservations(bundles_df, consumers_df):
     """creates reservations with collected, no-show, and expired (reserved) states"""
