@@ -84,11 +84,12 @@ async def reserve_bundle(
         raise HTTPException(500, "failed to find reservations")
     if bundle.total_qty <= len(list(reservations)):
         raise HTTPException(409, "no reservations available")
+    used_codes = [rese.claim_code for rese in reservations]
     reservation = reservations_querier.create_reservation(
         CreateReservationParams(
             bundle_id=bundle.bundle_id,
             consumer_id=consumer.user_id,
-            claim_code=generate_claim_code(),
+            claim_code=generate_claim_code(used_codes),
         )
     )
     if not reservation:
