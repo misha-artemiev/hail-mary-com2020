@@ -112,8 +112,9 @@ def generate_profiles(users_df):
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
 
-def generate_inventory(seller_ids):
+def generate_inventory(seller_ids, categories_df):
     """makes 2 bundles for each seller every day for the 6 weeks"""
+    category_ids = categories_df['category_id'].tolist()
     bundles = []
     bundle_id = 1
     for day in range(WEEKS * 7):
@@ -123,6 +124,7 @@ def generate_inventory(seller_ids):
                 bundles.append({
                     'bundle_id': bundle_id,
                     'seller_id': seller_id,
+                    'category_id': random.choice(category_ids),
                     'bundle_name': f"Surplus {fake.word().capitalize()} Bag",
                     'description': fake.sentence(nb_words=10),
                     'total_qty': random.randint(1, 5),
