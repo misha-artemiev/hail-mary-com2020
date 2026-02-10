@@ -35,6 +35,11 @@ export default function Home() {
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Handles toggling a category on/off.
+     *
+     * @param {string} category - The category to toggle.
+     */
     const handleCategoryClick = (category) => {
         console.log(filters);
         setFilters((prev) => ({
@@ -43,6 +48,11 @@ export default function Home() {
         }));
     };
 
+    /**
+     * Handles adding new allergens to the filter list.
+     *
+     * @param {Array<string>} nextAllergens - The selected allergens.
+     */
     const handleAllergensChange = (nextAllergens) => {
         setFilters((prev) => ({
             ...prev,
