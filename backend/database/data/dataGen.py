@@ -169,3 +169,63 @@ def generate_reservations(bundles_df, consumers_df):
         })
 
     return pd.DataFrame(reservations)
+
+def generate_issue_reports(reservations_df, users_df):
+    """creates seller and admin issue reports"""
+    seller_issue_types = [
+        'ITEM_MISSING',
+        'ITEM_INCORRECT',
+        'ITEM_DAMAGED',
+        'SELLER_CLOSED',
+        'SELLER_REFUSED_PICKUP',
+        'PICKUP_DELAYED',
+        'BUNDLE_EXPIRED',
+        'RESERVATION_CANCELLED_BY_SELLER',
+        'RESERVATION_NOT_FOUND',
+        'CLAIM_CODE_INVALID',
+        'CLAIM_CODE_ALREADY_USED',
+        'OTHER'
+    ]
+    admin_issue_types = [
+        'LOGIN_FAILED',
+        'ACCOUNT_LOCKED',
+        'PASSWORD_RESET_FAILED',
+        'PAYMENT_FAILED',
+        'APP_CRASH',
+        'DATA_INCONSISTENCY',
+        'PERMISSION_ERROR',
+        'OTHER'
+    ]
+    statuses = ['open', 'in_progress', 'closed']
+    # split the reports into seller and admin reports (70 % seller, 30 % admin)
+    seller_reports_count = int(NUM_REPORTS * 0.7)
+    admin_reports_count = NUM_REPORTS - seller_reports_count
+
+    reservation_ids = reservations_df['reservation_id'].tolist()
+    user_ids = users_df['user_id'].tolist()
+
+    seller_reports = []
+    for report_id in range(1, seller_reports_count + 1):
+        seller_reports.append({
+            'report_id': report_id,
+            'reservation_id': random.choice(reservation_ids),
+            'issue_type': random.choice(seller_issue_types),
+            # random realistic sentence (to be improved)
+            'description': fake.sentence(nb_words=12),
+            'created_at': START_DATE + timedelta(days=random.randint(0, WEEKS * 7 - 1)),
+            'status': random.choice(statuses)
+        })
+
+    admin_reports = []
+    for report_id in range(1, admin_reports_count + 1):
+        admin_reports.append({
+            'report_id': report_id,
+            'user_id': random.choice(user_ids),
+            'issue_type': random.choice(admin_issue_types),
+            # random realistic sentence (to be improved)
+            'description': fake.sentence(nb_words=12),
+            'created_at': START_DATE + timedelta(days=random.randint(0, WEEKS * 7 - 1)),
+            'status': random.choice(statuses)
+        })
+
+    return pd.DataFrame(seller_reports), pd.DataFrame(admin_reports)
