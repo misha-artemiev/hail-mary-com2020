@@ -41,10 +41,13 @@ export function useUser(username) {
                 username: username,
                 bio: "Selling quality items with fast delivery and trusted service.",
                 activeSince: "1st Jan, 2026",
-                location: "Exeter, England",
-                openingHours: "9am-5pm daily",
-                role: "seller",
-                categories: ["Fast Food", "Tacos", "Mexican", "Spicy"],
+                streak: "2 Weeks",
+                mealsSaved: "15",
+                co2e: "15kg",
+                // location: "Exeter, England",
+                // openingHours: "9am-5pm daily",
+                // role: "seller",
+                // categories: ["Fast Food", "Tacos", "Mexican", "Spicy"],
             };
 
             if (!cancelled) {

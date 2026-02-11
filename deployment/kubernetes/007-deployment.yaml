@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:latest
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:0.1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -83,7 +83,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:latest
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:0.1.0
           imagePullPolicy: Always
           env:
             - name: HOST_PORT

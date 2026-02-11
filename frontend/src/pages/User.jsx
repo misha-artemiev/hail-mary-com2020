@@ -136,6 +136,24 @@ export default function User() {
                         />
                     </>
                 )}
+
+                {!isSeller && (
+                    <>
+                        {/* User info */}
+                        <InfoLine
+                            label="Active since"
+                            value={user.activeSince}
+                        />
+                        <InfoLine label="Rescue streak" value={user.streak} />
+
+                        {/* Personal impact summary */}
+                        <h2 className="mt-4 text-xl font-bold text-green-700">
+                            Impact
+                        </h2>
+                        <InfoLine label="Meals saved" value={user.mealsSaved} />
+                        <InfoLine label="CO2e prevented" value={user.co2e} />
+                    </>
+                )}
             </Card>
 
             {/* Listings container */}
@@ -147,6 +165,22 @@ export default function User() {
                     </h2>
 
                     {/* Active listings */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {renderListings(listings)}
+                    </div>
+                </Card>
+            )}
+
+            {/* Reservations container */}
+            {!isSeller && (
+                <Card>
+                    {/* Header */}
+                    <h2 className="text-2xl font-bold mb-4 text-green-700">
+                        Reservations
+                    </h2>
+
+                    {/* Active reservations */}
+                    {/* TODO: get active reservations */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {renderListings(listings)}
                     </div>
