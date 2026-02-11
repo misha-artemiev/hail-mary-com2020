@@ -15,7 +15,7 @@ import User from "../pages/User";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
-import GuestRoot from "./GuestRoute";
+import GuestRoute from "./GuestRoute";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -40,17 +40,17 @@ export const ROUTES = [
     {
         path: "/login",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Login />
-            </GuestRoot>
+            </GuestRoute>
         ),
     },
     {
         path: "/signup",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Signup />
-            </GuestRoot>
+            </GuestRoute>
         ),
     },
     {
