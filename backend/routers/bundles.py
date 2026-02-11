@@ -20,10 +20,8 @@ from internal.geolocation.types import LocationModel
 from internal.geolocation.distance import dist_safe_box
 from internal.geolocation.types import LocationModel
 from internal.settings.env import host_settings
-from decimal import Decimal
 from datetime import datetime
 from thefuzz.fuzz import WRatio
-from internal.logger.logger import logger
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
@@ -124,7 +122,7 @@ class SearchBundlesResponse(BaseModel):
     sellers_name: str
     bundle_name: str
     bundle_description: str
-    price: Decimal
+    price: float
     discount_percentage: int
     window_start: datetime
     window_end: datetime
@@ -165,6 +163,11 @@ async def search_bundles(
             if categories is not None and form.categories is not None:
                 if set(categories).isdisjoint(set(form.categories)):
                     continue
+            reservations = ReservationQuerier(conn).get_bundle_reservations(
+                bundle_id=int(bundle.bundle_id)
+            )
+            if not reservations or bundle.total_qty <= len(list(reservations)):
+                continue
             filtered_bundles.append(SearchBundlesResponse(
                 bundle_id=bundle.bundle_id,
                 sellers_name=seller.seller_name,
