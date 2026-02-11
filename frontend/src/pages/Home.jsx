@@ -5,12 +5,16 @@
 
 import React, { useState } from "react";
 
+// Hooks
+import useListings from "../hooks/useListings";
+
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import Button from "../components/forms/Button";
 import Category from "../components/Category";
 import DropdownSelect from "../components/forms/DropdownSelect";
+import Listing from "../components/Listing";
 
 /**
  * The main home page of the site, a feed of available bundles.
@@ -26,6 +30,9 @@ export default function Home() {
         maxPrice: "",
         maxDistance: "",
     });
+
+    // Use custom hooks
+    const { listings, loading } = useListings();
 
     /**
      * Handles changes to the filters.
@@ -83,6 +90,22 @@ export default function Home() {
             >
                 {category.label}
             </Category>
+        ));
+
+    /**
+     * Dynamically renders given listings.
+     *
+     * @param {Object} listings - The listings to display.
+     * @returns {JSX.Element} a set of Listing elements
+     */
+    const renderListings = (listings) =>
+        listings.map((listing) => (
+            <Listing
+                key={listing.id}
+                title={listing.title}
+                info={listing.info}
+                footer={listing.footer}
+            />
         ));
 
     const CATEGORIES = [
@@ -174,7 +197,22 @@ export default function Home() {
             </Card>
 
             <Card>
-                <p className="text-gray-600">No bundles yet</p>
+                {/* Display a temporary loading indicator */}
+                {loading && (
+                    <p className="text-gray-600">Loading listings...</p>
+                )}
+
+                {/* Display if there are no listings */}
+                {!listings ||
+                    (listings.length === 0 && (
+                        <p className="text-gray-600">No listings yet!</p>
+                    ))}
+
+                {listings && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {renderListings(listings)}
+                    </div>
+                )}
             </Card>
         </div>
     );
