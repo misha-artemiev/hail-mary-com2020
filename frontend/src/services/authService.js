@@ -6,6 +6,15 @@
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
+/**
+ * Creates a session by authenticating with email and password.
+ *
+ * @param {string} email - User's email (used as username).
+ * @param {string} password - User's password.
+ *
+ * @returns {Promise<Object>} the token object with `{token, expires_at, role}`
+ * @throws {Error} if authentication fails.
+ */
 export async function createSession(email, password) {
     // Convert credentials (i.e. email:password) to Base64 token
     const credentials = btoa(`${email}:${password}`);
@@ -31,6 +40,11 @@ export async function createSession(email, password) {
     return await response.json();
 }
 
+/**
+ * Stores the authentication token object in localStorage.
+ *
+ * @param {Object} tokenData - Response from {@link createSession}.
+ */
 export function storeAuthToken(tokenData) {
     // Push auth information to local storage
     localStorage.setItem("authToken", tokenData.token);
@@ -38,10 +52,18 @@ export function storeAuthToken(tokenData) {
     localStorage.setItem("userRole", tokenData.role);
 }
 
+/**
+ * Retrieves the current authentication token, if it exists.
+ *
+ * @returns {string|null} the stored token.
+ */
 export function getAuthToken() {
     return localStorage.getItem("authToken");
 }
 
+/**
+ * Clears stored authentication data.
+ */
 export function clearAuthToken() {
     // Clears auth
     localStorage.removeItem("authToken");
