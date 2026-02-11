@@ -269,3 +269,39 @@ def generate_issue_reports(reservations_df, users_df):
         })
 
     return pd.DataFrame(seller_reports), pd.DataFrame(admin_reports)
+
+def generate_allergens():
+    allergen_names = ['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Sesame']
+    allergens = []
+    for i, name in enumerate(allergen_names, start=1):
+        allergens.append({'allergen_id': i, 'name': name})
+    return pd.DataFrame(allergens)
+
+def generate_bundle_allergens(bundles_df, allergens_df):
+    """links each bundle to 1-3 random allergens."""
+    bundle_ids = bundles_df['bundle_id'].tolist()
+    allergen_ids = allergens_df['allergen_id'].tolist()
+    links = []
+    for bundle_id in bundle_ids:
+        # pick a random number of allergens for this food bag
+        selected = random.sample(allergen_ids, random.randint(0, 3))
+        for allergen_id in selected:
+            links.append({'bundle_id': bundle_id, 'allergen_id': allergen_id})
+    return pd.DataFrame(links)
+
+def generate_inbox(users_df):
+    """generates welcome messages and system notifications."""
+    user_ids = users_df['user_id'].tolist()
+    messages = []
+    for i in range(1, 101): # 100 sample messages
+        recip = random.choice(user_ids)
+        messages.append({
+            'message_id': i,
+            'user_id': recip,
+            'sender_id': 1, # assuming user_id 1 is the system/admin can be changed easily
+            'message_subject': "Welcome to the App!",
+            'message_text': fake.paragraph(nb_sentences=3),
+            'sent_at': START_DATE + timedelta(days=random.randint(0, 30)),
+            'read_status': random.choice([True, False])
+        })
+    return pd.DataFrame(messages)
