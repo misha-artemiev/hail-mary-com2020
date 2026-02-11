@@ -125,8 +125,8 @@ def generate_profiles(users_df):
     for uid in consumer_ids:
         consumers.append({
             'user_id': uid,
-            'f_name': fake.first_name(),
-            'l_name': fake.last_name()
+            'fName': fake.first_name(),
+            'lName': fake.last_name()
         })
         
     # admins
@@ -138,8 +138,8 @@ def generate_profiles(users_df):
     for userid, (first, last) in zip(admin_ids, admin_names.items()):
         admins.append({
             'user_id': userid,
-            'f_name': first,
-            'l_name': last
+            'fName': first,
+            'lName': last
         })
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
@@ -443,22 +443,22 @@ if __name__ == "__main__":
 
     #saving
     all_dfs = {
-        'users': df_users,
-        'sellers': df_sellers,
-        'consumers': df_consumers,
-        'admins': df_admins,
-        'bundles': df_bundles,
-        'categories': df_categories,
-        'allergens': df_allergens,
-        'bundle_category': df_bundle_cats,
-        'bundle_allergens': df_bundle_alls,
-        'reservations': df_reservations,
-        'seller_issue_report': df_seller_reports,
-        'admin_issue_report': df_admin_reports,
-        'inbox': df_inbox,
-        'badges': df_badges,
-        'badges_acquired': df_badges_acquired,
-        'token': df_tokens,
+        '01_users': df_users,
+        '02_sellers': df_sellers,
+        '03_consumers': df_consumers,
+        '04_admins': df_admins,
+        '05_bundles': df_bundles,
+        '06_categories': df_categories,
+        '07_allergens': df_allergens,
+        '08_bundle_category': df_bundle_cats,
+        '09_bundle_allergens': df_bundle_alls,
+        '10_reservations': df_reservations,
+        '11_seller_issue_report': df_seller_reports,
+        '12_admin_issue_report': df_admin_reports,
+        '13_inbox': df_inbox,
+        '14_badges': df_badges,
+        '15_badges_acquired': df_badges_acquired,
+        '16_token': df_tokens,
     }
 
     print("Saving files...")
