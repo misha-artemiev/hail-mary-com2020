@@ -13,7 +13,7 @@ import numpy as np
 import random
 import string
 from datetime import datetime, timedelta
-#from internal.auth.security import
+from internal.auth.security import generate_claim_code
 from faker import Faker
 
 #setting the Faker library to use UK countries
@@ -244,8 +244,7 @@ def generate_reservations(bundles_df, consumers_df):
             collected_at = None
 
         while True:
-            # create a unique claim code (10 uppercase characters long)
-            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+            code = generate_claim_code()
             if code not in claim_codes:
                 claim_codes.add(code)
                 break
