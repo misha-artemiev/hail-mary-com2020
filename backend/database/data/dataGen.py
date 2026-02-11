@@ -356,49 +356,6 @@ def generate_inbox(users_df):
             'read_status': random.choice([True, False])
         })
     return pd.DataFrame(messages)
-    """Creates badge definitions and assigns them to consumers."""
-    # Badge Definitions
-    badge_data = [
-        {'badgeID': 1, 'name': 'First Save', 'description': 'Saved your first bag'},
-        {'badgeID': 2, 'name': 'Eco Warrior', 'description': 'Saved 10 bags total'},
-        {'badgeID': 3, 'name': 'Early Bird', 'description': 'Picked up a bag before 10am'},
-        {'badgeID': 4, 'name': 'Streak Master', 'description': 'Saved bags 3 days in a row'}
-    ]
-    
-    # badges accuired
-    acquired = []
-    consumer_ids = consumers_df['user_id'].tolist()
-    
-    for uid in consumer_ids:
-        # 40% chance a user has badges
-        if random.random() < 0.4:
-            # Assign 1 to 3 random badges
-            num_badges = random.randint(1, 3)
-            my_badges = random.sample([b['badgeID'] for b in badge_data], num_badges)
-            
-            for bid in my_badges:
-                acquired.append({
-                    'user_id': uid,
-                    'badge_id': bid,
-                    'aquired_at': START_DATE + timedelta(days=random.randint(1, 40))
-                })
-                
-    return pd.DataFrame(badge_data), pd.DataFrame(acquired)
-
-    """Generates auth tokens for the token table."""
-    tokens = []
-    for user_id in users_df['user_id']:
-        # Only active users might have a valid token
-        if random.random() > 0.2: 
-            created = START_DATE + timedelta(days=random.randint(1, 40))
-            tokens.append({
-                'token_id': len(tokens) + 1,
-                'user_id': user_id,
-                'token': ''.join(random.choices(string.ascii_letters + string.digits, k=32)),
-                'created_at': created,
-                'expires_at': created + timedelta(hours=24)
-            })
-    return pd.DataFrame(tokens)
 
 def generate_badges(consumers_df):
     """Creates badge definitions and assigns them to consumers."""
