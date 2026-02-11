@@ -70,50 +70,76 @@ def generate_users():
     return pd.DataFrame(users)
 
 def generate_profiles(users_df):
-    """this function makes the seperate user role tables from the user table returned by generate_users()"""
-    admin_ids = users_df[users_df['role'] == 'admin']['user_id'].tolist() #makes a list of all ids that are admins for verifcation NOT ADMIN TABLE
+    """Creates profile tables with REAL UK COORDINATES for Sellers."""
+    admin_ids = users_df[users_df['role'] == 'admin']['user_id'].tolist()
     
-    #handling sellers
+    exeter_data = [
+        (50.7260, -3.5275, "EX4 3HG"), # High St
+        (50.7255, -3.5298, "EX4 3HP"), # Guildhall
+        (50.7238, -3.5321, "EX4 3AN"), # Fore St
+        (50.7272, -3.5235, "EX4 6NN"), # Sidwell St
+        (50.7295, -3.5330, "EX4 3RP"), # Queen St
+        (50.7198, -3.5268, "EX2 4AN"), # The Quayside
+        (50.7185, -3.5280, "EX2 8GT"), # Piazza Terracina
+        (50.7365, -3.5351, "EX4 4QJ"), # University (Forum)
+        (50.7330, -3.5360, "EX4 4RN"), # University (Innovation)
+        (50.7215, -3.5180, "EX2 4TA"), # Magdalen Rd
+        (50.7248, -3.5042, "EX1 2QN"), # Heavitree Fore St
+        (50.7255, -3.4980, "EX1 2RG"), # Heavitree Tesco
+        (50.7065, -3.5215, "EX2 8QF"), # Marsh Barton
+        (50.7090, -3.5240, "EX2 8LB"), # Marsh Barton Sainsbury
+        (50.7130, -3.5110, "EX2 5DW"), # Wonford
+        (50.7230, -3.4850, "EX4 8AD"), # Whipton
+        (50.7420, -3.5050, "EX4 8LL"), # Pinhoe
+        (50.7550, -3.4750, "EX2 7LL"), # Sowton Ind Est
+        (50.7160, -3.4800, "EX2 7HY"), # Rydon Lane
+        (50.7050, -3.4900, "EX2 7BY"), # Countess Wear
+        (50.7280, -3.5450, "EX4 4KU"), # St Davids
+        (50.7200, -3.5420, "EX4 1AH"), # Exe Bridges
+        (50.7290, -3.5200, "EX4 6LG"), # Old Tiverton Rd
+        (50.7150, -3.5350, "EX2 8DP"), # Haven Banks
+        (50.7320, -3.5100, "EX4 7AY")  # Polsloe
+    ]
+    
+    #Sellers
     sellers = []
-    seller_ids = users_df[users_df['role'] == 'seller']['user_id'].tolist()#makes a list of all user ids that are sellers
-    for unique_id in seller_ids:
+    seller_ids = users_df[users_df['role'] == 'seller']['user_id'].tolist()
+    
+    for user_id, (lat, lon, pcode) in zip(seller_ids, exeter_data):
         sellers.append({
-            'user_id': unique_id,
+            'user_id': user_id,
             'seller_name': fake.company(),
             'verified_by': random.choice(admin_ids),
             'verification_date': START_DATE - timedelta(days=15),
             'address_line1': fake.street_address(),
-            'address_line2': fake.secondary_address(),
-            'city': fake.city(),
-            'post_code': fake.postcode(),
-            'region': fake.county(),
+            'city': 'Exeter',
+            'latitude': lat,
+            'longitude': lon,
+            'post_code': pcode,
             'country': 'United Kingdom'
         })
         
-    # handling consumers
+    #consumers
     consumers = []
-    consumer_ids = users_df[users_df['role'] == 'consumer']['user_id'].tolist()#getting consumer ids from the users df
-    for unique_id in consumer_ids:
+    consumer_ids = users_df[users_df['role'] == 'consumer']['user_id'].tolist()
+    for uid in consumer_ids:
         consumers.append({
-            'user_id': unique_id,
-            'fName': fake.first_name(),
-            'lName': fake.last_name()
+            'user_id': uid,
+            'f_name': fake.first_name(),
+            'l_name': fake.last_name()
         })
         
-    #handling admins
+    # admins
     admins = []
-    admin_names = {"Muhammed": "Panjwani",
-                   "Massimo": "Belmonte",
-                   "Thomas" : "Noakes",
-                   "Noe" : "Bouchard",
-                   "Misha" : "Artemiev",
-                   "Furkan" : "Yalcintepe",
-                   "Ed" : "Ed_lol"} 
-    for unique_id, (first, last) in zip(admin_ids, admin_names.items()):
+    admin_names = {
+        "Muhammed": "Panjwani", "Massimo": "Belmonte", "Thomas": "Noakes",
+        "Noe": "Bouchard", "Misha": "Artemiev", "Furkan": "Yalcintepe", "Ed": "Ed_lol"
+    }
+    for userid, (first, last) in zip(admin_ids, admin_names.items()):
         admins.append({
-            'user_id': unique_id,
-            'fName': first,
-            'lName': last
+            'user_id': userid,
+            'f_name': first,
+            'l_name': last
         })
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
