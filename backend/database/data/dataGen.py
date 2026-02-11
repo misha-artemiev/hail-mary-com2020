@@ -138,7 +138,7 @@ def generate_profiles(users_df):
         "Muhammed": "Panjwani",
         "Massimo": "Belmonte",
         "Thomas": "Noakes",
-        "Noe": "Bouchard",
+        "Noé": "Bouchard",
         "Misha": "Artemiev",
         "Furkan": "Yalcintepe",
         "Ed": "Ed_lol",
