@@ -28,7 +28,7 @@ WHERE seller_id=$1;
 -- name: GetSellersActiveBundles :many
 SELECT *
 FROM bundles
-WHERE seller_id=$1 AND window_start >= NOW() AND window_end <= NOW();
+WHERE seller_id=$1 AND NOW() BETWEEN window_start AND window_end;
 
 -- name: GetSellersBundle :one
 SELECT *

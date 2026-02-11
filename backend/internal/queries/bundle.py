@@ -56,7 +56,7 @@ FROM bundles
 GET_SELLERS_ACTIVE_BUNDLES = """-- name: get_sellers_active_bundles \\:many
 SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
-WHERE seller_id=:p1 AND window_start >= NOW() AND window_end <= NOW()
+WHERE seller_id=:p1 AND NOW() BETWEEN window_start AND window_end
 """
 
 

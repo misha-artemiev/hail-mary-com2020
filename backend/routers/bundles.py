@@ -13,12 +13,17 @@ from internal.queries.reservations import CreateReservationParams
 from internal.queries.reservations import Querier as ReservationQuerier
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.seller import GetSellerByLocationParams, Querier as SellerQuerier
+from internal.queries.allergens import Querier as AllergensQuerier
+from internal.queries.category import Querier as CategoriesQuerier
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
 from internal.geolocation.distance import dist_safe_box
 from internal.geolocation.types import LocationModel
+from internal.settings.env import host_settings
 from decimal import Decimal
 from datetime import datetime
+from thefuzz.fuzz import WRatio
+from internal.logger.logger import logger
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
@@ -111,6 +116,7 @@ class SearchBundlesForm(BaseModel):
     max_price: float | None = Field(gt=0)
     seller_name: str | None
     allergens: list[int] | None
+    categories: list[int] | None
 
 
 class SearchBundlesResponse(BaseModel):
@@ -141,11 +147,33 @@ async def search_bundles(
         raise HTTPException(500, "failed to get sellers")
     filtered_bundles: list[SearchBundlesResponse] = []
     for seller in sellers:
-        dist = get_distance(LocationModel(lat=form.lat,lon=form.lon), LocationModel(lat=seller.latitude, lon=seller.longitude))
+        dist = get_distance(
+            LocationModel(lat=form.lat,lon=form.lon), 
+            LocationModel(lat=seller.latitude, lon=seller.longitude)
+        )
         if dist > form.max_dist:
             continue
-        seller_bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
-        filtered_bundles.append(SearchBundlesResponse(
-            bundle_id=se
-        ))
+        if form.seller_name and WRatio(form.seller_name, seller.seller_name) > host_settings.fuzz_threshold:
+            continue
+        seller_bundles = BundleQuerier(conn).get_sellers_active_bundles(seller_id=seller.user_id)
+        for bundle in seller_bundles:
+            allergens = AllergensQuerier(conn).get_bundle_allergens(bundle_id=bundle.bundle_id)
+            if allergens is not None and form.allergens is not None:
+                if not set(allergens).isdisjoint(set(form.allergens)):
+                    continue
+            categories = CategoriesQuerier(conn).get_bundle_categories(bundle_id=bundle.bundle_id)
+            if categories is not None and form.categories is not None:
+                if set(categories).isdisjoint(set(form.categories)):
+                    continue
+            filtered_bundles.append(SearchBundlesResponse(
+                bundle_id=bundle.bundle_id,
+                sellers_name=seller.seller_name,
+                bundle_name=bundle.bundle_name,
+                bundle_description=bundle.description,
+                price=bundle.price,
+                discount_percentage=bundle.discount_percentage,
+                window_start=bundle.window_start,
+                window_end=bundle.window_end,
+                dist=round(dist, 2),
+            ))
     return filtered_bundles
