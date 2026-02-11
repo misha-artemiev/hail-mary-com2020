@@ -149,19 +149,32 @@ def generate_inventory(seller_ids, categories_df, windows_df):
     return pd.DataFrame(bundles)
 
 def generate_categories():
-    """creates product categories from the default category names giving a unique id to each category"""
-    category_names = DEFAULT_CATEGORY_NAMES[:NUM_CATEGORIES]
-    if len(category_names) < NUM_CATEGORIES:
-        for _ in range(NUM_CATEGORIES - len(category_names)):
-            category_names.append(fake.unique.word().capitalize())
-
+    """Creates the master list of product categories."""
+    # Using DEFAULT_CATEGORY_NAMES list
     categories = []
-    for category_id, name in enumerate(category_names, start=1):
+    for i, name in enumerate(DEFAULT_CATEGORY_NAMES, start=1):
         categories.append({
-            'category_id': category_id,
+            'category_id': i,
             'category_name': name
         })
     return pd.DataFrame(categories)
+
+def generate_bundle_categories(bundles_df, categories_df):
+    """Links each bundle to 1-2 random categories."""
+    bundle_ids = bundles_df['bundle_id'].tolist()
+    category_ids = categories_df['category_id'].tolist()
+    links = []
+    
+    for bundle_id in bundle_ids:
+        # Most bundles belong to 1 category, some might belong to 2
+        selected = random.sample(category_ids, random.randint(1, 2))
+        for category_id in selected:
+            links.append({
+                'bundle_id': bundle_id, 
+                'category_id': category_id
+            })
+            
+    return pd.DataFrame(links)
 
 def generate_pickup_windows():
     """creates a list of pickup time windows from 8am in 1 hour increments for the 10 windows"""
