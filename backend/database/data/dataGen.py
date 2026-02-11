@@ -31,7 +31,7 @@ NUM_CATEGORIES = 6
 NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 # random start date can be changed
-START_DATE = datetime(2024, 1, 1)
+START_DATE = datetime(2025, 1, 15)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [
@@ -417,6 +417,7 @@ def generate_tokens(users_df):
                 "expires_at": created + timedelta(hours=24),
             })
     return pd.DataFrame(tokens)
+    
 
 
 # main execution
