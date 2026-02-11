@@ -12,6 +12,8 @@ dependencies = [
     "bcrypt==5.0.0",
     "sqlalchemy==2.0.46",
     "psycopg[binary]==3.3.2",
+    "geopy==2.4.1",
+    "thefuzz[speedup]==0.22.1",
 ]
 
 [project.optional-dependencies]
@@ -112,3 +114,9 @@ warn_no_return = true
 warn_redundant_casts = true
 explicit_package_bases = true
 exclude = "^internal/queries"
+
+[[tool.mypy.overrides]]
+module = [
+    "geopy.*",
+    "thefuzz.*",
+]
