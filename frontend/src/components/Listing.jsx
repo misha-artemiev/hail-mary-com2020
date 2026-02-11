@@ -57,7 +57,7 @@ export default function Listing({ title, info, footer, onClick }) {
                 </div>
 
                 {/* Footer, if present */}
-                {footer}
+                {footer && <p>{footer}</p>}
             </div>
         </div>
     );

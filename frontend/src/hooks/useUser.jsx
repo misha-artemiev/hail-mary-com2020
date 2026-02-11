@@ -51,7 +51,6 @@ export function useUser(username) {
             };
 
             if (!cancelled) {
-                console.log("done");
                 setUser(data);
                 setLoading(false);
             }

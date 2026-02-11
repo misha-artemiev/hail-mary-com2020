@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App"; // Loads the SPA
-import "./index.css"; // Loads TailwindCSS
+import "./styles/index.css"; // Loads TailwindCSS
 
 // Apply the app to the HTML
 createRoot(document.getElementById("root")).render(
