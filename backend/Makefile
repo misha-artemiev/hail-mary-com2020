@@ -5,11 +5,13 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
-.PHONY: default format lint install typecheck lint-fix init-db run
+.PHONY: default format lint install typecheck lint-fix init-db run docs check check-apply sql
 
 default: check
 
-check: format spell typecheck lint audit
+check-apply: format spell typecheck lint-fix audit
+
+check: format-check spell typecheck lint audit
 
 install:
 	@pip install -e ".[dev]"
@@ -17,6 +19,10 @@ install:
 format:
 	@echo "Running formatting"
 	@ruff format $(SRC)
+
+format-check:
+	@echo Running formatting checker
+	@ruff format --check $(SRC)
 
 spell:
 	@echo "Running spell check"
@@ -43,6 +49,7 @@ run:
 init-db:
 	@python -m database.init_db
 
+<<<<<<< HEAD
 FILES = users admins sellers consumers bundles category allergens bundle_category bundle_allergens reservations seller_issue_reports admin_issue_reports inbox badges badges_acquired token
 upload-db:
 	@python -m database.data.dataGen
@@ -50,3 +57,16 @@ upload-db:
 		csvsql --db "postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_DATABASE)" --insert --no-create --no-inference "synthetic_data/$$file.csv"; \
 	done
 	@rm -r ./synthetic_data
+=======
+docs:
+	@mv .env .env.bak || true
+	@pdoc --docformat google \
+		--mermaid \
+		--math \
+		-o ./docs \
+		main.py internal routers database
+	@mv .env.bak .env || true
+
+sql:
+	@sqlc generate
+>>>>>>> origin/release

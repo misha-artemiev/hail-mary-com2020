@@ -7,26 +7,10 @@ import React from "react";
 
 // Components
 import Card from "../components/Card";
+import InfoLine from "../components/InfoLine";
 
 // Resources
 import defaultProfile from "../assets/default-user.jpg";
-
-/**
- * Displays a labelled information field.
- *
- * @param {Object} props
- * @param {string} props.label - The label to describe the value
- * @param {string | number} props.label - The value to display
- *
- * @returns {JSX.Element} a paragraph element containing the label and value
- */
-function Info({ label, value }) {
-    return (
-        <p className="text-gray-700 mb-2">
-            <span className="font-semibold">{label}:</span> {value}
-        </p>
-    );
-}
 
 export default function Profile() {
     /**
@@ -65,9 +49,9 @@ export default function Profile() {
                 />
 
                 {/* User info */}
-                <Info label="Display name" value="User0001" />
-                <Info label="Current rescue streak" value="0 weeks" />
-                <Info label="Bundles rescued" value="0" />
+                <InfoLine label="Display name" value="User0001" />
+                <InfoLine label="Current rescue streak" value="0 weeks" />
+                <InfoLine label="Bundles rescued" value="0" />
             </Card>
 
             {/* Badges container */}

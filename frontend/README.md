@@ -89,6 +89,7 @@ npm run format:fix
 │   │   ├ Signup.jsx
 │   │   ├ Profile.jsx
 │   │   └ NotFound.jsx
+│   ├ routes/           # Routing configuration
 │   ├ App.jsx           # Loads the React Router
 │   ├ main.jsx          # Main entrypoint for root element
 │   └ index.css         # Initialises TailwindCSS

@@ -1,19 +1,20 @@
 """Middlewares to include in routes for auto authorisation."""
 
-from fastapi import Security
+from fastapi import HTTPException, Security
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBasic,
     HTTPBasicCredentials,
     HTTPBearer,
 )
+from pydantic import BaseModel
+
 from internal.auth.security import check_password
-from internal.database import database_dependency
+from internal.database.dependency import database_dependency
 from internal.queries.models import UserRole
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.token import Querier as TokenQuerier
 from internal.queries.user import Querier as UserQuerier
-from pydantic import BaseModel
 
 
 class BasicAuthResponse(BaseModel):
@@ -66,3 +67,60 @@ def bearer_auth(
     if not session:
         raise ValueError("No user was found")
     return session
+
+
+def consumer_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate consumer in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a consumer
+    """
+    if session.role == UserRole.CONSUMER:
+        return session
+    raise HTTPException(401, "Not authorised as consumer")
+
+
+def seller_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate seller in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a seller
+    """
+    if session.role == UserRole.SELLER:
+        return session
+    raise HTTPException(401, "Not authorised as seller")
+
+
+def admin_auth(
+    session: GetSessionByTokenRow = Security(bearer_auth),
+) -> GetSessionByTokenRow:
+    """Authentisate admin in a middleware.
+
+    Args:
+      session: user session from bearer authentication
+
+    Returns:
+      user session if user was successfully authenticated
+
+    Raises:
+      HTTPException: if user is not a admin
+    """
+    if session.role == UserRole.ADMIN:
+        return session
+    raise HTTPException(401, "Not authorised as admin")
