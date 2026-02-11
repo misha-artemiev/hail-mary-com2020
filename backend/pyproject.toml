@@ -26,6 +26,7 @@ dev = [
     "faker>=40.4.0",
     "pandas-stubs>=3.0.0.260204",
     "pdoc>=16.0.0",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [build-system]
