@@ -3,6 +3,7 @@
 from pydantic import BaseModel, EmailStr, SecretStr
 from sqlalchemy import Connection
 
+from internal.geolocation.location import get_location
 from internal.queries.consumer import CreateConsumerParams
 from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
@@ -10,7 +11,6 @@ from internal.queries.seller import CreateSellerParams
 from internal.queries.seller import Querier as SellerQuerier
 from internal.queries.user import CreateUserParams, CreateUserRow
 from internal.queries.user import Querier as UserQuery
-from internal.geolocation.location import get_location
 
 from .security import hash_password
 
@@ -88,7 +88,7 @@ class CreateSellerForm(BaseModel):
     country: str
 
 
-async def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
+def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
     """Creates and inserts seller and user entiry.
 
     Args:
@@ -111,7 +111,7 @@ async def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
     if form.region:
         address += f", {form.region}"
     address += f", {form.country}"
-    loc = await get_location(address)
+    loc = get_location(address)
     seller = SellerQuerier(conn).create_seller(
         CreateSellerParams(
             user_id=user.user_id,

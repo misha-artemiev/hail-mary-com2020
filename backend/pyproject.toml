@@ -114,3 +114,9 @@ warn_no_return = true
 warn_redundant_casts = true
 explicit_package_bases = true
 exclude = "^internal/queries"
+
+[[tool.mypy.overrides]]
+module = [
+    "geopy.*",
+    "thefuzz.*",
+]

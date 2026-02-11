@@ -97,7 +97,7 @@ async def register_seller(
     Returns:
       if seller was registered
     """
-    _ = await create_seller(form, conn)
+    _ = create_seller(form, conn)
     return Response("Seller was registered", 201)
 
 
