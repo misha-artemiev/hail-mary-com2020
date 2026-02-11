@@ -7,6 +7,7 @@ from my thoughts it is okay for the prototype and will be improves later, rememb
 make changes to almost every aspect of the app so we can make improvements and get more realistic data 
 therefore more marks for CW2.'''
 
+import os
 import pandas as pd
 import numpy as np
 import random
@@ -329,3 +330,159 @@ def generate_inbox(users_df):
             'read_status': random.choice([True, False])
         })
     return pd.DataFrame(messages)
+    """Creates badge definitions and assigns them to consumers."""
+    # Badge Definitions
+    badge_data = [
+        {'badgeID': 1, 'name': 'First Save', 'description': 'Saved your first bag'},
+        {'badgeID': 2, 'name': 'Eco Warrior', 'description': 'Saved 10 bags total'},
+        {'badgeID': 3, 'name': 'Early Bird', 'description': 'Picked up a bag before 10am'},
+        {'badgeID': 4, 'name': 'Streak Master', 'description': 'Saved bags 3 days in a row'}
+    ]
+    
+    # badges accuired
+    acquired = []
+    consumer_ids = consumers_df['user_id'].tolist()
+    
+    for uid in consumer_ids:
+        # 40% chance a user has badges
+        if random.random() < 0.4:
+            # Assign 1 to 3 random badges
+            num_badges = random.randint(1, 3)
+            my_badges = random.sample([b['badgeID'] for b in badge_data], num_badges)
+            
+            for bid in my_badges:
+                acquired.append({
+                    'user_id': uid,
+                    'badge_id': bid,
+                    'aquired_at': START_DATE + timedelta(days=random.randint(1, 40))
+                })
+                
+    return pd.DataFrame(badge_data), pd.DataFrame(acquired)
+
+    """Generates auth tokens for the token table."""
+    tokens = []
+    for user_id in users_df['user_id']:
+        # Only active users might have a valid token
+        if random.random() > 0.2: 
+            created = START_DATE + timedelta(days=random.randint(1, 40))
+            tokens.append({
+                'token_id': len(tokens) + 1,
+                'user_id': user_id,
+                'token': ''.join(random.choices(string.ascii_letters + string.digits, k=32)),
+                'created_at': created,
+                'expires_at': created + timedelta(hours=24)
+            })
+    return pd.DataFrame(tokens)
+
+def generate_badges(consumers_df):
+    """Creates badge definitions and assigns them to consumers."""
+    #Badge Definitions
+    badge_data = [
+        {'badgeID': 1, 'name': 'First Save', 'description': 'Saved your first bag'},
+        {'badgeID': 2, 'name': 'Eco Saver', 'description': 'Saved 10 bags total'},
+        {'badgeID': 3, 'name': 'Early Bird', 'description': 'Picked up a bag before 10am'},
+        {'badgeID': 4, 'name': 'Streak', 'description': 'Saved bags 3 days in a row'}
+    ]
+    
+    #Badges Acquired (Junction)
+    acquired = []
+    consumer_ids = consumers_df['user_id'].tolist()
+    
+    for uid in consumer_ids:
+        # 40% chance a user has badges
+        if random.random() < 0.4:
+            # Assign 1 to 3 random badges
+            num_badges = random.randint(1, 3)
+            my_badges = random.sample([b['badgeID'] for b in badge_data], num_badges)
+            
+            for bid in my_badges:
+                acquired.append({
+                    'user_id': uid,
+                    'badge_id': bid,
+                    'aquired_at': START_DATE + timedelta(days=random.randint(1, 40))
+                })
+                
+    return pd.DataFrame(badge_data), pd.DataFrame(acquired)
+
+def generate_tokens(users_df):
+    """Generates auth tokens for the token table."""
+    tokens = []
+    for user_id in users_df['user_id']:
+        if random.random() > 0.2: 
+            created = START_DATE + timedelta(days=random.randint(1, 40))
+            tokens.append({
+                'token_id': len(tokens) + 1,
+                'user_id': user_id,
+                'token': ''.join(random.choices(string.ascii_letters + string.digits, k=32)),
+                'created_at': created,
+                'expires_at': created + timedelta(hours=24)
+            })
+    return pd.DataFrame(tokens)
+
+# main execution
+if __name__ == "__main__":
+    print("Starting Data Gen...")
+
+    # Define Output Folder
+    OUTPUT_FOLDER = 'synthetic_data'
+    # Create the folder if it doesn't exist
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
+        print(f"Created folder: {OUTPUT_FOLDER}")
+
+    #Users & Profiles
+    df_users = generate_users()
+    df_sellers, df_consumers, df_admins = generate_profiles(df_users)
+    print(f"   Generated {len(df_users)} users")
+    
+    # categories, allergens, and pickup windows
+    df_categories = generate_categories()
+    df_allergens = generate_allergens()
+    df_windows = generate_pickup_windows()
+    
+    #Inventory
+    df_bundles = generate_inventory(df_sellers['user_id'].tolist(), df_categories, df_windows)
+    
+    #Junction Tables
+    df_bundle_cats = generate_bundle_categories(df_bundles, df_categories)
+    df_bundle_alls = generate_bundle_allergens(df_bundles, df_allergens)
+    print(f"   Generated {len(df_bundles)} bundles")
+    
+    # reservations with different states (collected, no-show, expired)
+    df_reservations = generate_reservations(df_bundles, df_consumers)
+    print(f"   Generated {len(df_reservations)} reservations")
+    
+    #support and game
+    df_seller_reports, df_admin_reports = generate_issue_reports(df_reservations, df_users)
+    df_inbox = generate_inbox(df_users)
+    df_badges, df_badges_acquired = generate_badges(df_consumers)
+    df_tokens = generate_tokens(df_users)
+
+    #saving
+    all_dfs = {
+        'users': df_users,
+        'sellers': df_sellers,
+        'consumers': df_consumers,
+        'admins': df_admins,
+        'bundles': df_bundles,
+        'categories': df_categories,
+        'allergens': df_allergens,
+        'bundle_category': df_bundle_cats,
+        'bundle_allergens': df_bundle_alls,
+        'reservations': df_reservations,
+        'seller_issue_report': df_seller_reports,
+        'admin_issue_report': df_admin_reports,
+        'inbox': df_inbox,
+        'badges': df_badges,
+        'badges_acquired': df_badges_acquired,
+        'token': df_tokens,
+    }
+
+    print("Saving files...")
+    for name, df in all_dfs.items():
+        # Use os.path.join to work on Windows and Mac
+        file_path = os.path.join(OUTPUT_FOLDER, f"{name}.csv")
+        df.to_csv(file_path, index=False)
+        print(f"   - Saved {file_path}")
+
+    print("Data Gen done yippee hurray")
