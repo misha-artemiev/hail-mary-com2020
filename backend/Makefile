@@ -45,6 +45,7 @@ init-db:
 
 FILES = users sellers consumers admins bundles categories allergens bundle_category bundle_allergens reservations seller_issue_report admin_issue_report inbox badges badges_acquired token
 upload-db:
+	@python -m database.data.dataGen
 	@for file in $(FILES); do \
 		csvsql --db "postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_DATABASE)" --insert --no-create "synthetic_data/$$file.csv"; \
 	done
