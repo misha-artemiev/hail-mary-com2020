@@ -20,7 +20,13 @@ dev = [
     "codespell>=2.4.1",
     "mypy>=1.19.1",
     "pip-audit>=2.10.0",
+    "csvkit>=2.2.0",
+    "pandas>=3.0.0",
+    "numpy>=2.4.2",
+    "faker>=40.4.0",
+    "pandas-stubs>=3.0.0.260204",
     "pdoc>=16.0.0",
+    "psycopg2-binary>=2.9.11",
 ]
 
 [build-system]
