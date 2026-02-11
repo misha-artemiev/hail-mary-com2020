@@ -19,7 +19,7 @@ export async function createSession(email, password) {
     // Convert credentials (i.e. email:password) to Base64 token
     const credentials = btoa(`${email}:${password}`);
 
-    const response = await fetch(`${API_BASE_URL}/session`, {
+    const response = await fetch(`${API_BASE_URL}/sessions`, {
         method: "POST",
         headers: {
             Authorization: `Basic ${credentials}`,
