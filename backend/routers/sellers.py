@@ -79,9 +79,6 @@ from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.reservations import Querier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.seller import GetSellerByLocationParams, Querier as SellerQuerier
-from internal.geolocation.distance import dist_safe_box, get_distance
-from internal.geolocation.types import LocationModel
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -282,38 +279,3 @@ async def reservation_collection(
     if not claimed_reservation:
         raise HTTPException(500, "failed to update reservation status")
     return claimed_reservation
-
-class FilteredSellersForm(BaseModel):
-    lat: float
-    lon: float
-    max_dist: int = Field(gt=0)
-    max_price: float | None = Field(gt=0)
-    seller_name: str | None
-    allergens: list[int] | None
-
-
-class FilteredSellersResponse(BaseModel):
-    seller_id: int
-    dist: float
-
-@router.get("/filter")
-async def get_filtered_sellers(
-    form: FilteredSellersForm, conn: database_dependency
-) -> list[FilteredSellersResponse]:
-    distance_box = dist_safe_box(
-        LocationModel(lat=form.lat, lon=form.lon), form.max_dist
-    )
-    sellers = SellerQuerier(conn).get_seller_by_location(GetSellerByLocationParams(
-        lat_max=distance_box.lat_max,
-        lat_min=distance_box.lat_min,
-        lon_max=distance_box.lon_max,
-        lon_min=distance_box.lon_min,
-    ))
-    if not sellers:
-        raise HTTPException(500, "failed to get sellers")
-    filtered_sellers: list[FilteredSellersResponse] = []
-    for seller in sellers:
-        dist = get_distance(LocationModel(lat=form.lat,lon=form.lon), LocationModel(lat=seller.latitude, lon=seller.longitude))
-        if dist <= form.max_dist:
-            filtered_sellers.append(FilteredSellersResponse(seller_id=seller.user_id, dist=dist))
-    return filtered_sellers

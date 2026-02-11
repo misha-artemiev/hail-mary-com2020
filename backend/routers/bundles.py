@@ -12,8 +12,13 @@ from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.reservations import Querier as ReservationQuerier
 from internal.queries.token import GetSessionByTokenRow
+from internal.queries.seller import GetSellerByLocationParams, Querier as SellerQuerier
+from internal.geolocation.distance import dist_safe_box, get_distance
+from internal.geolocation.types import LocationModel
 from internal.geolocation.distance import dist_safe_box
 from internal.geolocation.types import LocationModel
+from decimal import Decimal
+from datetime import datetime
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
@@ -98,3 +103,49 @@ async def reserve_bundle(
     if not reservation:
         raise HTTPException(500, "failed to create reservation")
     return reservation
+
+class SearchBundlesForm(BaseModel):
+    lat: float
+    lon: float
+    max_dist: int = Field(gt=0)
+    max_price: float | None = Field(gt=0)
+    seller_name: str | None
+    allergens: list[int] | None
+
+
+class SearchBundlesResponse(BaseModel):
+    bundle_id: int
+    sellers_name: str
+    bundle_name: str
+    bundle_description: str
+    price: Decimal
+    discount_percentage: int
+    window_start: datetime
+    window_end: datetime
+    dist: float
+
+@router.post("/search")
+async def search_bundles(
+    form: SearchBundlesForm, conn: database_dependency
+) -> list[SearchBundlesResponse]:
+    distance_box = dist_safe_box(
+        LocationModel(lat=form.lat, lon=form.lon), form.max_dist
+    )
+    sellers = SellerQuerier(conn).get_seller_by_location(GetSellerByLocationParams(
+        lat_max=distance_box.lat_max,
+        lat_min=distance_box.lat_min,
+        lon_max=distance_box.lon_max,
+        lon_min=distance_box.lon_min,
+    ))
+    if not sellers:
+        raise HTTPException(500, "failed to get sellers")
+    filtered_bundles: list[SearchBundlesResponse] = []
+    for seller in sellers:
+        dist = get_distance(LocationModel(lat=form.lat,lon=form.lon), LocationModel(lat=seller.latitude, lon=seller.longitude))
+        if dist > form.max_dist:
+            continue
+        seller_bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
+        filtered_bundles.append(SearchBundlesResponse(
+            bundle_id=se
+        ))
+    return filtered_bundles

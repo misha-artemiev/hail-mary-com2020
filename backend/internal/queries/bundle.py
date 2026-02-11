@@ -53,6 +53,13 @@ FROM bundles
 """
 
 
+GET_SELLERS_ACTIVE_BUNDLES = """-- name: get_sellers_active_bundles \\:many
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+FROM bundles
+WHERE seller_id=:p1 AND window_start >= NOW() AND window_end <= NOW()
+"""
+
+
 GET_SELLERS_BUNDLE = """-- name: get_sellers_bundle \\:one
 SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
@@ -159,6 +166,22 @@ class Querier:
 
     def get_bundles(self) -> Iterator[models.Bundle]:
         result = self._conn.execute(sqlalchemy.text(GET_BUNDLES))
+        for row in result:
+            yield models.Bundle(
+                bundle_id=row[0],
+                seller_id=row[1],
+                bundle_name=row[2],
+                description=row[3],
+                total_qty=row[4],
+                price=row[5],
+                discount_percentage=row[6],
+                window_start=row[7],
+                window_end=row[8],
+                created_at=row[9],
+            )
+
+    def get_sellers_active_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
+        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_ACTIVE_BUNDLES), {"p1": seller_id})
         for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
