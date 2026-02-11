@@ -125,8 +125,8 @@ def generate_profiles(users_df):
     for uid in consumer_ids:
         consumers.append({
             'user_id': uid,
-            'fName': fake.first_name(),
-            'lName': fake.last_name()
+            'fname': fake.first_name(),
+            'lname': fake.last_name()
         })
         
     # admins
@@ -138,8 +138,8 @@ def generate_profiles(users_df):
     for userid, (first, last) in zip(admin_ids, admin_names.items()):
         admins.append({
             'user_id': userid,
-            'fName': first,
-            'lName': last
+            'fname': first,
+            'lname': last
         })
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
@@ -215,7 +215,7 @@ def generate_pickup_windows():
 def generate_reservations(bundles_df, consumers_df):
     """creates reservations with collected, no-show, and expired (reserved) states"""
     statuses = (
-        ['no-show'] * NUM_NO_SHOWS
+        ['no_show'] * NUM_NO_SHOWS
         + ['reserved'] * NUM_EXPIRIES
         + ['collected'] * (NUM_RESERVATIONS - NUM_NO_SHOWS - NUM_EXPIRIES)
     )
@@ -325,7 +325,7 @@ def generate_allergens():
     allergen_names = ['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Sesame']
     allergens = []
     for i, name in enumerate(allergen_names, start=1):
-        allergens.append({'allergen_id': i, 'name': name})
+        allergens.append({'allergen_id': i, 'allergen_name': name})
     return pd.DataFrame(allergens)
 
 def generate_bundle_allergens(bundles_df, allergens_df):
@@ -361,10 +361,10 @@ def generate_badges(consumers_df):
     """Creates badge definitions and assigns them to consumers."""
     #Badge Definitions
     badge_data = [
-        {'badgeID': 1, 'name': 'First Save', 'description': 'Saved your first bag'},
-        {'badgeID': 2, 'name': 'Eco Saver', 'description': 'Saved 10 bags total'},
-        {'badgeID': 3, 'name': 'Early Bird', 'description': 'Picked up a bag before 10am'},
-        {'badgeID': 4, 'name': 'Streak', 'description': 'Saved bags 3 days in a row'}
+        {'badge_id': 1, 'name': 'First Save', 'description': 'Saved your first bag'},
+        {'badge_id': 2, 'name': 'Eco Saver', 'description': 'Saved 10 bags total'},
+        {'badge_id': 3, 'name': 'Early Bird', 'description': 'Picked up a bag before 10am'},
+        {'badge_id': 4, 'name': 'Streak', 'description': 'Saved bags 3 days in a row'}
     ]
     
     #Badges Acquired (Junction)
@@ -376,13 +376,13 @@ def generate_badges(consumers_df):
         if random.random() < 0.4:
             # Assign 1 to 3 random badges
             num_badges = random.randint(1, 3)
-            my_badges = random.sample([b['badgeID'] for b in badge_data], num_badges)
+            my_badges = random.sample([b['badge_id'] for b in badge_data], num_badges)
             
             for bid in my_badges:
                 acquired.append({
                     'user_id': uid,
                     'badge_id': bid,
-                    'aquired_at': START_DATE + timedelta(days=random.randint(1, 40))
+                    'acquired_at': START_DATE + timedelta(days=random.randint(1, 40))
                 })
                 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
@@ -448,13 +448,13 @@ if __name__ == "__main__":
         'consumers': df_consumers,
         'admins': df_admins,
         'bundles': df_bundles,
-        'categories': df_categories,
+        'category': df_categories,
         'allergens': df_allergens,
         'bundle_category': df_bundle_cats,
         'bundle_allergens': df_bundle_alls,
         'reservations': df_reservations,
-        'seller_issue_report': df_seller_reports,
-        'admin_issue_report': df_admin_reports,
+        'seller_issue_reports': df_seller_reports,
+        'admin_issue_reports': df_admin_reports,
         'inbox': df_inbox,
         'badges': df_badges,
         'badges_acquired': df_badges_acquired,
