@@ -2,6 +2,11 @@
 I have added some comments to the code to explain what each part is doing, but feel free to
 ask if you have any questions if you need to understand.'''
 
+'''This code generates synthetic data for the app although it is not perfect for the final app,
+from my thoughts it is okay for the prototype and will be improves later, remember for CW2 we have to
+make changes to almost every aspect of the app so we can make improvements and get more realistic data 
+therefore more marks for CW2.'''
+
 import pandas as pd
 import numpy as np
 import random
@@ -112,27 +117,33 @@ def generate_profiles(users_df):
         
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
 
-def generate_inventory(seller_ids, categories_df):
+def generate_inventory(seller_ids, categories_df, windows_df):
     """makes 2 bundles for each seller every day for the 6 weeks"""
     category_ids = categories_df['category_id'].tolist()
+    window_records = windows_df.to_dict('records')
     bundles = []
     bundle_id = 1
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
         for seller_id in seller_ids:
-            for _ in range(2): # 2 Daily
+            for _ in range(2): 
+                # Pick a random window (e.g., 8am-9am or 2pm-3pm)
+                window = random.choice(window_records)
+                
+                win_start = current_date.replace(hour=window['window_start'], minute=0)
+                win_end = current_date.replace(hour=window['window_end'], minute=0)
+                
                 bundles.append({
                     'bundle_id': bundle_id,
                     'seller_id': seller_id,
-                    'category_id': random.choice(category_ids),
                     'bundle_name': f"Surplus {fake.word().capitalize()} Bag",
                     'description': fake.sentence(nb_words=10),
                     'total_qty': random.randint(1, 5),
                     'price': round(random.uniform(3.00, 7.50), 2),
                     'discount_percentage': random.choice([50, 60, 70]),
-                    'window_start': current_date.replace(hour=17, minute=0),
-                    'window_end': current_date.replace(hour=19, minute=0),
-                    'created_at': current_date.replace(hour=17, minute=0) - timedelta(hours=4)
+                    'window_start': win_start,
+                    'window_end': win_end,
+                    'created_at': win_start - timedelta(hours=random.randint(2, 6))
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
