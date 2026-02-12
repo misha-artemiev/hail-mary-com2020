@@ -18,6 +18,12 @@ WHERE b.bundle_id=:p1
 """
 
 
+GET_CATEGORIES = """-- name: get_categories \\:many
+SELECT category_id, category_name
+FROM category
+"""
+
+
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
@@ -26,3 +32,11 @@ class Querier:
         result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_CATEGORIES), {"p1": bundle_id})
         for row in result:
             yield row[0]
+
+    def get_categories(self) -> Iterator[models.Category]:
+        result = self._conn.execute(sqlalchemy.text(GET_CATEGORIES))
+        for row in result:
+            yield models.Category(
+                category_id=row[0],
+                category_name=row[1],
+            )

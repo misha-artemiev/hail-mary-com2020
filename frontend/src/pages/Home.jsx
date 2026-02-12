@@ -6,7 +6,9 @@
 import React, { useState } from "react";
 
 // Hooks
-import useListings from "../hooks/useListings";
+import useAllergens from "../hooks/useAllergens";
+import useCategories from "../hooks/useCategories";
+import useSearchBundles from "../hooks/useSearchBundles";
 
 // Components
 import Card from "../components/Card";
@@ -32,7 +34,9 @@ export default function Home() {
     });
 
     // Use custom hooks
-    const { listings, loading } = useListings();
+    const { listings, loading, search } = useSearchBundles();
+    const { allergenOptions } = useAllergens();
+    const { categoryOptions } = useCategories();
 
     /**
      * Handles changes to the filters.
@@ -71,8 +75,7 @@ export default function Home() {
      * Handles submitting a search.
      */
     const handleSearch = () => {
-        console.log(filters);
-        // TODO: fetch filters
+        search(filters);
     };
 
     /**
@@ -99,48 +102,59 @@ export default function Home() {
      * @returns {JSX.Element} a set of Listing elements
      */
     const renderListings = (listings) =>
-        listings.map((listing) => (
-            <Listing
-                key={listing.id}
-                title={listing.title}
-                info={listing.info}
-                footer={listing.footer}
-            />
-        ));
+        listings.map((listing) => {
+            const originalPrice = listing.price;
+            const discountedPrice =
+                originalPrice * (1 - listing.discount_percentage / 100);
+            const windowStart = new Date(listing.window_start);
+            const windowEnd = new Date(listing.window_end);
+            const startDateTime = windowStart.toLocaleString("en-GB", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+            const endDateTime = windowEnd.toLocaleString("en-GB", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+            });
 
-    const CATEGORIES = [
-        {
-            value: "bakery",
-            label: "Bakery",
-        },
-        {
-            value: "grocery",
-            label: "Grocery",
-        },
-        {
-            value: "restaurant",
-            label: "Restaurant",
-        },
-    ];
-
-    const ALLERGENS = [
-        {
-            value: "nuts",
-            label: "Nuts",
-        },
-        {
-            value: "dairy",
-            label: "Dairy",
-        },
-        {
-            value: "gluten",
-            label: "Gluten",
-        },
-        {
-            value: "shellfish",
-            label: "Shellfish",
-        },
-    ];
+            return (
+                <Listing
+                    key={listing.bundle_id}
+                    title={listing.bundle_name}
+                    info={[
+                        {
+                            label: "Description",
+                            value: listing.bundle_description,
+                        },
+                        { label: "Restaurant", value: listing.sellers_name },
+                        {
+                            label: "Pickup Window",
+                            value: `${startDateTime} - ${endDateTime}`,
+                        },
+                    ]}
+                    footer={
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-gray-500 line-through">
+                                £{originalPrice.toFixed(2)}
+                            </span>
+                            <span className="text-lg font-bold text-green-600">
+                                £{discountedPrice.toFixed(2)}
+                            </span>
+                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                {listing.discount_percentage}% OFF
+                            </span>
+                            <span className="text-gray-600 text-m ml-auto">
+                                {listing.dist.toFixed(1)} km
+                            </span>
+                        </div>
+                    }
+                />
+            );
+        });
 
     return (
         <div className="max-w-8xl mx-auto p-6">
@@ -164,6 +178,8 @@ export default function Home() {
                         placeholder="Max Price (£)"
                         name="maxPrice"
                         type="number"
+                        min="0"
+                        step="0.5"
                         value={filters.maxPrice}
                         onChange={handleChange}
                     />
@@ -173,6 +189,8 @@ export default function Home() {
                         placeholder="Max Distance (km)"
                         name="maxDistance"
                         type="number"
+                        min="0"
+                        step="1"
                         value={filters.maxDistance}
                         onChange={handleChange}
                     />
@@ -182,13 +200,13 @@ export default function Home() {
                         value={filters.allergens}
                         name="allergen"
                         onChange={handleAllergensChange}
-                        options={ALLERGENS}
+                        options={allergenOptions}
                     />
                 </div>
 
                 {/* Categories div */}
                 <div className="mt-4 flex flex-wrap gap-2">
-                    {renderCategories(CATEGORIES)}
+                    {renderCategories(categoryOptions)}
                 </div>
 
                 <Button onClick={handleSearch} className="w-md mt-4">
