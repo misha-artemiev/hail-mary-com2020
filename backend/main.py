@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
 from internal.settings.env import host_settings
@@ -14,6 +14,8 @@ from routers.consumers import router as consumers_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
 from routers.users import router as users_router
+from routers.allergens import router as allergens_router
+from routers.categories import router as categories_router
 from uvicorn import run
 
 
@@ -40,12 +42,17 @@ app = FastAPI(
 
 def register_routers(app: FastAPI) -> None:
     """Registers api routers with the app."""
-    app.include_router(consumers_router)
-    app.include_router(sellers_router)
-    app.include_router(sessions_router)
-    app.include_router(bundle_router)
-    app.include_router(users_router)
-
+    routers: list[APIRouter] = [
+        consumers_router,
+        sellers_router,
+        bundle_router,
+        sessions_router,
+        users_router,
+        allergens_router,
+        categories_router,
+    ]
+    for router in routers:
+        app.include_router(router)
 
 register_routers(app)
 
