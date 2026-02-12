@@ -3,10 +3,9 @@
  * @author Ed Brown
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 // Hooks
-import useListings from "../hooks/useListings";
 import useAllergens from "../hooks/useAllergens";
 import useCategories from "../hooks/useCategories";
 import useSearchBundles from "../hooks/useSearchBundles";
@@ -36,8 +35,8 @@ export default function Home() {
 
     // Use custom hooks
     const { listings, loading, search } = useSearchBundles();
-    const { allergenOptions, loading: allergenLoading } = useAllergens();
-    const { categoryOptions, loading: categoryLoading } = useCategories();
+    const { allergenOptions, loading: _allergenLoading } = useAllergens();
+    const { categoryOptions, loading: _categoryLoading } = useCategories();
 
     /**
      * Handles changes to the filters.
@@ -130,7 +129,7 @@ export default function Home() {
                         { label: "Restaurant", value: listing.sellers_name },
                         { label: "Pickup Window", value: `${startDateTime} - ${endDateTime}` },
                     ]}
-                    footer={[
+                    footer={
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-gray-500 line-through">
                                 £{originalPrice.toFixed(2)}
@@ -145,7 +144,7 @@ export default function Home() {
                                 {listing.dist.toFixed(1)} km
                             </span>
                         </div>
-                    ]}
+                    }
                 />
             );
         });
