@@ -187,7 +187,7 @@ async def search_bundles(
             if (
                 allergens
                 and form.allergens
-                and not set(list(allergens)).isdisjoint(set(form.allergens))
+                and not set(allergens).isdisjoint(set(form.allergens))
             ):
                 continue
             categories = CategoriesQuerier(conn).get_bundle_categories(
@@ -196,7 +196,7 @@ async def search_bundles(
             if (
                 categories
                 and form.categories
-                and set(list(categories)).isdisjoint(set(form.categories))
+                and set(categories).isdisjoint(set(form.categories))
             ):
                 continue
             reservations = ReservationQuerier(conn).get_bundle_reservations(
