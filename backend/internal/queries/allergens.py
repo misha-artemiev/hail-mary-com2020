@@ -9,6 +9,12 @@ import sqlalchemy
 from internal.queries import models
 
 
+GET_ALLERGENS = """-- name: get_allergens \\:many
+SELECT allergen_id, allergen_name
+FROM allergens
+"""
+
+
 GET_BUNDLE_ALLERGENS = """-- name: get_bundle_allergens \\:many
 SELECT a.allergen_id
 FROM allergens a
@@ -21,6 +27,14 @@ WHERE b.bundle_id=:p1
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
+
+    def get_allergens(self) -> Iterator[models.Allergen]:
+        result = self._conn.execute(sqlalchemy.text(GET_ALLERGENS))
+        for row in result:
+            yield models.Allergen(
+                allergen_id=row[0],
+                allergen_name=row[1],
+            )
 
     def get_bundle_allergens(self, *, bundle_id: int) -> Iterator[int]:
         result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_ALLERGENS), {"p1": bundle_id})
