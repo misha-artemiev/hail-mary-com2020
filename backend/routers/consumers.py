@@ -67,9 +67,12 @@ from fastapi import APIRouter, HTTPException, Response, Security
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
+from internal.queries.consumer import Querier as ConsumerQuerier
+from internal.queries.consumer import UpdateConsumerParams
 from internal.queries.models import Reservation
 from internal.queries.reservations import Querier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
@@ -114,3 +117,39 @@ async def get_reservations(
     if not reservations:
         raise HTTPException(500, "failed to get reservations")
     return list(reservations)
+
+
+class UpdateConsumerForm(BaseModel):
+    """Consumer name update form."""
+
+    first_name: str
+    last_name: str
+
+
+@router.patch("/me")
+async def update_consumer(
+    form: UpdateConsumerForm,
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> Response:
+    """Consumer name update.
+
+    Args:
+        form: consumer update form
+        conn: database connection
+        consumer: consumer session
+
+    Returns:
+        if consumer was update
+
+    Raises:
+        HTTPException: if failed to update consumer
+    """
+    updated_consumer = ConsumerQuerier(conn).update_consumer(
+        UpdateConsumerParams(
+            user_id=consumer.user_id, fname=form.first_name, lname=form.last_name
+        )
+    )
+    if not updated_consumer:
+        raise HTTPException(500, "failed to update consumer")
+    return Response("consumer was updated", 200)

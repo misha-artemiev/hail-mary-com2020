@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS sellers (
     post_code VARCHAR(20) NOT NULL,
     region VARCHAR(100),
     country VARCHAR(100) NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (user_id),
     FOREIGN KEY (verified_by) REFERENCES admins(user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
