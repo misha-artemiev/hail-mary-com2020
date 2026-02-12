@@ -35,8 +35,8 @@ export default function Home() {
 
     // Use custom hooks
     const { listings, loading, search } = useSearchBundles();
-    const { allergenOptions, loading: _allergenLoading } = useAllergens();
-    const { categoryOptions, loading: _categoryLoading } = useCategories();
+    const { allergenOptions } = useAllergens();
+    const { categoryOptions } = useCategories();
 
     /**
      * Handles changes to the filters.
@@ -104,20 +104,21 @@ export default function Home() {
     const renderListings = (listings) =>
         listings.map((listing) => {
             const originalPrice = listing.price;
-            const discountedPrice = originalPrice * (1 - listing.discount_percentage / 100);
+            const discountedPrice =
+                originalPrice * (1 - listing.discount_percentage / 100);
             const windowStart = new Date(listing.window_start);
             const windowEnd = new Date(listing.window_end);
-            const startDateTime = windowStart.toLocaleString('en-GB', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            const startDateTime = windowStart.toLocaleString("en-GB", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
             });
-            const endDateTime = windowEnd.toLocaleString('en-GB', {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            const endDateTime = windowEnd.toLocaleString("en-GB", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
             });
 
             return (
@@ -125,9 +126,15 @@ export default function Home() {
                     key={listing.bundle_id}
                     title={listing.bundle_name}
                     info={[
-                        { label: "Description", value: listing.bundle_description },
+                        {
+                            label: "Description",
+                            value: listing.bundle_description,
+                        },
                         { label: "Restaurant", value: listing.sellers_name },
-                        { label: "Pickup Window", value: `${startDateTime} - ${endDateTime}` },
+                        {
+                            label: "Pickup Window",
+                            value: `${startDateTime} - ${endDateTime}`,
+                        },
                     ]}
                     footer={
                         <div className="flex items-center gap-2 flex-wrap">

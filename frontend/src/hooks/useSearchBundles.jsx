@@ -12,43 +12,56 @@ export default function useSearchBundles() {
      * Uses provided filters, but falls back to internal userLocation
      * if specific coordinates aren't passed in the arguments.
      */
-    const search = useCallback(async (filters = {}) => {
-        setLoading(true);
-        setError(null);
+    const search = useCallback(
+        async (filters = {}) => {
+            setLoading(true);
+            setError(null);
 
-        try {
-            const searchLat = filters.lat !== undefined ? filters.lat : userLocation.lat;
-            const searchLon = filters.lon !== undefined ? filters.lon : userLocation.lon;
+            try {
+                const searchLat =
+                    filters.lat !== undefined ? filters.lat : userLocation.lat;
+                const searchLon =
+                    filters.lon !== undefined ? filters.lon : userLocation.lon;
 
-            const payload = {
-                lat: searchLat,
-                lon: searchLon,
-                max_dist: filters.maxDistance ? Number(filters.maxDistance) : null,
-                max_price: filters.maxPrice ? Number(filters.maxPrice) : null,
-                seller_name: filters.restaurant || null,
-                allergens: (filters.allergens || []).map((a) => Number(a.value ?? a)),
-                categories: filters.category ? [Number(filters.category)] : []
-            };
+                const payload = {
+                    lat: searchLat,
+                    lon: searchLon,
+                    max_dist: filters.maxDistance
+                        ? Number(filters.maxDistance)
+                        : null,
+                    max_price: filters.maxPrice
+                        ? Number(filters.maxPrice)
+                        : null,
+                    seller_name: filters.restaurant || null,
+                    allergens: (filters.allergens || []).map((a) =>
+                        Number(a.value ?? a),
+                    ),
+                    categories: filters.category
+                        ? [Number(filters.category)]
+                        : [],
+                };
 
-            const response = await fetch("/api/bundles/search", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
+                const response = await fetch("/api/bundles/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
 
-            if (!response.ok) {
-                throw new Error("Failed to search bundles");
+                if (!response.ok) {
+                    throw new Error("Failed to search bundles");
+                }
+
+                const data = await response.json();
+                setListings(data);
+            } catch (err) {
+                console.error(err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
             }
-
-            const data = await response.json();
-            setListings(data);
-        } catch (err) {
-            console.error(err);
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    }, [userLocation]);
+        },
+        [userLocation],
+    );
 
     /**
      * Geolocation Effect
@@ -79,7 +92,7 @@ export default function useSearchBundles() {
                 enableHighAccuracy: true,
                 timeout: 10000,
                 maximumAge: 0,
-            }
+            },
         );
     }, []);
 

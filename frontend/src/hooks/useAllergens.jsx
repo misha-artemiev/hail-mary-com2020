@@ -23,9 +23,9 @@ export default function useAllergens() {
 
             if (!cancelled) {
                 const formattedAllergens = data.map((allergen) => ({
-                        value: allergen.allergen_id,
-                        label: allergen.allergen_name
-                    }));
+                    value: allergen.allergen_id,
+                    label: allergen.allergen_name,
+                }));
 
                 setAllergenOptions(formattedAllergens);
                 setLoading(false);

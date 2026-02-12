@@ -23,9 +23,9 @@ export default function useAllergens() {
 
             if (!cancelled) {
                 const formattedCategories = data.map((category) => ({
-                        value: category.category_id,
-                        label: category.category_name
-                    }));
+                    value: category.category_id,
+                    label: category.category_name,
+                }));
 
                 setCategoryOptions(formattedCategories);
                 setLoading(false);
