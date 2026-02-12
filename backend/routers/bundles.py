@@ -185,8 +185,8 @@ async def search_bundles(
                 bundle_id=bundle.bundle_id
             )
             if (
-                not allergens
-                and form.allergens is not None
+                allergens
+                and form.allergens
                 and not set(allergens).isdisjoint(set(form.allergens))
             ):
                 continue
@@ -194,8 +194,8 @@ async def search_bundles(
                 bundle_id=bundle.bundle_id
             )
             if (
-                not categories
-                and form.categories is not None
+                categories
+                and form.categories
                 and set(categories).isdisjoint(set(form.categories))
             ):
                 continue
