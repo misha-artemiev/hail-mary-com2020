@@ -21,6 +21,7 @@ from internal.queries.token import GetSessionByTokenRow
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
+from internal.logger.logger import logger
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
@@ -185,18 +186,18 @@ async def search_bundles(
                 bundle_id=bundle.bundle_id
             )
             if (
-                not allergens
-                and form.allergens is not None
-                and not set(allergens).isdisjoint(set(form.allergens))
+                allergens
+                and form.allergens
+                and not set(list(allergens)).isdisjoint(set(form.allergens))
             ):
                 continue
             categories = CategoriesQuerier(conn).get_bundle_categories(
                 bundle_id=bundle.bundle_id
             )
             if (
-                not categories
-                and form.categories is not None
-                and set(categories).isdisjoint(set(form.categories))
+                categories
+                and form.categories
+                and set(list(categories)).isdisjoint(set(form.categories))
             ):
                 continue
             reservations = ReservationQuerier(conn).get_bundle_reservations(
