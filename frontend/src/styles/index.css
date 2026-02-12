@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Custom fade-in */
+@import "./animate-in.css";
