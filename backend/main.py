@@ -9,13 +9,13 @@ from fastapi import APIRouter, FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
 from internal.settings.env import host_settings
+from routers.allergens import router as allergens_router
 from routers.bundles import router as bundle_router
+from routers.categories import router as categories_router
 from routers.consumers import router as consumers_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
 from routers.users import router as users_router
-from routers.allergens import router as allergens_router
-from routers.categories import router as categories_router
 from uvicorn import run
 
 
@@ -53,6 +53,7 @@ def register_routers(app: FastAPI) -> None:
     ]
     for router in routers:
         app.include_router(router)
+
 
 register_routers(app)
 
