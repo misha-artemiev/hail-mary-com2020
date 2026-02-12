@@ -21,7 +21,6 @@ from internal.queries.token import GetSessionByTokenRow
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
-from internal.logger.logger import logger
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
