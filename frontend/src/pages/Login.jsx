@@ -68,8 +68,6 @@ export default function Login() {
             const tokenData = await createSession(form.email, form.password);
             storeAuthToken(tokenData);
 
-            console.log(tokenData);
-
             // Update AuthContext state
             auth_ctx.login(tokenData);
 
