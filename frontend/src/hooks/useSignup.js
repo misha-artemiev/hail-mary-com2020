@@ -6,6 +6,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { createSession, storeAuthToken } from "../services/authService";
+import { useAuth } from "../context/authContext";
+
 // Set the default base API route
 const API_BASE_URL =
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -54,6 +57,7 @@ const buildRequest = (role, form) => {
 
 export function useSignup() {
     const navigate = useNavigate();
+    const authContext = useAuth();
 
     // State object: holds all fields for the form
     const [role, setRole] = useState("");
@@ -126,6 +130,11 @@ export function useSignup() {
                     data?.message ?? `Signup failed (${response.status}).`,
                 );
             }
+
+            // Auto-login with new user
+            const tokenData = await createSession(form.email, form.password);
+            storeAuthToken(tokenData);
+            authContext.login(tokenData);
 
             // Redirect to home page
             navigate("/");
