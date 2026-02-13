@@ -112,7 +112,7 @@ class SearchBundlesForm(BaseModel):
 
     lat: float
     lon: float
-    max_dist: int = Field(gt=0)
+    max_dist: int | None = Field(gt=0)
     max_price: float | None = Field(gt=0)
     seller_name: str | None
     allergens: list[int] | None
@@ -149,6 +149,7 @@ async def search_bundles(
     Raises:
         HTTPException: if failed to find item
     """
+    form.max_dist = form.max_dist or 10
     distance_box = dist_safe_box(
         LocationModel(lat=form.lat, lon=form.lon), form.max_dist
     )
@@ -184,8 +185,8 @@ async def search_bundles(
                 bundle_id=bundle.bundle_id
             )
             if (
-                allergens is not None
-                and form.allergens is not None
+                allergens
+                and form.allergens
                 and not set(allergens).isdisjoint(set(form.allergens))
             ):
                 continue
@@ -193,8 +194,8 @@ async def search_bundles(
                 bundle_id=bundle.bundle_id
             )
             if (
-                categories is not None
-                and form.categories is not None
+                categories
+                and form.categories
                 and set(categories).isdisjoint(set(form.categories))
             ):
                 continue
