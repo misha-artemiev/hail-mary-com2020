@@ -16,6 +16,7 @@ import User from "../pages/User";
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoot from "./GuestRoute";
+import EditProfile from "../pages/EditProfile";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -34,6 +35,14 @@ export const ROUTES = [
         element: (
             <ProtectedRoute>
                 <Profile />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/editprofile",
+        element: (
+            <ProtectedRoute>
+                <EditProfile />
             </ProtectedRoute>
         ),
     },

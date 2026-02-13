@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
@@ -16,9 +17,10 @@ export default function Profile() {
     /**
      * Handles clicking the edit button.
      */
+
+    const navigate = useNavigate();
     const handleEdit = () => {
-        // TODO: add edit profile
-        alert("Clicked");
+        navigate("/editprofile");
     };
 
     return (
