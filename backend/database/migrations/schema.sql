@@ -153,7 +153,8 @@ CREATE TABLE IF NOT EXISTS reservations (
     status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers(user_id)
+    FOREIGN KEY (consumer_id) REFERENCES consumers(user_id),
+    UNIQUE (bundle_id, claim_code)
 );
 
 CREATE TABLE IF NOT EXISTS badges (
