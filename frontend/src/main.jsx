@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App"; // Loads the SPA
-import { AuthProvider } from "./context/authContext"; // Authentication context
+import { AuthProvider } from "./context/AuthContext"; // Authentication context
 import "./styles/index.css"; // Loads TailwindCSS
 
 // Apply the app to the HTML
