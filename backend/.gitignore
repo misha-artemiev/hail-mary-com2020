@@ -2,6 +2,7 @@
 .venv/
 .mypy_cache/
 .ruff_cacheA/
+**/synthetic_data
 dist/
 docs/
 .env

@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS sellers (
     post_code VARCHAR(20) NOT NULL,
     region VARCHAR(100),
     country VARCHAR(100) NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
     PRIMARY KEY (user_id),
     FOREIGN KEY (verified_by) REFERENCES admins(user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
@@ -151,7 +153,8 @@ CREATE TABLE IF NOT EXISTS reservations (
     status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers(user_id)
+    FOREIGN KEY (consumer_id) REFERENCES consumers(user_id),
+    UNIQUE (bundle_id, claim_code)
 );
 
 CREATE TABLE IF NOT EXISTS badges (

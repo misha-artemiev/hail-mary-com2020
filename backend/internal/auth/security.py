@@ -91,11 +91,18 @@ def update_pw(
     return user_updated
 
 
-def generate_claim_code() -> str:
+def generate_claim_code(used_codes: list[str]) -> str:
     """Generate claim code.
+
+    Args:
+        used_codes: list of codes to avoid
 
     Returns:
         claim code
     """
-    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    return "".join(choice(alphabet) for _ in range(4))
+    while True:
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        raw_code = "".join(choice(alphabet) for _ in range(4))
+        code = f"{raw_code[:2]}-{raw_code[2:]}"
+        if code not in used_codes:
+            return code
