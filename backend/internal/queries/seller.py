@@ -4,7 +4,7 @@
 # source: seller.sql
 import datetime
 import pydantic
-from typing import Optional
+from typing import Iterator, Optional
 
 import sqlalchemy
 
@@ -12,9 +12,9 @@ from internal.queries import models
 
 
 CREATE_SELLER = """-- name: create_seller \\:one
-INSERT INTO sellers (user_id, seller_name, address_line1, address_line2, city, post_code, region, country)
-VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8)
-RETURNING user_id, seller_name, verified_by, verification_date, address_line1, address_line2, city, post_code, region, country
+INSERT INTO sellers (user_id, seller_name, address_line1, address_line2, city, post_code, region, country, latitude, longitude)
+VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9, :p10)
+RETURNING user_id, seller_name, verified_by, verification_date, address_line1, address_line2, city, post_code, region, country, latitude, longitude
 """
 
 
@@ -27,12 +27,14 @@ class CreateSellerParams(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
+    latitude: float
+    longitude: float
 
 
 GET_SELLER = """-- name: get_seller \\:one
-SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at
+SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
 FROM sellers s
-INNER JOIN users u ON s.user_id=u.user_od
+INNER JOIN users u ON s.user_id=u.user_id
 WHERE u.user_id=:p1
 LIMIT 1
 """
@@ -52,6 +54,41 @@ class GetSellerRow(pydantic.BaseModel):
     verification_date: Optional[datetime.datetime]
     last_login: datetime.datetime
     created_at: datetime.datetime
+    latitude: float
+    longitude: float
+
+
+GET_SELLER_BY_LOCATION = """-- name: get_seller_by_location \\:many
+SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
+FROM sellers s
+INNER JOIN users u ON s.user_id=u.user_id
+WHERE s.latitude < :p1 AND s.latitude > :p2 AND s.longitude < :p3 AND s.longitude > :p4
+"""
+
+
+class GetSellerByLocationParams(pydantic.BaseModel):
+    lat_max: float
+    lat_min: float
+    lon_max: float
+    lon_min: float
+
+
+class GetSellerByLocationRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    seller_name: str
+    address_line1: str
+    address_line2: Optional[str]
+    city: str
+    post_code: str
+    region: Optional[str]
+    country: str
+    verified_by: Optional[int]
+    verification_date: Optional[datetime.datetime]
+    last_login: datetime.datetime
+    created_at: datetime.datetime
+    latitude: float
+    longitude: float
 
 
 class Querier:
@@ -68,6 +105,8 @@ class Querier:
             "p6": arg.post_code,
             "p7": arg.region,
             "p8": arg.country,
+            "p9": arg.latitude,
+            "p10": arg.longitude,
         }).first()
         if row is None:
             return None
@@ -82,6 +121,8 @@ class Querier:
             post_code=row[7],
             region=row[8],
             country=row[9],
+            latitude=row[10],
+            longitude=row[11],
         )
 
     def get_seller(self, *, user_id: int) -> Optional[GetSellerRow]:
@@ -102,4 +143,32 @@ class Querier:
             verification_date=row[10],
             last_login=row[11],
             created_at=row[12],
+            latitude=row[13],
+            longitude=row[14],
         )
+
+    def get_seller_by_location(self, arg: GetSellerByLocationParams) -> Iterator[GetSellerByLocationRow]:
+        result = self._conn.execute(sqlalchemy.text(GET_SELLER_BY_LOCATION), {
+            "p1": arg.lat_max,
+            "p2": arg.lat_min,
+            "p3": arg.lon_max,
+            "p4": arg.lon_min,
+        })
+        for row in result:
+            yield GetSellerByLocationRow(
+                user_id=row[0],
+                email=row[1],
+                seller_name=row[2],
+                address_line1=row[3],
+                address_line2=row[4],
+                city=row[5],
+                post_code=row[6],
+                region=row[7],
+                country=row[8],
+                verified_by=row[9],
+                verification_date=row[10],
+                last_login=row[11],
+                created_at=row[12],
+                latitude=row[13],
+                longitude=row[14],
+            )

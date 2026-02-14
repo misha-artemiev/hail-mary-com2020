@@ -11,10 +11,11 @@ import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import User from "../pages/User";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
-import GuestRoot from "./GuestRoute";
+import GuestRoute from "./GuestRoute";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -39,18 +40,22 @@ export const ROUTES = [
     {
         path: "/login",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Login />
-            </GuestRoot>
+            </GuestRoute>
         ),
     },
     {
         path: "/signup",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Signup />
-            </GuestRoot>
+            </GuestRoute>
         ),
+    },
+    {
+        path: "/user/:username",
+        element: <User />,
     },
     // Catch-all (i.e. 404)
     {

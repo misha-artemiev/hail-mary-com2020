@@ -13,6 +13,7 @@ import React from "react";
  * @param {string} props.name - The name (and ID) of the `input` element.
  * @param {string} [props.type="text"] - Input type (*e.g.* `text`, `email`, `password`, ...).
  * @param {string | number} props.value - The current input value.
+ * @param {string | number} [props.placeholder=""] - The placeholder value.
  * @param {(event: React.ChangeEvent<HTMLInputElement>) => void} props.onChange
  *          - The change event handler.
  * @param {boolean} [props.required="false"] - Whether the input is required
@@ -23,30 +24,38 @@ export default function FormInput({
     label,
     name,
     type = "text",
+    min = "",
+    step = "",
     value,
+    placeholder = "",
     onChange,
     required = false,
 }) {
     return (
         <div>
             {/* Label */}
-            <label
-                htmlFor="{name}"
-                className="block font-semibold text-gray-700 mb-1"
-            >
-                {label}
+            {label && (
+                <label
+                    htmlFor="{name}"
+                    className="block font-semibold text-gray-700 mb-1"
+                >
+                    {label}
 
-                {/* Required 'star' */}
-                {required && <span className="text-red-500"> *</span>}
-            </label>
+                    {/* Required 'star' */}
+                    {required && <span className="text-red-500"> *</span>}
+                </label>
+            )}
 
             {/* Input field */}
             <input
                 id={name}
                 type={type}
                 name={name}
+                min={min}
+                step={step}
                 required={required}
                 value={value}
+                placeholder={placeholder}
                 onChange={onChange}
                 className="w-full border rounded-md px-3 py-2 focus:ring-2
                            focus:ring-green-500 focus:outline-none"

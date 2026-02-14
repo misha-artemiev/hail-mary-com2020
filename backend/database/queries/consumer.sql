@@ -9,3 +9,9 @@ LIMIT 1;
 INSERT INTO consumers (user_id, fName, lName)
 VALUES ($1, $2, $3)
 RETURNING *;
+
+-- name: UpdateConsumer :one
+UPDATE consumers
+SET fName=$2, lName=$3
+WHERE user_id=$1
+RETURNING *;

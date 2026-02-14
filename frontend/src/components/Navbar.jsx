@@ -6,6 +6,9 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 
+// Authentication
+import { useAuth } from "../context/AuthContext";
+
 // Images
 import logoFull from "../assets/logos/logo-full-512.png";
 import defaultProfile from "../assets/default-user.jpg";
@@ -16,6 +19,8 @@ import defaultProfile from "../assets/default-user.jpg";
  * @returns {JSX.Element} the navigation bar
  */
 export default function Navbar() {
+    const { isAuthenticated } = useAuth();
+
     // TODO: get correct user information
     const user = {
         displayName: "User0001",
@@ -34,15 +39,25 @@ export default function Navbar() {
                 />
             </NavLink>
 
-            {/* Profile picture */}
-            <NavLink to="/profile">
-                <img
-                    src={user.profilePic}
-                    alt={`${user.displayName}'s profile`}
-                    // Grow on hover
-                    className="w-10 h-10 rounded-full hover:scale-110 transition"
-                />
-            </NavLink>
+            {/* If signed in, show profile picture (link to profile page) */}
+            {/* Otherwise, show login/signup link */}
+            <div className="hover:scale-110 transition">
+                {isAuthenticated ? (
+                    <NavLink to="/profile">
+                        <img
+                            src={user.profilePic}
+                            alt={`${user.displayName}'s profile`}
+                            // Grow on hover
+                            className="w-10 h-10 rounded-full"
+                        />
+                    </NavLink>
+                ) : (
+                    <NavLink to="/login" className="text-md font-bold">
+                        Log In /<br />
+                        Sign Up
+                    </NavLink>
+                )}
+            </div>
         </nav>
     );
 }

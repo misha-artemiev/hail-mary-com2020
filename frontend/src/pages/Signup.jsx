@@ -3,19 +3,22 @@
  * @author Ed Brown
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
 import RoleSelect from "../components/forms/RoleSelect";
-import Divider from "../components/forms/Divider";
+import Divider from "../components/Divider";
 import SubmitButton from "../components/forms/SubmitButton";
 import Button from "../components/forms/Button";
 
 // Config
 import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
+
+// Hooks
+import { useSignup } from "../hooks/useSignup";
 
 /**
  * The signup page of the site.
@@ -25,52 +28,9 @@ import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
  * @returns {JSX.Elements} the signup page
  */
 export default function Signup() {
-    const navigate = useNavigate();
-
-    // State object: holds all fields for the form
-    const [role, setRole] = useState("");
-    const [form, setForm] = useState({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        firstName: "",
-        lastName: "",
-        sellerName: "",
-        address1: "",
-        address2: "",
-        city: "",
-        postCode: "",
-        county: "",
-        country: "",
-    });
-
-    /**
-     * Handles changes to the form.
-     */
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    /**
-     * Handles submitting the form.
-     * Redirects to `/`
-     */
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-        // Ensure passwords match
-        if (form.password !== form.confirmPassword) {
-            alert("Please ensure that passwords match");
-            return;
-        }
-
-        // TODO: sign-up logic
-        alert("Signup submitted");
-
-        // Redirect to home page
-        navigate("/");
-    };
+    const navigate = useNavigate;
+    const { form, handleChange, role, setRole, error, loading, handleSubmit } =
+        useSignup();
 
     /**
      * Dynamically renders given information fields.
@@ -95,6 +55,13 @@ export default function Signup() {
         <div className="max-w-xl mx-auto p-6">
             {/* Signup container */}
             <Card>
+                {/* Error message */}
+                {error && (
+                    <div className="text-center font-semibold bg-red-100 text-red-800 p-3 mb-4 rounded">
+                        {error}
+                    </div>
+                )}
+
                 {/* Header */}
                 <h1 className="text-3xl font-bold text-green-700 mb-6">
                     Create Account
@@ -124,10 +91,12 @@ export default function Signup() {
                         renderFields(SIGNUP_FORM_FIELDS.seller)}
 
                     {/* Submit */}
-                    <SubmitButton>Sign up</SubmitButton>
+                    <SubmitButton disabled={loading}>
+                        {loading ? "Signing up..." : "Sign up"}
+                    </SubmitButton>
                 </form>
 
-                <Divider text="or" />
+                <Divider>or</Divider>
 
                 {/* Login redirect */}
                 <Button onClick={() => navigate("/login")}>
