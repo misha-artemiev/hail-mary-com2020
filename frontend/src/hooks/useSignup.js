@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createSession, storeAuthToken } from "../services/authService";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext";
 
 // Set the default base API route
 const API_BASE_URL =
