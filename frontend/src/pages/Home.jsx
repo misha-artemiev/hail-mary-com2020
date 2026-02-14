@@ -136,23 +136,22 @@ export default function Home() {
                             value: `${startDateTime} - ${endDateTime}`,
                         },
                     ]}
-                    footer={
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-gray-500 line-through">
-                                £{originalPrice.toFixed(2)}
-                            </span>
-                            <span className="text-lg font-bold text-green-600">
-                                £{discountedPrice.toFixed(2)}
-                            </span>
-                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
-                                {listing.discount_percentage}% OFF
-                            </span>
-                            <span className="text-gray-600 text-m ml-auto">
-                                {listing.dist.toFixed(1)} km
-                            </span>
-                        </div>
-                    }
-                />
+                >
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-500 line-through">
+                            £{originalPrice.toFixed(2)}
+                        </span>
+                        <span className="text-lg font-bold text-green-600">
+                            £{discountedPrice.toFixed(2)}
+                        </span>
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                            {listing.discount_percentage}% OFF
+                        </span>
+                        <span className="text-gray-600 text-m ml-auto">
+                            {listing.dist.toFixed(1)} km
+                        </span>
+                    </div>
+                </Listing>
             );
         });
 
