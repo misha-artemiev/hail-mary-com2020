@@ -12,6 +12,7 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
+import DeveloperProfile from "../pages/DeveloperProfile";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -36,6 +37,10 @@ export const ROUTES = [
                 <Profile />
             </ProtectedRoute>
         ),
+    },
+    {
+        path: "/developer",
+        element: <DeveloperProfile />,
     },
     {
         path: "/login",
