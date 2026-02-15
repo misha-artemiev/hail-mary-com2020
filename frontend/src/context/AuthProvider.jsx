@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { getAuthToken, clearAuthToken } from "../services/authService";
 import { AuthContext } from "./auth-context";
 
