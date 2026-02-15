@@ -12,11 +12,11 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
+import EditProfile from "../pages/EditProfile";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRoute";
-import EditProfile from "../pages/EditProfile";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
