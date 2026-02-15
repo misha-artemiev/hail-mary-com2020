@@ -7,7 +7,7 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 // Authentication
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth-context.js";
 
 /**
  * Protects some pages from being accessed unless by an authenticated user.

@@ -7,7 +7,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 // Authentication
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth-context.js";
 
 /**
  * Protects some pages from being accessed if the user is already logged in.

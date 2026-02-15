@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createSession, storeAuthToken } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth-context";
 
 // Set the default base API route
 const API_BASE_URL =
@@ -24,7 +24,7 @@ const API_BASE_URL =
 const buildRequest = (role, form) => {
     if (role === "consumer") {
         return {
-            endpoint: `${API_BASE_URL}/consumers`,
+            endpoint: `${API_BASE_URL}/api/consumers`,
             payload: {
                 email: form.email,
                 password: form.password,
@@ -36,7 +36,7 @@ const buildRequest = (role, form) => {
 
     if (role === "seller") {
         return {
-            endpoint: `${API_BASE_URL}/sellers`,
+            endpoint: `${API_BASE_URL}/api/sellers`,
             payload: {
                 email: form.email,
                 password: form.password,

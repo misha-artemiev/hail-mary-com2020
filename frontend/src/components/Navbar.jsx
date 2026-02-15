@@ -7,7 +7,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 // Authentication
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth-context.js";
 
 // Images
 import logoFull from "../assets/logos/logo-full-512.png";

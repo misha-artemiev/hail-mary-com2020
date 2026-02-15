@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 // Authentication
 import { createSession, storeAuthToken } from "../services/authService";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth-context.js";
 
 // Components
 import Card from "../components/Card";

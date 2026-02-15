@@ -5,8 +5,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { getAuthToken, clearAuthToken } from "../services/authService";
-
-const AuthContext = createContext(null);
+import { AuthContext } from "./auth-context";
 
 /**
  * A component that wraps the application and supplies authentication logic.
@@ -58,22 +57,4 @@ export function AuthProvider({ children }) {
             {children}
         </AuthContext.Provider>
     );
-}
-
-/**
- * Custom hook to access authentication context.
- * Must be used within an AuthProvider element.
- *
- * @returns {Object} the authentication context.
- *
- * ---
- * @example
- * const { isAuthenticated, userRole, login, logout } = useAuth();
- */
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within AuthProvider");
-    }
-    return context;
 }
