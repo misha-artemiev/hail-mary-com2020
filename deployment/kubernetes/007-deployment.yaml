@@ -39,6 +39,12 @@ spec:
         - name: frontend
           image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:0.1.0
           imagePullPolicy: Always
+          env:
+            - name: VITE_API_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: vite-api-base-url
           ports:
             - containerPort: 80
       imagePullSecrets:
