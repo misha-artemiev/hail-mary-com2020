@@ -15,7 +15,7 @@ import User from "../pages/User";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
-import GuestRoot from "./GuestRoute";
+import GuestRoute from "./GuestRoute";
 import EditProfile from "../pages/EditProfile";
 
 /**
