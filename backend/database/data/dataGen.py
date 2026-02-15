@@ -151,20 +151,20 @@ def generate_profiles(users_df):
 
 def generate_inventory(seller_ids, categories_df, windows_df):
     """makes 2 bundles for each seller every day for the 6 weeks"""
-    category_ids = categories_df["category_id"].tolist()
-    window_records = windows_df.to_dict("records")
     bundles = []
     bundle_id = 1
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
         for seller_id in seller_ids:
             for _ in range(2):
-                # Pick a random window (e.g., 8am-9am or 2pm-3pm)
-                window = random.choice(window_records)
-
-                win_start = current_date.replace(hour=window["window_start"], minute=0)
-                win_end = current_date.replace(hour=window["window_end"], minute=0)
-
+                closing_hour = random.randint(16, 20)
+                created_at = current_date.replace(
+                    hour=closing_hour, minute=0, second=0, microsecond=0
+                )
+                win_end = (current_date + timedelta(days=1)).replace(
+                    hour=closing_hour, minute=0, second=0, microsecond=0
+                )
+                win_start = win_end - timedelta(hours=10)
                 bundles.append({
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
@@ -175,7 +175,7 @@ def generate_inventory(seller_ids, categories_df, windows_df):
                     "discount_percentage": random.choice([50, 60, 70]),
                     "window_start": win_start,
                     "window_end": win_end,
-                    "created_at": win_start - timedelta(hours=random.randint(2, 6)),
+                    "created_at": created_at,
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
