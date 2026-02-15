@@ -1,8 +1,14 @@
 """Sensitive information manimulation."""
 
-from secrets import token_urlsafe
+from secrets import choice, token_urlsafe
 
 from bcrypt import checkpw, gensalt, hashpw
+from fastapi import HTTPException
+from pydantic import BaseModel, SecretStr
+from sqlalchemy import Connection
+
+from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import UpdateUserPasswordParams, UpdateUserPasswordRow
 
 
 def hash_password(password: str) -> str:
@@ -43,3 +49,60 @@ def generate_token() -> str:
       rendomly generated token as a string
     """
     return token_urlsafe(32)
+
+
+class UpdatePasswordForm(BaseModel):
+    """User form to update password."""
+
+    old_password: SecretStr
+    new_password: SecretStr
+
+
+def update_pw(
+    email: str, form: UpdatePasswordForm, conn: Connection
+) -> UpdateUserPasswordRow:
+    """Update user password with old password check.
+
+    Args:
+      email: user email
+      form: form with information to update password
+      conn: database connection
+
+    Returns:
+      updated user record
+
+    Raises:
+      HTTPException: if failed to perform update
+    """
+    querier = UserQuerier(conn)
+    user = querier.get_user_login(email=email)
+    if not user:
+        raise HTTPException(500)
+    if not check_password(form.old_password.get_secret_value(), user.pw_hash):
+        raise HTTPException(403)
+    user_updated = querier.update_user_password(
+        UpdateUserPasswordParams(
+            user_id=user.user_id,
+            pw_hash=hash_password(form.new_password.get_secret_value()),
+        )
+    )
+    if not user_updated:
+        raise HTTPException(500)
+    return user_updated
+
+
+def generate_claim_code(used_codes: list[str]) -> str:
+    """Generate claim code.
+
+    Args:
+        used_codes: list of codes to avoid
+
+    Returns:
+        claim code
+    """
+    while True:
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        raw_code = "".join(choice(alphabet) for _ in range(4))
+        code = f"{raw_code[:2]}-{raw_code[2:]}"
+        if code not in used_codes:
+            return code

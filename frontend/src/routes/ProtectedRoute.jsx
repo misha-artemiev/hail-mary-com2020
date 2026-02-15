@@ -6,6 +6,9 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
+// Authentication
+import { useAuth } from "../context/AuthContext";
+
 /**
  * Protects some pages from being accessed unless by an authenticated user.
  *
@@ -17,7 +20,7 @@ import { Navigate, useLocation } from "react-router-dom";
 export default function ProtectedRoute({ children }) {
     const location = useLocation();
 
-    const isAuthenticated = false; // TODO: replace with actual authentication logic
+    const { isAuthenticated } = useAuth();
 
     // Redirect to the login page
     if (!isAuthenticated) {

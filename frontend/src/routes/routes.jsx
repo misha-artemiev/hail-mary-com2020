@@ -49,17 +49,17 @@ export const ROUTES = [
     {
         path: "/login",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Login />
-            </GuestRoot>
+            </GuestRoute>
         ),
     },
     {
         path: "/signup",
         element: (
-            <GuestRoot>
+            <GuestRoute>
                 <Signup />
-            </GuestRoot>
+            </GuestRoute>
         ),
     },
     {

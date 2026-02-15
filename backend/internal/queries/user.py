@@ -75,6 +75,46 @@ class GetUserLoginRow(pydantic.BaseModel):
     role: models.UserRole
 
 
+UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
+UPDATE users
+SET email=:p2
+WHERE user_id=:p1
+RETURNING user_id, email, role, created_at
+"""
+
+
+class UpdateUserEmailParams(pydantic.BaseModel):
+    user_id: int
+    email: str
+
+
+class UpdateUserEmailRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+
+
+UPDATE_USER_PASSWORD = """-- name: update_user_password \\:one
+UPDATE users
+SET pw_hash=:p2
+WHERE user_id=:p1
+RETURNING user_id, email, role, created_at
+"""
+
+
+class UpdateUserPasswordParams(pydantic.BaseModel):
+    user_id: int
+    pw_hash: str
+
+
+class UpdateUserPasswordRow(pydantic.BaseModel):
+    user_id: int
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+
+
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
@@ -121,4 +161,26 @@ class Querier:
             email=row[1],
             pw_hash=row[2],
             role=row[3],
+        )
+
+    def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
+        row = self._conn.execute(sqlalchemy.text(UPDATE_USER_EMAIL), {"p1": arg.user_id, "p2": arg.email}).first()
+        if row is None:
+            return None
+        return UpdateUserEmailRow(
+            user_id=row[0],
+            email=row[1],
+            role=row[2],
+            created_at=row[3],
+        )
+
+    def update_user_password(self, arg: UpdateUserPasswordParams) -> Optional[UpdateUserPasswordRow]:
+        row = self._conn.execute(sqlalchemy.text(UPDATE_USER_PASSWORD), {"p1": arg.user_id, "p2": arg.pw_hash}).first()
+        if row is None:
+            return None
+        return UpdateUserPasswordRow(
+            user_id=row[0],
+            email=row[1],
+            role=row[2],
+            created_at=row[3],
         )

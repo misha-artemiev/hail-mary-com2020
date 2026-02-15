@@ -1,5 +1,9 @@
 """Creates seller and consumer entities."""
 
+from pydantic import BaseModel, EmailStr, SecretStr
+from sqlalchemy import Connection
+
+from internal.geolocation.location import get_location
 from internal.queries.consumer import CreateConsumerParams
 from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
@@ -7,8 +11,6 @@ from internal.queries.seller import CreateSellerParams
 from internal.queries.seller import Querier as SellerQuerier
 from internal.queries.user import CreateUserParams, CreateUserRow
 from internal.queries.user import Querier as UserQuery
-from pydantic import BaseModel, EmailStr, SecretStr
-from sqlalchemy import Connection
 
 from .security import hash_password
 
@@ -100,6 +102,16 @@ def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
       ValueError: database failed to create a seller
     """
     user = create_user(form.email, form.password, UserRole.SELLER, conn)
+    address: str = ""
+    address += f"{form.address_line1}"
+    if form.address_line2:
+        address += f", {form.address_line2}"
+    address += f", {form.city}"
+    address += f", {form.post_code}"
+    if form.region:
+        address += f", {form.region}"
+    address += f", {form.country}"
+    loc = get_location(address)
     seller = SellerQuerier(conn).create_seller(
         CreateSellerParams(
             user_id=user.user_id,
@@ -110,6 +122,8 @@ def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
             post_code=form.post_code,
             region=form.region,
             country=form.country,
+            latitude=loc.lat,
+            longitude=loc.lon,
         )
     )
     if not seller:

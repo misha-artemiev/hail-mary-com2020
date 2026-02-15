@@ -6,6 +6,10 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// Authentication
+import { createSession, storeAuthToken } from "../services/authService";
+import { useAuth } from "../context/AuthContext";
+
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
@@ -23,6 +27,7 @@ import { LOGIN_FORM_FIELDS } from "../config/loginFormFields";
  * @returns {JSX.Element} the login page
  */
 export default function Login() {
+    const auth_ctx = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -35,26 +40,44 @@ export default function Login() {
         password: "",
     });
 
+    // Loading and error states
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     /**
      * Handles changes to the form.
      */
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
+        // Clear errors
+        if (error) setError(null);
     };
 
     /**
      * Handles submitting the form.
      * Redirects to `/`
      */
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError(null);
 
-        // TODO: sign-in logic
-        alert("Login submitted");
+        try {
+            // Authenticate to get token, store it
+            const tokenData = await createSession(form.email, form.password);
+            storeAuthToken(tokenData);
 
-        // Redirect to home page
-        navigate(from, { replace: true });
+            // Update AuthContext state
+            auth_ctx.login(tokenData);
+
+            // Redirect to home page or redirect
+            navigate(from, { replace: true });
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     /**
@@ -87,6 +110,13 @@ export default function Login() {
                     </div>
                 )}
 
+                {/* Error message */}
+                {error && (
+                    <div className="text-center font-semibold bg-red-100 text-red-800 p-3 mb-4 rounded">
+                        {error}
+                    </div>
+                )}
+
                 {/* Header */}
                 <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">
                     Sign In
@@ -97,13 +127,15 @@ export default function Login() {
                     {renderFields(LOGIN_FORM_FIELDS)}
 
                     {/* Submit */}
-                    <SubmitButton>Sign in</SubmitButton>
+                    <SubmitButton disabled={loading}>
+                        {loading ? "Signing in..." : "Sign in"}
+                    </SubmitButton>
                 </form>
 
                 <Divider>or</Divider>
 
                 {/* Signup redirect */}
-                <Button onClick={() => navigate("/signup")}>
+                <Button onClick={() => navigate("/signup")} disabled={loading}>
                     Create an Account
                 </Button>
             </Card>

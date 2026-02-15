@@ -193,6 +193,8 @@ class Seller(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
+    latitude: float
+    longitude: float
 
 
 class SellerIssueReport(pydantic.BaseModel):

@@ -69,6 +69,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: RESTRICTED_NAMESPACE
+              value: "hail-mary"
             # Enable polling
             - name: POLL
               value: "true"
@@ -105,3 +107,37 @@ spec:
         - emptyDir:
             medium: ""
           name: keel-data
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: keel-role
+  namespace: hail-mary
+rules:
+  - apiGroups: ["", "apps", "batch", "extensions"]
+    resources:
+      - deployments
+      - daemonsets
+      - statefulsets
+      - cronjobs
+      - replicasets
+      - pods
+      - services
+      - configmaps
+      - secrets
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: keel-role-binding
+  namespace: hail-mary
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: keel-role
+subjects:
+  - kind: ServiceAccount
+    name: keel
+    namespace: hail-mary

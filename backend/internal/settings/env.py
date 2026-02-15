@@ -5,6 +5,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+"""@private"""
 
 
 class HostSettings(BaseSettings):
@@ -13,8 +14,8 @@ class HostSettings(BaseSettings):
     host: str = "localhost"
     port: int = 8080
     name: str = "hail mary"
-    version: str = "0.0.1"
     forward_from: str = "*"
+    fuzz_threshold: int = 80
 
     model_config = SettingsConfigDict(
         env_prefix="HOST_",
