@@ -33,7 +33,6 @@ export default function EditProfile({ role = "consumer"}) {
     const [fName, setFName] = useState("User");
     const [lName, setLName] = useState("Example");
     
-
     // Handles profile image changes
     const handleImageChange = (e) => {
         const file = e.target.files[0];
