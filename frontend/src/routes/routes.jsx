@@ -39,8 +39,12 @@ export const ROUTES = [
         ),
     },
     {
-        path: "/developer",
-        element: <DeveloperProfile />,
+        path: "/devprofile",
+        element: (
+            <ProtectedRoute>
+                <DeveloperProfile />,
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/login",
