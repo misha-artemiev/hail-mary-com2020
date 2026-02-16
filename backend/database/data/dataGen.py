@@ -199,7 +199,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "seller_id": seller_id,
                     "bundle_name": f"Surplus {fake.word().capitalize()} Bag",
                     "description": fake.sentence(nb_words=10),
-                    "total_qty": secure_rng.randint(1, 5),
+                    "total_qty": secure_rng.randint(1, 4),
                     "price": round(secure_rng.uniform(3.00, 7.50), 2),
                     "discount_percentage": secure_rng.choice([50, 60, 70]),
                     "window_start": win_start,
