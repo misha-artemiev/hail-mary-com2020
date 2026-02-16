@@ -214,6 +214,14 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                 win_end = pickup_date.replace(
                     hour=selected_window['window_end'], minute=0, second=0, microsecond=0
                 )
+                # Simulated preferred collection-time label for analytics (nullable).
+                collection_window = secure_rng.choice(window_records)
+                collection_time_label = (
+                    f"{collection_window['window_start']:02d}:00-"
+                    f"{collection_window['window_end']:02d}:00"
+                    if secure_rng.random() >= 0.35
+                    else None
+                )
                 
                 # Set Listing Time (Evening of the current day, e.g., 4PM-8PM)
                 # This ensures the item is listed BEFORE the pickup window starts
@@ -233,6 +241,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     # Using the specific window times
                     "window_start": win_start,
                     "window_end": win_end,
+                    "collection_time_label": collection_time_label,
                     "status": "available",
                     "created_at": created_at,
                 })
