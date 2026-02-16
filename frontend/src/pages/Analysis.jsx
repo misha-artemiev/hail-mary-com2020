@@ -14,7 +14,8 @@ import useSellerAnalyticsGraphs from "../hooks/useSellerAnalyticsGraphs";
  * @returns {JSX.Element} the analysis page
  */
 export default function Analysis() {
-    const { graphs, reportPeriod, loading, error } = useSellerAnalyticsGraphs();
+    const { graphs, reportPeriod, sellerUserId, loading, error } =
+        useSellerAnalyticsGraphs();
 
     return (
         <div className="max-w-6xl mx-auto p-6">
@@ -23,6 +24,11 @@ export default function Analysis() {
                     Analysis
                 </h1>
                 <p className="text-gray-600">Weekly seller performance graphs.</p>
+                {sellerUserId !== null && (
+                    <p className="text-sm text-gray-500 mt-2">
+                        Showing data for seller: {sellerUserId}
+                    </p>
+                )}
                 {reportPeriod && (
                     <p className="text-sm text-gray-500 mt-2">
                         Report week: {reportPeriod}

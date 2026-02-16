@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 // Authentication
 import { useAuth } from "../context/AuthContext";
@@ -19,7 +19,8 @@ import defaultProfile from "../assets/default-user.jpg";
  * @returns {JSX.Element} the navigation bar
  */
 export default function Navbar() {
-    const { isAuthenticated, userRole } = useAuth();
+    const navigate = useNavigate();
+    const { isAuthenticated, userRole, logout } = useAuth();
     const navLinks = [{ to: "/about", label: "About Us" }];
 
     if (userRole === "seller") {
@@ -30,6 +31,11 @@ export default function Navbar() {
     const user = {
         displayName: "User0001",
         profilePic: defaultProfile,
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate("/login");
     };
 
     return (
@@ -67,16 +73,25 @@ export default function Navbar() {
 
             {/* If signed in, show profile picture (link to profile page) */}
             {/* Otherwise, show login/signup link */}
-            <div className="hover:scale-110 transition">
+            <div className="flex items-center gap-3">
                 {isAuthenticated ? (
-                    <NavLink to="/profile">
-                        <img
-                            src={user.profilePic}
-                            alt={`${user.displayName}'s profile`}
-                            // Grow on hover
-                            className="w-10 h-10 rounded-full"
-                        />
-                    </NavLink>
+                    <>
+                        <NavLink to="/profile" className="hover:scale-110 transition">
+                            <img
+                                src={user.profilePic}
+                                alt={`${user.displayName}'s profile`}
+                                // Grow on hover
+                                className="w-10 h-10 rounded-full"
+                            />
+                        </NavLink>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="text-sm font-semibold text-white/90 hover:text-white"
+                        >
+                            Log Out
+                        </button>
+                    </>
                 ) : (
                     <NavLink to="/login" className="text-md font-bold">
                         Log In /<br />

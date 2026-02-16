@@ -112,7 +112,25 @@ def _load_sourceless_module(module_name: str, module_path: Path) -> ModuleType:
 
 
 def _try_generate_graph_paths(seller_id: int) -> dict[str, Path]:
-    """Try generating graph files with compiled analytics modules."""
+    """Try generating graph files with analytics modules."""
+    try:
+        from database.data.graphs import generate_seller_weekly_graphs
+
+        generated_paths = generate_seller_weekly_graphs(seller_user_id=seller_id)
+        if isinstance(generated_paths, dict):
+            resolved: dict[str, Path] = {}
+            for key, raw_path in generated_paths.items():
+                if key not in GRAPH_FILE_NAMES:
+                    continue
+                path = Path(str(raw_path))
+                if path.exists():
+                    resolved[key] = path.resolve()
+            if resolved:
+                return resolved
+    except Exception:
+        pass
+
+    # Fallback to compiled modules if source imports are unavailable.
     backend_root = Path(__file__).resolve().parents[1]
     cache_dir = backend_root / "database" / "data" / "__pycache__"
     data_analysis_pyc = next(
@@ -176,6 +194,15 @@ def _find_latest_graph_paths(seller_id: int) -> tuple[str | None, dict[str, Path
     return latest_dir.name, paths
 
 
+def _get_graph_paths_for_seller(seller_id: int) -> tuple[str | None, dict[str, Path]]:
+    """Resolve graph paths for a seller from generated output or existing files."""
+    graph_paths = _try_generate_graph_paths(seller_id)
+    if graph_paths:
+        report_period = next(iter(graph_paths.values())).parent.name
+        return report_period, graph_paths
+    return _find_latest_graph_paths(seller_id)
+
+
 class AnalyticsGraph(BaseModel):
     """Seller analytics graph payload."""
 
@@ -187,6 +214,7 @@ class AnalyticsGraph(BaseModel):
 class AnalyticsGraphsResponse(BaseModel):
     """Seller analytics page payload."""
 
+    seller_user_id: int
     report_period: str | None
     graphs: list[AnalyticsGraph]
 
@@ -323,13 +351,20 @@ async def get_seller_analytics_graphs(
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
 ) -> AnalyticsGraphsResponse:
     """Fetch seller analytics graphs for the authenticated seller."""
-    graph_paths = _try_generate_graph_paths(seller.user_id)
-
     report_period = None
-    if graph_paths:
-        report_period = next(iter(graph_paths.values())).parent.name
-    else:
-        report_period, graph_paths = _find_latest_graph_paths(seller.user_id)
+    graph_paths: dict[str, Path] = {}
+    selected_seller_id = seller.user_id
+
+    candidate_seller_ids = [seller.user_id]
+    if seller.user_id != 1:
+        # Development fallback: show demo graphs from seller_1 when current seller has none.
+        candidate_seller_ids.append(1)
+
+    for candidate_seller_id in candidate_seller_ids:
+        report_period, graph_paths = _get_graph_paths_for_seller(candidate_seller_id)
+        if graph_paths:
+            selected_seller_id = candidate_seller_id
+            break
 
     if not graph_paths:
         raise HTTPException(404, "no analytics graph data found for this seller")
@@ -354,7 +389,11 @@ async def get_seller_analytics_graphs(
     if not graphs:
         raise HTTPException(404, "analytics graphs are unavailable for this seller")
 
-    return AnalyticsGraphsResponse(report_period=report_period, graphs=graphs)
+    return AnalyticsGraphsResponse(
+        seller_user_id=selected_seller_id,
+        report_period=report_period,
+        graphs=graphs,
+    )
 
 
 @router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])

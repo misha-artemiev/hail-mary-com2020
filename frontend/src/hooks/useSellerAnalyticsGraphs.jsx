@@ -10,6 +10,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
  * @returns {{
  *   graphs: Array<{key: string, title: string, image_data_url: string}>,
  *   reportPeriod: string | null,
+ *   sellerUserId: number | null,
  *   loading: boolean,
  *   error: string | null
  * }}
@@ -17,6 +18,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 export default function useSellerAnalyticsGraphs() {
     const [graphs, setGraphs] = useState([]);
     const [reportPeriod, setReportPeriod] = useState(null);
+    const [sellerUserId, setSellerUserId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -56,6 +58,7 @@ export default function useSellerAnalyticsGraphs() {
                 const data = await response.json();
                 setGraphs(data.graphs || []);
                 setReportPeriod(data.report_period || null);
+                setSellerUserId(data.seller_user_id ?? null);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -66,5 +69,5 @@ export default function useSellerAnalyticsGraphs() {
         loadGraphs();
     }, []);
 
-    return { graphs, reportPeriod, loading, error };
+    return { graphs, reportPeriod, sellerUserId, loading, error };
 }
