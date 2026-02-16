@@ -43,7 +43,7 @@ def fix_sequences():
             ('seller_issue_reports', 'report_id'), 
             ('admin_issue_reports', 'report_id'),
             ('inbox', 'message_id'),
-            ('tokens', 'token_id'),
+            ('token', 'token_id'),
             ('allergens', 'allergen_id'),
             ('category', 'category_id')
         ]
