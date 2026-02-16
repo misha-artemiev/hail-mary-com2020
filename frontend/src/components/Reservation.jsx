@@ -11,12 +11,15 @@ import React from "react";
  * @param {Object} props
  * @param {number} props.id - The ID of the reservation.
  * @param {Date} props.reserved_at - The date the reservation was made.
+ * @param {(event: React.MouseEvent<HTMLDivElement>) => void} [props.onClick]
+ *          - Optional click event handler
  *
  * @returns {JSX.Element} a reservation panel.
  */
-export default function Reservation({ id, reserved_at }) {
+export default function Reservation({ id, reserved_at, onClick }) {
     return (
         <div
+            onClick={onClick}
             className="flex justify-between items-center p-3
                      bg-gray-100 rounded-lg
                      cursor-pointer
