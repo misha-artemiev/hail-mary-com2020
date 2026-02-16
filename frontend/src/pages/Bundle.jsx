@@ -10,6 +10,7 @@ import { useParams } from "react-router-dom";
 import useBundle from "../hooks/useBundle";
 import { useAuth } from "../context/AuthContext";
 import { useReserveBundle } from "../hooks/useReserveBundle";
+import { useConsumerReservations } from "../hooks/useConsumerHasReserved";
 
 // Components
 import Card from "../components/Card";
@@ -30,6 +31,7 @@ import defaultListing from "../assets/default-listing.jpg";
  */
 export default function Bundle() {
     const { id } = useParams();
+    const { hasReservedBundle } = useConsumerReservations();
 
     // Get the role of the logged in user
     const { userRole } = useAuth();
@@ -171,12 +173,21 @@ export default function Bundle() {
 
                     {/* Depends on reservation status */}
                     {reservationSuccess ? (
+                        // Reservation was a success:
                         <div className="text-center py-4">
                             <p className="text-green-600 font-semibold text-lg">
                                 Reservation successful!
                             </p>
                         </div>
+                    ) : hasReservedBundle(parseInt(id)) ? (
+                        // Reservation was previously made:
+                        <div className="text-center py-4">
+                            <p className="text-green-600 font-semibold text-lg">
+                                Already reserved!
+                            </p>
+                        </div>
                     ) : (
+                        // Otherwise, able to make new reservation:
                         <Button onClick={handleReserve} disabled={reserving}>
                             {reserving ? "Reserving..." : "Reserve Bundle"}
                         </Button>

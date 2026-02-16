@@ -13,7 +13,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
  * Uses the token stored in the user's local storage.
  *
  * @param {Number} bundleId - The ID of the bundle to reserve.
- * @returns
+ * @returns {{ reserving: boolean, reservationSuccess: boolean, handleReserve: () => Promise<void> }}
+ *          object of if the bundle has been/is being reserved, and a promise function to reserve it
  */
 export function useReserveBundle(bundleId) {
     // State object: stores reservation status
@@ -30,6 +31,9 @@ export function useReserveBundle(bundleId) {
 
         // Get the user's auth token from local storage
         const token = localStorage.getItem("authToken");
+        if (!token) {
+            return;
+        }
 
         try {
             // Send the request
