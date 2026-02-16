@@ -40,10 +40,12 @@ def fix_sequences():
             ('users', 'user_id'),
             ('bundles', 'bundle_id'),
             ('reservations', 'reservation_id'),
-            ('seller_reports', 'report_id'), 
-            ('admin_reports', 'report_id'),
+            ('seller_issue_reports', 'report_id'), 
+            ('admin_issue_reports', 'report_id'),
             ('inbox', 'message_id'),
-            ('tokens', 'token_id')
+            ('token', 'token_id'),
+            ('allergens', 'allergen_id'),
+            ('category', 'category_id')
         ]
         
         for table, pk in tables:
