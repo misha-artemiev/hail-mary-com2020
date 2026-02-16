@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Hooks
 import useAllergens from "../hooks/useAllergens";
@@ -24,6 +25,8 @@ import Listing from "../components/Listing";
  * @returns {JSX.Element} the home page
  */
 export default function Home() {
+    const navigate = useNavigate();
+
     // State object: holds all fields for the form
     const [filters, setFilters] = useState({
         restaurant: "",
@@ -136,6 +139,7 @@ export default function Home() {
                             value: `${startDateTime} - ${endDateTime}`,
                         },
                     ]}
+                    onClick={() => navigate(`/bundles/${listing.bundle_id}`)}
                 >
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-gray-500 line-through">
