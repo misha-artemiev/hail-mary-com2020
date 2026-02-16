@@ -34,6 +34,18 @@ def _load_tables(data_dir: Path = DATA_DIR) -> dict[str, pd.DataFrame]:
     }
 
 
+def _resolve_week_start(
+    bundles: pd.DataFrame, week_start: str | pd.Timestamp | None
+) -> pd.Timestamp:
+    """Resolve report week start (Monday 00:00)."""
+    if week_start is not None:
+        resolved = pd.Timestamp(week_start).normalize()
+        return resolved - pd.Timedelta(days=resolved.weekday())
+
+    latest_pickup = bundles["window_end"].max().normalize()
+    return latest_pickup - pd.Timedelta(days=latest_pickup.weekday())
+
+
 def _bundle_outcome(
     statuses: set[str],
     window_end: pd.Timestamp,
@@ -78,7 +90,11 @@ def _build_bundle_outcomes(
     return pd.DataFrame(outcome_rows)
 
 
-def seller_analytics(seller_user_id: int, data_dir: Path = DATA_DIR) -> dict[str, Any]:
+def seller_analytics(
+    seller_user_id: int,
+    data_dir: Path = DATA_DIR,
+    week_start: str | pd.Timestamp | None = None,
+) -> dict[str, Any]:
     """Compute analytics for a seller by `user_id`."""
     data = _load_tables(data_dir)
     bundles = data["bundles"]
@@ -92,11 +108,22 @@ def seller_analytics(seller_user_id: int, data_dir: Path = DATA_DIR) -> dict[str
         raise ValueError(f"Seller user_id={seller_user_id} not found.")
 
     seller_name = str(seller.iloc[0]["seller_name"])
-    seller_bundles = bundles[bundles["seller_id"] == seller_user_id].copy()
+    report_week_start = _resolve_week_start(bundles, week_start)
+    report_week_end = report_week_start + pd.Timedelta(days=7)
+
+    seller_bundles = bundles[
+        (bundles["seller_id"] == seller_user_id)
+        & (bundles["window_end"] >= report_week_start)
+        & (bundles["window_end"] < report_week_end)
+    ].copy()
     if seller_bundles.empty:
         return {
             "seller_user_id": seller_user_id,
             "seller_name": seller_name,
+            "report_period": {
+                "week_start": report_week_start.isoformat(),
+                "week_end": report_week_end.isoformat(),
+            },
             "summary": {"total_bundles_posted": 0, "total_reservations": 0},
             "sell_through": {},
             "pricing_effectiveness": [],
@@ -188,6 +215,8 @@ def seller_analytics(seller_user_id: int, data_dir: Path = DATA_DIR) -> dict[str
     )
 
     summary = {
+        "week_start": report_week_start.isoformat(),
+        "week_end": report_week_end.isoformat(),
         "total_bundles_posted": total_posted,
         "total_reservations": total_reservations,
         "collected_reservations": collected_reservations,
@@ -198,6 +227,10 @@ def seller_analytics(seller_user_id: int, data_dir: Path = DATA_DIR) -> dict[str
     return {
         "seller_user_id": seller_user_id,
         "seller_name": seller_name,
+        "report_period": {
+            "week_start": report_week_start.isoformat(),
+            "week_end": report_week_end.isoformat(),
+        },
         "summary": summary,
         "sell_through": sell_through,
         "pricing_effectiveness": pricing.to_dict(orient="records"),
@@ -212,6 +245,7 @@ def seller_analytics(seller_user_id: int, data_dir: Path = DATA_DIR) -> dict[str
 
 if __name__ == "__main__":
     result = seller_analytics(seller_user_id=1)
+    print("Report period:", result["report_period"])
     print("Summary:", result["summary"])
     print("Sell-through:", result["sell_through"])
     print("Top pickup windows:", result["pickup_window_performance"][:3])
