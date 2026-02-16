@@ -19,7 +19,7 @@ from typing import Any
 
 import pandas as pd
 from faker import Faker
-from internal.auth.security import generate_claim_code, generate_token
+from internal.auth.security import generate_token
 
 # setting the Faker library to use UK countries
 fake = Faker("en_GB")
@@ -53,6 +53,17 @@ DEFAULT_CATEGORY_NAMES = [
 
 Faker.seed(42)
 secure_rng = SystemRandom()
+
+
+def _generate_claim_code(used_codes: set[str]) -> str:
+    """Generate unique claim code without external dependency."""
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    while True:
+        raw_code = "".join(secure_rng.choice(alphabet) for _ in range(4))
+        code = f"{raw_code[:2]}-{raw_code[2:]}"
+        if code not in used_codes:
+            used_codes.add(code)
+            return code
 
 
 def generate_users() -> pd.DataFrame:
@@ -222,6 +233,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     # Using the specific window times
                     "window_start": win_start,
                     "window_end": win_end,
+                    "status": "available",
                     "created_at": created_at,
                 })
                 bundle_id += 1
@@ -329,11 +341,7 @@ def generate_reservations(
         else:
             collected_at = None
 
-        while True:
-            code = generate_claim_code([])
-            if code not in claim_codes:
-                claim_codes.add(code)
-                break
+        code = _generate_claim_code(claim_codes)
 
         reservations.append({
             "reservation_id": reservation_id,
@@ -346,6 +354,23 @@ def generate_reservations(
         })
 
     return pd.DataFrame(reservations)
+
+
+def sync_bundle_status(
+    bundles_df: pd.DataFrame, reservations_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Updates bundle availability status based on reservation count and capacity."""
+    reservation_counts = reservations_df.groupby("bundle_id").size().to_dict()
+    updated = bundles_df.copy()
+    updated["status"] = updated.apply(
+        lambda row: (
+            "unavailable"
+            if reservation_counts.get(int(row["bundle_id"]), 0) >= int(row["total_qty"])
+            else "available"
+        ),
+        axis=1,
+    )
+    return updated
 
 
 def generate_issue_reports(
@@ -580,6 +605,7 @@ if __name__ == "__main__":
 
     # reservations with different states (collected, no-show, expired)
     df_reservations = generate_reservations(df_bundles, df_consumers)
+    df_bundles = sync_bundle_status(df_bundles, df_reservations)
     print(f"   Generated {len(df_reservations)} reservations")
 
     # support and game

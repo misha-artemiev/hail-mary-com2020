@@ -10,6 +10,11 @@ CREATE TYPE reservation_status AS ENUM (
     'no_show'
 );
 
+CREATE TYPE bundle_status AS ENUM (
+    'available',
+    'unavailable'
+);
+
 CREATE TYPE admin_issue_type AS ENUM (
     'LOGIN_FAILED',
     'ACCOUNT_LOCKED',
@@ -115,6 +120,7 @@ CREATE TABLE IF NOT EXISTS bundles (
     discount_percentage INT NOT NULL,
     window_start TIMESTAMP NOT NULL,
     window_end TIMESTAMP NOT NULL,
+    status bundle_status NOT NULL DEFAULT 'available',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );

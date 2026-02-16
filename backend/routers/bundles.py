@@ -12,7 +12,7 @@ from internal.geolocation.types import LocationModel
 from internal.queries.allergens import Querier as AllergensQuerier
 from internal.queries.bundle import Querier as BundleQuerier
 from internal.queries.category import Querier as CategoriesQuerier
-from internal.queries.models import Bundle, Reservation
+from internal.queries.models import Bundle, BundleStatus, Reservation
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.reservations import Querier as ReservationQuerier
 from internal.queries.seller import GetSellerByLocationParams
@@ -86,13 +86,15 @@ async def reserve_bundle(
     bundle = BundleQuerier(conn).get_bundle_lock(bundle_id=int(bundle_id))
     if not bundle:
         raise HTTPException(500, "failed to find bundle")
+    if bundle.status == BundleStatus.UNAVAILABLE:
+        raise HTTPException(409, "no reservations available")
     reservations_querier = ReservationQuerier(conn)
-    reservations = reservations_querier.get_bundle_reservations(
-        bundle_id=int(bundle_id)
-    )
-    if not reservations:
-        raise HTTPException(500, "failed to find reservations")
-    if bundle.total_qty <= len(list(reservations)):
+    reservations = list(reservations_querier.get_bundle_reservations(bundle_id=int(bundle_id)))
+    reservation_count = len(reservations)
+    if bundle.total_qty <= reservation_count:
+        _ = BundleQuerier(conn).update_bundle_status(
+            bundle_id=bundle.bundle_id, status=BundleStatus.UNAVAILABLE
+        )
         raise HTTPException(409, "no reservations available")
     used_codes = [rese.claim_code for rese in reservations]
     reservation = reservations_querier.create_reservation(
@@ -104,6 +106,10 @@ async def reserve_bundle(
     )
     if not reservation:
         raise HTTPException(500, "failed to create reservation")
+    if reservation_count + 1 >= bundle.total_qty:
+        _ = BundleQuerier(conn).update_bundle_status(
+            bundle_id=bundle.bundle_id, status=BundleStatus.UNAVAILABLE
+        )
     return reservation
 
 
@@ -202,7 +208,9 @@ async def search_bundles(
             reservations = ReservationQuerier(conn).get_bundle_reservations(
                 bundle_id=int(bundle.bundle_id)
             )
-            if not reservations or bundle.total_qty <= len(list(reservations)):
+            if bundle.status == BundleStatus.UNAVAILABLE:
+                continue
+            if bundle.total_qty <= len(list(reservations)):
                 continue
             filtered_bundles.append(
                 SearchBundlesResponse(
