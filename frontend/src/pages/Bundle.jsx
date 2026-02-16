@@ -8,10 +8,13 @@ import { useParams } from "react-router-dom";
 
 // Hooks
 import useBundle from "../hooks/useBundle";
+import { useAuth } from "../context/AuthContext";
+import { useReserveBundle } from "../hooks/useReserveBundle";
 
 // Components
 import Card from "../components/Card";
 import InfoLine from "../components/InfoLine";
+import Button from "../components/forms/Button";
 
 // Resources
 import defaultListing from "../assets/default-listing.jpg";
@@ -28,7 +31,15 @@ import defaultListing from "../assets/default-listing.jpg";
 export default function Bundle() {
     const { id } = useParams();
 
+    // Get the role of the logged in user
+    const { userRole } = useAuth();
+
+    // Get bundle information
     const { bundle, loading, error } = useBundle(id);
+
+    // Get reservation information
+    const { reserving, reservationSuccess, handleReserve } =
+        useReserveBundle(id);
 
     if (loading) {
         return (
@@ -143,6 +154,35 @@ export default function Bundle() {
                     value={`${formatDateTime(windowStart)} - ${formatDateTime(windowEnd)}`}
                 />
             </Card>
+
+            {/* Reservation card */}
+            {userRole === "consumer" && (
+                <Card>
+                    {/* Subtitle */}
+                    <h2 className="text-xl font-bold text-green-700 mb-4">
+                        Reserve This Bundle
+                    </h2>
+
+                    <p className="text-gray-600 mb-4">
+                        Reserve this bundle now to secure your pickup.
+                        You&apos;ll receive a claim code to use when you collect
+                        it.
+                    </p>
+
+                    {/* Depends on reservation status */}
+                    {reservationSuccess ? (
+                        <div className="text-center py-4">
+                            <p className="text-green-600 font-semibold text-lg">
+                                Reservation successful!
+                            </p>
+                        </div>
+                    ) : (
+                        <Button onClick={handleReserve} disabled={reserving}>
+                            {reserving ? "Reserving..." : "Reserve Bundle"}
+                        </Button>
+                    )}
+                </Card>
+            )}
         </div>
     );
 }
