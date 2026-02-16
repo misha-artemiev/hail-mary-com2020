@@ -16,7 +16,7 @@ try:
     from database.data.DataAnalysis import DATA_DIR, seller_analytics
 except ModuleNotFoundError:
     try:
-        from .DataAnalysis import DATA_DIR, seller_analytics
+        from DataAnalysis import DATA_DIR, seller_analytics
     except ModuleNotFoundError:
         from .DataAnalysis import DATA_DIR, seller_analytics
 
@@ -163,13 +163,31 @@ def plot_sell_rate_capacity(
     bars = ax.bar(labels, values, color=["#F6C85F", "#6F4E7C"])
     ax.set_ylim(0, 100)
     ax.set_ylabel("Rate (%)")
-    ax.set_title("Weekly Sell Rates vs Bundle Quantity Capacity")
+    ax.set_title("Weekly Sell Rates vs Bundle Quantity Capacity", pad=22)
+    ax.legend(
+        bars,
+        labels,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 1.0),
+        ncol=2,
+        frameon=False,
+        borderaxespad=0.2,
+    )
 
     subtitle = (
         f"capacity={total_bundle_quantity} qty, reservations={reservations}, "
         f"no-shows={no_shows}, effective sales={actual_sales}"
     )
-    ax.text(0.5, 1.02, subtitle, transform=ax.transAxes, ha="center", fontsize=9)
+    ax.text(
+        0.5,
+        1.01,
+        subtitle,
+        transform=ax.transAxes,
+        ha="center",
+        va="bottom",
+        fontsize=9,
+        clip_on=False,
+    )
 
     for bar, value in zip(bars, values):
         ax.text(
@@ -201,7 +219,7 @@ def plot_top_categories(
         ax.axis("off")
     else:
         top_categories = categories_df.sort_values("reservations", ascending=False).head(3)
-        ax.bar(
+        bars = ax.bar(
             top_categories["category_name"],
             top_categories["reservations"],
             color="#9FD356",
@@ -220,7 +238,16 @@ def plot_top_categories(
                 va="bottom",
                 fontsize=9,
             )
-        ax.set_title("Top 3 Categories by Reservations (Weekly)")
+        ax.set_title("Top 3 Categories by Reservations (Weekly)", pad=22)
+        ax.legend(
+            [bars[0]],
+            ["Reservations"],
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.0),
+            ncol=1,
+            frameon=False,
+            borderaxespad=0.2,
+        )
         ax.set_ylabel("Reservations")
         ax.set_xlabel("Category")
 
