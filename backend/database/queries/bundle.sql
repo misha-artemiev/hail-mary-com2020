@@ -28,7 +28,7 @@ WHERE seller_id=$1;
 -- name: GetSellersActiveBundles :many
 SELECT *
 FROM bundles
-WHERE seller_id=$1 AND NOW() BETWEEN window_start AND window_end AND status='available';
+WHERE seller_id=$1 AND NOW() BETWEEN window_start AND window_end;
 
 -- name: GetSellersBundle :one
 SELECT *
@@ -40,10 +40,4 @@ LIMIT 1;
 UPDATE bundles
 SET bundle_name=$3, description=$4, total_qty=$5, price=$6, discount_percentage=$7, window_start=$8, window_end=$9
 WHERE bundle_id=$1 AND seller_id=$2
-RETURNING *;
-
--- name: UpdateBundleStatus :one
-UPDATE bundles
-SET status=$2
-WHERE bundle_id=$1
 RETURNING *;

@@ -75,7 +75,7 @@ from internal.queries.bundle import (
     UpdateBundleParams,
 )
 from internal.queries.bundle import Querier as BundleQuerier
-from internal.queries.models import Bundle, BundleStatus, Reservation
+from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.reservations import Querier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
@@ -185,19 +185,6 @@ async def update_bundle(
     )
     if not bundle:
         raise HTTPException(406, "failed to update bundle")
-    reservations = list(ReservationsQuerier(conn).get_bundle_reservations(bundle_id=bundle.bundle_id))
-    target_status = (
-        BundleStatus.UNAVAILABLE
-        if len(reservations) >= bundle.total_qty
-        else BundleStatus.AVAILABLE
-    )
-    if bundle.status != target_status:
-        updated_bundle = BundleQuerier(conn).update_bundle_status(
-            bundle_id=bundle.bundle_id, status=target_status
-        )
-        if not updated_bundle:
-            raise HTTPException(500, "failed to update bundle status")
-        return updated_bundle
     return bundle
 
 

@@ -10,11 +10,6 @@ CREATE TYPE reservation_status AS ENUM (
     'no_show'
 );
 
-CREATE TYPE bundle_status AS ENUM (
-    'available',
-    'unavailable'
-);
-
 CREATE TYPE admin_issue_type AS ENUM (
     'LOGIN_FAILED',
     'ACCOUNT_LOCKED',
