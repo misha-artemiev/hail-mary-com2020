@@ -17,6 +17,7 @@ import { useSellerBundleReservations } from "../hooks/useSellerBundleReservation
 import Card from "../components/Card";
 import InfoLine from "../components/InfoLine";
 import Button from "../components/forms/Button";
+import Reservation from "../components/Reservation";
 
 // Resources
 import defaultListing from "../assets/default-listing.jpg";
@@ -111,29 +112,11 @@ export default function Bundle() {
      */
     const renderReservations = (reservations) =>
         reservations.map((reservation) => (
-            <div
+            <Reservation
                 key={reservation.reservation_id}
-                className="flex justify-between items-center p-3 bg-gray-100 rounded-lg cursor-pointer hover:scale-101 transition"
-            >
-                <div>
-                    {/* Reservation ID */}
-                    <p className="font-medium">
-                        Reservation{" "}
-                        <span className="font-mono font-bold">
-                            #{reservation.reservation_id}
-                        </span>
-                    </p>
-
-                    {/* TODO: user to claim */}
-                </div>
-
-                {/* Date of reservation */}
-                <span className="text-sm text-gray-500">
-                    {new Date(reservation.reserved_at).toLocaleDateString(
-                        "en-GB",
-                    )}
-                </span>
-            </div>
+                id={reservation.reservation_id}
+                reserved_at={reservation.reserved_at}
+            />
         ));
 
     return (
