@@ -1,20 +1,25 @@
-"""Needs checks for attributes of the tables, I will double check but a triple check would be good.
-I have added some comments to the code to explain what each part is doing, but feel free to
-ask if you have any questions if you need to understand."""
+"""Generate random data for database.
 
-"""This code generates synthetic data for the app although it is not perfect for the final app,
-from my thoughts it is okay for the prototype and will be improves later, remember for CW2 we have to
-make changes to almost every aspect of the app so we can make improvements and get more realistic data 
-therefore more marks for CW2."""
+Needs checks for attributes of the tables, I will double check but a triple
+check would be good. I have added some comments to the code to explain what each
+part is doing, but feel free to ask if you have any questions
+if you need to understand.
 
-import os
-import pandas as pd
-import numpy as np
+This code generates synthetic data for the app although it is not perfect for the
+final app, from my thoughts it is okay for the prototype and will be improves
+later, remember for CW2 we have to make changes to almost every aspect of the app
+so we can make improvements and get more realistic data therefore more marks for CW2.
+"""
+
+import pathlib
 import random
-import string
-from datetime import datetime, timedelta
-from internal.auth.security import generate_claim_code
+from datetime import UTC, datetime, timedelta
+from secrets import SystemRandom
+from typing import Any
+
+import pandas as pd
 from faker import Faker
+from internal.auth.security import generate_claim_code, generate_token
 
 # setting the Faker library to use UK countries
 fake = Faker("en_GB")
@@ -30,7 +35,8 @@ NUM_REPORTS = 150
 NUM_CATEGORIES = 6
 NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
-# random start date can be changed
+TOKEN_CREATION_THRESHOLD = 0.2
+BADGE_PROBABILITY = 0.4
 START_DATE = datetime(2025, 1, 15)
 
 # default product category names (easily changeable if needed)
@@ -45,14 +51,19 @@ DEFAULT_CATEGORY_NAMES = [
     "Snacks",
 ]
 
-random.seed(42)
-np.random.seed(42)
 Faker.seed(42)
+secure_rng = SystemRandom()
 
 
-def generate_users():
-    """creates the base user credentials and roles. then stores the users as a pandas dataframe
-    via a list of dictionaries"""
+def generate_users() -> pd.DataFrame:
+    """Creates the base user credentials and roles.
+
+    then stores the users as a pandas dataframe
+    via a list of dictionaries
+
+    Returns:
+      users dataframe
+    """
     total_users = NUM_SELLERS + NUM_CONSUMERS + NUM_ADMINS
     roles = (
         ["seller"] * NUM_SELLERS + ["consumer"] * NUM_CONSUMERS + ["admin"] * NUM_ADMINS
@@ -66,14 +77,23 @@ def generate_users():
             "email": fake.unique.email(),
             "pw_hash": fake.sha256(),
             "role": role,
-            "created_at": START_DATE - timedelta(days=random.randint(30, 100)),
-            "last_login": START_DATE + timedelta(days=random.randint(0, 42)),
+            "created_at": START_DATE - timedelta(days=secure_rng.randint(30, 100)),
+            "last_login": START_DATE + timedelta(days=secure_rng.randint(0, 42)),
         })
     return pd.DataFrame(users)
 
 
-def generate_profiles(users_df):
-    """Creates profile tables with REAL UK COORDINATES for Sellers."""
+def generate_profiles(
+    users_df: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Creates profile tables with REAL UK COORDINATES for Sellers.
+
+    Args:
+      users_df: users dataframe
+
+    Returns:
+      tuples of sellers, consumers and admins
+    """
     admin_ids = users_df[users_df["role"] == "admin"]["user_id"].tolist()
 
     exeter_data = [
@@ -112,7 +132,7 @@ def generate_profiles(users_df):
         sellers.append({
             "user_id": user_id,
             "seller_name": fake.company(),
-            "verified_by": random.choice(admin_ids),
+            "verified_by": secure_rng.choice(admin_ids),
             "verification_date": START_DATE - timedelta(days=15),
             "address_line1": fake.street_address(),
             "city": "Exeter",
@@ -149,14 +169,29 @@ def generate_profiles(users_df):
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
 
 
+<<<<<<< HEAD
 def generate_inventory(seller_ids, categories_df, windows_df):
     """makes 2 bundles for each seller every day for the 6 weeks"""
+=======
+def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.DataFrame:
+    """Makes 2 bundles for each seller every day for the 6 weeks.
+
+    Args:
+      seller_ids: list of sellers ids
+      windows_df: dataframe bundle of windows
+
+    Returns:
+      dataframe of bundles
+    """
+    window_records = windows_df.to_dict("records")
+>>>>>>> origin/release
     bundles = []
     bundle_id = 1
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
         for seller_id in seller_ids:
             for _ in range(2):
+<<<<<<< HEAD
                 closing_hour = random.randint(16, 20)
                 created_at = current_date.replace(
                     hour=closing_hour, minute=0, second=0, microsecond=0
@@ -165,24 +200,40 @@ def generate_inventory(seller_ids, categories_df, windows_df):
                     hour=closing_hour, minute=0, second=0, microsecond=0
                 )
                 win_start = win_end - timedelta(hours=10)
+=======
+                # Pick a random window (e.g., 8am-9am or 2pm-3pm)
+                window = secure_rng.choice(window_records)
+
+                win_start = current_date.replace(hour=window["window_start"], minute=0)
+                win_end = current_date.replace(hour=window["window_end"], minute=0)
+
+>>>>>>> origin/release
                 bundles.append({
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
                     "bundle_name": f"Surplus {fake.word().capitalize()} Bag",
                     "description": fake.sentence(nb_words=10),
-                    "total_qty": random.randint(1, 5),
-                    "price": round(random.uniform(3.00, 7.50), 2),
-                    "discount_percentage": random.choice([50, 60, 70]),
+                    "total_qty": secure_rng.randint(1, 5),
+                    "price": round(secure_rng.uniform(3.00, 7.50), 2),
+                    "discount_percentage": secure_rng.choice([50, 60, 70]),
                     "window_start": win_start,
                     "window_end": win_end,
+<<<<<<< HEAD
                     "created_at": created_at,
+=======
+                    "created_at": win_start - timedelta(hours=secure_rng.randint(2, 6)),
+>>>>>>> origin/release
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
 
 
-def generate_categories():
-    """Creates the master list of product categories."""
+def generate_categories() -> pd.DataFrame:
+    """Creates the master list of product categories.
+
+    Returns:
+        dataframe of cetegories
+    """
     # Using DEFAULT_CATEGORY_NAMES list
     categories = []
     for i, name in enumerate(DEFAULT_CATEGORY_NAMES, start=1):
@@ -190,33 +241,61 @@ def generate_categories():
     return pd.DataFrame(categories)
 
 
-def generate_bundle_categories(bundles_df, categories_df):
-    """Links each bundle to 1-2 random categories."""
+def generate_bundle_categories(
+    bundles_df: pd.DataFrame, categories_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Links each bundle to 1-2 random categories.
+
+    Args:
+      bundles_df: dataframe of bundles
+      categories_df: dataframe of categories
+
+    Returns:
+      dataframe going categories and bundles
+    """
     bundle_ids = bundles_df["bundle_id"].tolist()
     category_ids = categories_df["category_id"].tolist()
     links = []
 
     for bundle_id in bundle_ids:
         # Most bundles belong to 1 category, some might belong to 2
-        selected = random.sample(category_ids, random.randint(1, 2))
+        selected = secure_rng.sample(category_ids, secure_rng.randint(1, 2))
         for category_id in selected:
             links.append({"bundle_id": bundle_id, "category_id": category_id})
 
     return pd.DataFrame(links)
 
 
-def generate_pickup_windows():
-    """creates a list of pickup time windows from 8am in 1 hour increments for the 10 windows"""
+def generate_pickup_windows() -> pd.DataFrame:
+    """Creates a list of pickup time windows.
+
+    from 8am in 1 hour increments for the 10 windows
+
+    Returns:
+        dataframe of pickup windows
+    """
     windows = []
     start_hour = 8
-    for _ in range(NUM_PICKUP_WINDOWS):
-        windows.append({"window_start": start_hour, "window_end": start_hour + 1})
-        start_hour += 1
+    for i in range(NUM_PICKUP_WINDOWS):
+        windows.append({
+            "window_start": start_hour + i,
+            "window_end": start_hour + i + 1,
+        })
     return pd.DataFrame(windows)
 
 
-def generate_reservations(bundles_df, consumers_df):
-    """creates reservations with collected, no-show, and expired (reserved) states"""
+def generate_reservations(
+    bundles_df: pd.DataFrame, consumers_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Creates reservations with collected, no-show, and expired (reserved) states.
+
+    Args:
+      bundles_df: dataframe of bundles
+      consumers_df: dataframe of consumers
+
+    Returns:
+      dataframe of reservations
+    """
     statuses = (
         ["no_show"] * NUM_NO_SHOWS
         + ["reserved"] * NUM_EXPIRIES
@@ -232,8 +311,10 @@ def generate_reservations(bundles_df, consumers_df):
     consumer_ids = consumers_df["user_id"].tolist()
 
     for reservation_id, status in enumerate(statuses, start=1):
-        bundle = random.choice(bundle_records)
-        reserved_at = bundle["window_start"] - timedelta(hours=random.randint(1, 24))
+        bundle = secure_rng.choice(bundle_records)
+        reserved_at = bundle["window_start"] - timedelta(
+            hours=secure_rng.randint(1, 24)
+        )
         if reserved_at > bundle["window_end"]:
             reserved_at = bundle["window_start"]
 
@@ -242,13 +323,13 @@ def generate_reservations(bundles_df, consumers_df):
                 (bundle["window_end"] - bundle["window_start"]).total_seconds() / 60
             )
             collected_at = bundle["window_start"] + timedelta(
-                minutes=random.randint(10, max(10, window_minutes))
+                minutes=secure_rng.randint(10, max(10, window_minutes))
             )
         else:
             collected_at = None
 
         while True:
-            code = generate_claim_code()
+            code = generate_claim_code([])
             if code not in claim_codes:
                 claim_codes.add(code)
                 break
@@ -256,7 +337,7 @@ def generate_reservations(bundles_df, consumers_df):
         reservations.append({
             "reservation_id": reservation_id,
             "bundle_id": bundle["bundle_id"],
-            "consumer_id": random.choice(consumer_ids),
+            "consumer_id": secure_rng.choice(consumer_ids),
             "reserved_at": reserved_at,
             "claim_code": code,
             "status": status,
@@ -266,8 +347,18 @@ def generate_reservations(bundles_df, consumers_df):
     return pd.DataFrame(reservations)
 
 
-def generate_issue_reports(reservations_df, users_df):
-    """creates seller and admin issue reports"""
+def generate_issue_reports(
+    reservations_df: pd.DataFrame, users_df: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Creates seller and admin issue reports.
+
+    Args:
+      reservations_df: dataframe of reservations
+      users_df: dataframe of users
+
+    Returns:
+      dataframe of reservation issues
+    """
     seller_issue_types = [
         "ITEM_MISSING",
         "ITEM_INCORRECT",
@@ -304,30 +395,37 @@ def generate_issue_reports(reservations_df, users_df):
     for report_id in range(1, seller_reports_count + 1):
         seller_reports.append({
             "report_id": report_id,
-            "reservation_id": random.choice(reservation_ids),
-            "issue_type": random.choice(seller_issue_types),
+            "reservation_id": secure_rng.choice(reservation_ids),
+            "issue_type": secure_rng.choice(seller_issue_types),
             # random realistic sentence (to be improved)
             "description": fake.sentence(nb_words=12),
-            "created_at": START_DATE + timedelta(days=random.randint(0, WEEKS * 7 - 1)),
-            "status": random.choice(statuses),
+            "created_at": START_DATE
+            + timedelta(days=secure_rng.randint(0, WEEKS * 7 - 1)),
+            "status": secure_rng.choice(statuses),
         })
 
     admin_reports = []
     for report_id in range(1, admin_reports_count + 1):
         admin_reports.append({
             "report_id": report_id,
-            "user_id": random.choice(user_ids),
-            "issue_type": random.choice(admin_issue_types),
+            "user_id": secure_rng.choice(user_ids),
+            "issue_type": secure_rng.choice(admin_issue_types),
             # random realistic sentence (to be improved)
             "description": fake.sentence(nb_words=12),
-            "created_at": START_DATE + timedelta(days=random.randint(0, WEEKS * 7 - 1)),
-            "status": random.choice(statuses),
+            "created_at": START_DATE
+            + timedelta(days=secure_rng.randint(0, WEEKS * 7 - 1)),
+            "status": secure_rng.choice(statuses),
         })
 
     return pd.DataFrame(seller_reports), pd.DataFrame(admin_reports)
 
 
-def generate_allergens():
+def generate_allergens() -> pd.DataFrame:
+    """Generates allergies.
+
+    Returns:
+      dataframe of allergens
+    """
     allergen_names = ["Gluten", "Dairy", "Nuts", "Soy", "Eggs", "Sesame"]
     allergens = []
     for i, name in enumerate(allergen_names, start=1):
@@ -335,39 +433,63 @@ def generate_allergens():
     return pd.DataFrame(allergens)
 
 
-def generate_bundle_allergens(bundles_df, allergens_df):
-    """links each bundle to 1-3 random allergens."""
+def generate_bundle_allergens(
+    bundles_df: pd.DataFrame, allergens_df: pd.DataFrame
+) -> pd.DataFrame:
+    """Links each bundle to 1-3 random allergens.
+
+    Args:
+      bundles_df: dataframe of bundles
+      allergens_df: dataframe of allergens
+
+    Returns:
+      dataframe joining bundles and allergens
+    """
     bundle_ids = bundles_df["bundle_id"].tolist()
     allergen_ids = allergens_df["allergen_id"].tolist()
     links = []
     for bundle_id in bundle_ids:
         # pick a random number of allergens for this food bag
-        selected = random.sample(allergen_ids, random.randint(0, 3))
+        selected = secure_rng.sample(allergen_ids, secure_rng.randint(0, 3))
         for allergen_id in selected:
             links.append({"bundle_id": bundle_id, "allergen_id": allergen_id})
     return pd.DataFrame(links)
 
 
-def generate_inbox(users_df):
-    """generates welcome messages and system notifications."""
+def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
+    """Generates welcome messages and system notifications.
+
+    Args:
+      users_df: dataframe of users
+
+    Returns:
+      dataframe of inbox messages
+    """
     user_ids = users_df["user_id"].tolist()
     messages = []
     for i in range(1, 101):  # 100 sample messages
-        recip = random.choice(user_ids)
+        recip = secure_rng.choice(user_ids)
         messages.append({
             "message_id": i,
             "user_id": recip,
-            "sender_id": 1,  # assuming user_id 1 is the system/admin can be changed easily
+            "sender_id": 1,  # assuming user_id 1 is the system/admin
             "message_subject": "Welcome to the App!",
             "message_text": fake.paragraph(nb_sentences=3),
-            "sent_at": START_DATE + timedelta(days=random.randint(0, 30)),
-            "read_status": random.choice([True, False]),
+            "sent_at": START_DATE + timedelta(days=secure_rng.randint(0, 30)),
+            "read_status": secure_rng.choice([True, False]),
         })
     return pd.DataFrame(messages)
 
 
-def generate_badges(consumers_df):
-    """Creates badge definitions and assigns them to consumers."""
+def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Creates badge definitions and assigns them to consumers.
+
+    Args:
+      consumers_df: dataframe of consumers
+
+    Returns:
+      tuple of budges dataframe and joining user and badge dataframe
+    """
     # Badge Definitions
     badge_data = [
         {"badge_id": 1, "name": "First Save", "description": "Saved your first bag"},
@@ -386,33 +508,39 @@ def generate_badges(consumers_df):
 
     for uid in consumer_ids:
         # 40% chance a user has badges
-        if random.random() < 0.4:
+        if secure_rng.random() < BADGE_PROBABILITY:
             # Assign 1 to 3 random badges
-            num_badges = random.randint(1, 3)
+            num_badges = secure_rng.randint(1, 3)
             my_badges = random.sample([b["badge_id"] for b in badge_data], num_badges)
 
             for bid in my_badges:
                 acquired.append({
                     "user_id": uid,
                     "badge_id": bid,
-                    "acquired_at": START_DATE + timedelta(days=random.randint(1, 40)),
+                    "acquired_at": START_DATE
+                    + timedelta(days=secure_rng.randint(1, 40)),
                 })
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
 
 
-def generate_tokens(users_df):
-    """Generates auth tokens for the token table."""
-    tokens = []
+def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
+    """Generates auth tokens for the token table.
+
+    Args:
+      users_df: dataframe of users
+
+    Returns:
+      dataframe of tokens
+    """
+    tokens: list[dict[str, Any]] = []
     for user_id in users_df["user_id"]:
-        if random.random() > 0.2:
-            created = START_DATE + timedelta(days=random.randint(1, 40))
+        if (secure_rng.random()) > TOKEN_CREATION_THRESHOLD:
+            created = START_DATE + timedelta(days=secure_rng.randint(1, 40))
             tokens.append({
                 "token_id": len(tokens) + 1,
                 "user_id": user_id,
-                "token": "".join(
-                    random.choices(string.ascii_letters + string.digits, k=32)
-                ),
+                "token": generate_token(),
                 "created_at": created,
                 "expires_at": created + timedelta(hours=24),
             })
@@ -427,8 +555,8 @@ if __name__ == "__main__":
     # Define Output Folder
     OUTPUT_FOLDER = "synthetic_data"
     # Create the folder if it doesn't exist
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
+    if not pathlib.Path(OUTPUT_FOLDER).exists():
+        pathlib.Path(OUTPUT_FOLDER).mkdir(parents=True)
         print(f"Created folder: {OUTPUT_FOLDER}")
 
     # Users & Profiles
@@ -442,9 +570,7 @@ if __name__ == "__main__":
     df_windows = generate_pickup_windows()
 
     # Inventory
-    df_bundles = generate_inventory(
-        df_sellers["user_id"].tolist(), df_categories, df_windows
-    )
+    df_bundles = generate_inventory(df_sellers["user_id"].tolist(), df_windows)
 
     # Junction Tables
     df_bundle_cats = generate_bundle_categories(df_bundles, df_categories)
@@ -485,8 +611,7 @@ if __name__ == "__main__":
 
     print("Saving files...")
     for name, df in all_dfs.items():
-        # Use os.path.join to work on Windows and Mac
-        file_path = os.path.join(OUTPUT_FOLDER, f"{name}.csv")
+        file_path = pathlib.Path(OUTPUT_FOLDER) / f"{name}.csv"
         df.to_csv(file_path, index=False)
         print(f"   - Saved {file_path}")
 

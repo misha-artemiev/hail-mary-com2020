@@ -24,6 +24,8 @@ export default function FormInput({
     label,
     name,
     type = "text",
+    min = "",
+    step = "",
     value,
     placeholder = "",
     onChange,
@@ -49,6 +51,8 @@ export default function FormInput({
                 id={name}
                 type={type}
                 name={name}
+                min={min}
+                step={step}
                 required={required}
                 value={value}
                 placeholder={placeholder}

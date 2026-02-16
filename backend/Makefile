@@ -1,4 +1,4 @@
-SRC = main.py internal routers database
+SRC = main.py internal routers database testing
 
 ifneq (,$(wildcard ./.env))
     include .env
