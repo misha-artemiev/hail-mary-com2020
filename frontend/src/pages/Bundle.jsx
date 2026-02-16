@@ -11,6 +11,7 @@ import useBundle from "../hooks/useBundle";
 import { useAuth } from "../context/AuthContext";
 import { useReserveBundle } from "../hooks/useReserveBundle";
 import { useConsumerReservations } from "../hooks/useConsumerHasReserved";
+import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 
 // Components
 import Card from "../components/Card";
@@ -31,6 +32,8 @@ import defaultListing from "../assets/default-listing.jpg";
  */
 export default function Bundle() {
     const { id } = useParams();
+
+    // Get if the user has already reserved
     const { hasReservedBundle } = useConsumerReservations();
 
     // Get the role of the logged in user
@@ -42,6 +45,9 @@ export default function Bundle() {
     // Get reservation information
     const { reserving, reservationSuccess, handleReserve } =
         useReserveBundle(id);
+
+    // Get seller reservations
+    const { sellerReservations } = useSellerBundleReservations(parseInt(id));
 
     if (loading) {
         return (
@@ -76,7 +82,7 @@ export default function Bundle() {
     const discountedPrice =
         originalPrice * (1 - bundle.discount_percentage / 100);
 
-    //
+    // Dates and times bundle is available
     const windowStart = new Date(bundle.window_start);
     const windowEnd = new Date(bundle.window_end);
 
@@ -96,6 +102,39 @@ export default function Bundle() {
             minute: "2-digit",
         });
     };
+
+    /**
+     * Dynamically renders given reservations.
+     *
+     * @param {Object} reservations - The categories to display.
+     * @returns {JSX.Element} a set of reservation elements
+     */
+    const renderReservations = (reservations) =>
+        reservations.map((reservation) => (
+            <div
+                key={reservation.reservation_id}
+                className="flex justify-between items-center p-3 bg-gray-100 rounded-lg cursor-pointer hover:scale-101 transition"
+            >
+                <div>
+                    {/* Reservation ID */}
+                    <p className="font-medium">
+                        Reservation{" "}
+                        <span className="font-mono font-bold">
+                            #{reservation.reservation_id}
+                        </span>
+                    </p>
+
+                    {/* TODO: user to claim */}
+                </div>
+
+                {/* Date of reservation */}
+                <span className="text-sm text-gray-500">
+                    {new Date(reservation.reserved_at).toLocaleDateString(
+                        "en-GB",
+                    )}
+                </span>
+            </div>
+        ));
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -157,7 +196,7 @@ export default function Bundle() {
                 />
             </Card>
 
-            {/* Reservation card */}
+            {/* Consumer reservation section */}
             {userRole === "consumer" && (
                 <Card>
                     {/* Subtitle */}
@@ -191,6 +230,28 @@ export default function Bundle() {
                         <Button onClick={handleReserve} disabled={reserving}>
                             {reserving ? "Reserving..." : "Reserve Bundle"}
                         </Button>
+                    )}
+                </Card>
+            )}
+
+            {/* Seller reservations section */}
+            {userRole === "seller" && (
+                <Card>
+                    {/* Subtitle */}
+                    <h2 className="text-xl font-bold text-green-700 mb-4">
+                        Active Reservations
+                    </h2>
+
+                    {/* Depends on reservation status */}
+                    {sellerReservations.length === 0 ? (
+                        // No reservations
+                        <p className="text-gray-600">
+                            No active reservations for this bundle.
+                        </p>
+                    ) : (
+                        <div className="space-y-3">
+                            {renderReservations(sellerReservations)}
+                        </div>
                     )}
                 </Card>
             )}

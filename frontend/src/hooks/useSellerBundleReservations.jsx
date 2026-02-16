@@ -1,5 +1,5 @@
 /**
- * useConsumerReservations.jsx
+ * useSellerBundleReservations.jsx
  * @author Thomas Noakes
  */
 
@@ -9,19 +9,18 @@ import { useState, useEffect } from "react";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 /**
- * Custom React hook for checking if a user has reserved a bundle.
- * Uses the token stored in the user's local storage.
+ * Custom React hook for fetching reservations for a seller's bundle.
  *
- * @param {Number} bundleId - The ID of the bundle to reserve.
- * @returns {{ hasReservedBundle: (bundleId: Number) => boolean }}
- *          a function to check if the bundle ID has been reserved.
+ * @param {Number} bundleId - The ID of the bundle to fetch reservations for.
+ *
+ * @returns {{ reservations: Array<Object> }} a list of active reservations for the bundle.
  */
-export function useConsumerReservations() {
-    // State object: a list of all the reservations by the user
+export function useSellerBundleReservations(bundleId) {
+    // State object: a list of all the reservations for the bundle
     const [reservations, setReservations] = useState([]);
 
     /**
-     * Check the reservations.
+     * Get all reservations.
      * Uses the user's auth token.
      */
     useEffect(() => {
@@ -35,7 +34,7 @@ export function useConsumerReservations() {
             try {
                 // Send the request
                 const response = await fetch(
-                    `${API_BASE_URL}/consumers/me/reservations`,
+                    `${API_BASE_URL}/sellers/me/bundles/${bundleId}/reservations`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -43,7 +42,6 @@ export function useConsumerReservations() {
                     },
                 );
 
-                // Catch bad HTTP codes
                 if (!response.ok) {
                     const data = await response.json();
                     throw new Error(data.detail);
@@ -57,19 +55,13 @@ export function useConsumerReservations() {
         }
 
         fetchReservations();
-    }, []);
+    }, [bundleId]);
 
-    /**
-     * Checks if the user has reserved the given bundle.
-     *
-     * @param {Number} bundleId - The ID of the bundle to check.
-     *
-     * @returns {boolean} if the user has reserved that bundle.
-     */
-    const hasReservedBundle = (bundleId) => {
-        return reservations.some((res) => res.bundle_id === bundleId);
-    };
+    // Filter by reservations that are reserved
+    const sellerReservations = reservations.filter(
+        (res) => res.status === "reserved",
+    );
 
-    // Exit with the confirmation function
-    return { hasReservedBundle };
+    // Exit with a list of active reservations
+    return { sellerReservations };
 }
