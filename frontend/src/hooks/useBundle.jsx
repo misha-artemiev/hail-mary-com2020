@@ -8,6 +8,22 @@ import { useState, useEffect } from "react";
 // Set the default base API route
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+/**
+ * Custom React hook for fetching bundle data.
+ *
+ * @param {int} bundleId - The ID of the bundle to fetch (from the database).
+ *
+ * @returns {{ bundle: Object|null, loading: boolean }}
+ *          the bundle information and loading information
+ *
+ * ---
+ * @example
+ * const { bundle, loading } = useBundle;
+ *
+ * if (loading) return <Spinner />;
+ * if (!bundle) return <NotFound />;
+ * return <Bundle bundle={bundle} />;
+ */
 export default function useBundle(bundleId) {
     // State object: stores the bundle information
     const [bundle, setBundle] = useState(null);

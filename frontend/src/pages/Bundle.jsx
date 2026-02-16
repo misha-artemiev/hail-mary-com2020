@@ -16,6 +16,15 @@ import InfoLine from "../components/InfoLine";
 // Resources
 import defaultListing from "../assets/default-listing.jpg";
 
+/**
+ * The bundle page.
+ * The requested bundle is taken from the URL (*i.e.* `/bundles/<bundle_id`)
+ * If logged in:
+ *  - Consumers can reserve bundles
+ *  - Sellers can view reservations
+ *
+ * @returns the specific bundle page.
+ */
 export default function Bundle() {
     const { id } = useParams();
 
