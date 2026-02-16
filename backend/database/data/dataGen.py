@@ -13,7 +13,7 @@ so we can make improvements and get more realistic data therefore more marks for
 
 import pathlib
 import random
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from secrets import SystemRandom
 from typing import Any
 
@@ -169,10 +169,6 @@ def generate_profiles(
     return pd.DataFrame(sellers), pd.DataFrame(consumers), pd.DataFrame(admins)
 
 
-<<<<<<< HEAD
-def generate_inventory(seller_ids, categories_df, windows_df):
-    """makes 2 bundles for each seller every day for the 6 weeks"""
-=======
 def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.DataFrame:
     """Makes 2 bundles for each seller every day for the 6 weeks.
 
@@ -184,14 +180,12 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
       dataframe of bundles
     """
     window_records = windows_df.to_dict("records")
->>>>>>> origin/release
     bundles = []
     bundle_id = 1
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
         for seller_id in seller_ids:
             for _ in range(2):
-<<<<<<< HEAD
                 closing_hour = random.randint(16, 20)
                 created_at = current_date.replace(
                     hour=closing_hour, minute=0, second=0, microsecond=0
@@ -200,14 +194,6 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     hour=closing_hour, minute=0, second=0, microsecond=0
                 )
                 win_start = win_end - timedelta(hours=10)
-=======
-                # Pick a random window (e.g., 8am-9am or 2pm-3pm)
-                window = secure_rng.choice(window_records)
-
-                win_start = current_date.replace(hour=window["window_start"], minute=0)
-                win_end = current_date.replace(hour=window["window_end"], minute=0)
-
->>>>>>> origin/release
                 bundles.append({
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
@@ -218,11 +204,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "discount_percentage": secure_rng.choice([50, 60, 70]),
                     "window_start": win_start,
                     "window_end": win_end,
-<<<<<<< HEAD
                     "created_at": created_at,
-=======
-                    "created_at": win_start - timedelta(hours=secure_rng.randint(2, 6)),
->>>>>>> origin/release
                 })
                 bundle_id += 1
     return pd.DataFrame(bundles)
