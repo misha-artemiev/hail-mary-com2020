@@ -199,6 +199,8 @@ async def search_bundles(
                 and set(categories).isdisjoint(set(form.categories))
             ):
                 continue
+            if form.max_price and (bundle.price * bundle.discount_percentage / 100) > form.max_price:
+                continue
             reservations = ReservationQuerier(conn).get_bundle_reservations(
                 bundle_id=int(bundle.bundle_id)
             )
