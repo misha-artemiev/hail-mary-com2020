@@ -19,7 +19,12 @@ import defaultProfile from "../assets/default-user.jpg";
  * @returns {JSX.Element} the navigation bar
  */
 export default function Navbar() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, userRole } = useAuth();
+    const navLinks = [{ to: "/about", label: "About Us" }];
+
+    if (userRole === "seller") {
+        navLinks.unshift({ to: "/analysis", label: "Analysis" });
+    }
 
     // TODO: get correct user information
     const user = {
@@ -29,15 +34,36 @@ export default function Navbar() {
 
     return (
         <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            {/* Home page logo */}
-            <NavLink to="/">
-                <img
-                    src={logoFull}
-                    alt="Logo"
-                    // Grow on hover:
-                    className="h-16 w-auto hover:scale-102 transition"
-                />
-            </NavLink>
+            <div className="flex items-center gap-6">
+                {/* Home page logo */}
+                <NavLink to="/">
+                    <img
+                        src={logoFull}
+                        alt="Logo"
+                        // Grow on hover:
+                        className="h-16 w-auto hover:scale-102 transition"
+                    />
+                </NavLink>
+
+                {/* Main nav links */}
+                <div className="flex items-center gap-4">
+                    {navLinks.map((link) => (
+                        <NavLink
+                            key={link.to}
+                            to={link.to}
+                            className={({ isActive }) =>
+                                `text-sm font-semibold transition ${
+                                    isActive
+                                        ? "text-green-100 underline underline-offset-4"
+                                        : "text-white/90 hover:text-white"
+                                }`
+                            }
+                        >
+                            {link.label}
+                        </NavLink>
+                    ))}
+                </div>
+            </div>
 
             {/* If signed in, show profile picture (link to profile page) */}
             {/* Otherwise, show login/signup link */}

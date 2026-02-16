@@ -61,8 +61,13 @@ sequenceDiagram
 ```
 """
 
+import base64
+import importlib.util
+import sys
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
+from types import ModuleType
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Response, Security
@@ -82,6 +87,108 @@ from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
+
+GRAPH_FILE_NAMES = {
+    "top_time_windows": "top_time_windows.png",
+    "sell_rate_capacity": "sell_rate_capacity.png",
+    "top_categories": "top_categories.png",
+}
+GRAPH_TITLES = {
+    "top_time_windows": "Top Collection Time Windows",
+    "sell_rate_capacity": "Sell Rate vs Capacity",
+    "top_categories": "Top Categories by Reservations",
+}
+
+
+def _load_sourceless_module(module_name: str, module_path: Path) -> ModuleType:
+    """Load a module from `.pyc` when source files are unavailable."""
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if not spec or not spec.loader:
+        raise ImportError(f"failed to build import spec for {module_name}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _try_generate_graph_paths(seller_id: int) -> dict[str, Path]:
+    """Try generating graph files with compiled analytics modules."""
+    backend_root = Path(__file__).resolve().parents[1]
+    cache_dir = backend_root / "database" / "data" / "__pycache__"
+    data_analysis_pyc = next(
+        cache_dir.glob("DataAnalysis.cpython-*.pyc"),
+        None,
+    )
+    graphs_pyc = next(cache_dir.glob("graphs.cpython-*.pyc"), None)
+    if not data_analysis_pyc or not graphs_pyc:
+        return {}
+
+    try:
+        _load_sourceless_module("database.data.DataAnalysis", data_analysis_pyc)
+        graphs_module = _load_sourceless_module(
+            "database.data._graphs_runtime",
+            graphs_pyc,
+        )
+        generate = getattr(graphs_module, "generate_seller_weekly_graphs", None)
+        if not callable(generate):
+            return {}
+        generated_paths = generate(seller_id)
+    except Exception:
+        return {}
+
+    if not isinstance(generated_paths, dict):
+        return {}
+
+    resolved: dict[str, Path] = {}
+    for key, raw_path in generated_paths.items():
+        if key not in GRAPH_FILE_NAMES:
+            continue
+        path = Path(str(raw_path))
+        if not path.is_absolute():
+            path = (backend_root / path).resolve()
+        if path.exists():
+            resolved[key] = path
+    return resolved
+
+
+def _find_latest_graph_paths(seller_id: int) -> tuple[str | None, dict[str, Path]]:
+    """Find latest pre-generated analytics graph files for a seller."""
+    graphs_root = (
+        Path(__file__).resolve().parents[1]
+        / "database"
+        / "data"
+        / "graphs"
+        / f"seller_{seller_id}"
+    )
+    if not graphs_root.exists():
+        return None, {}
+
+    report_dirs = sorted((path for path in graphs_root.iterdir() if path.is_dir()))
+    if not report_dirs:
+        return None, {}
+
+    latest_dir = report_dirs[-1]
+    paths: dict[str, Path] = {}
+    for key, filename in GRAPH_FILE_NAMES.items():
+        graph_path = latest_dir / filename
+        if graph_path.exists():
+            paths[key] = graph_path
+    return latest_dir.name, paths
+
+
+class AnalyticsGraph(BaseModel):
+    """Seller analytics graph payload."""
+
+    key: str
+    title: str
+    image_data_url: str
+
+
+class AnalyticsGraphsResponse(BaseModel):
+    """Seller analytics page payload."""
+
+    report_period: str | None
+    graphs: list[AnalyticsGraph]
 
 
 @router.post("", status_code=201)
@@ -209,6 +316,45 @@ async def get_bundles(
     if not bundles:
         raise HTTPException(500, "failed to get bundles")
     return list(bundles)
+
+
+@router.get("/me/analytics/graphs", tags=["analytics"])
+async def get_seller_analytics_graphs(
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> AnalyticsGraphsResponse:
+    """Fetch seller analytics graphs for the authenticated seller."""
+    graph_paths = _try_generate_graph_paths(seller.user_id)
+
+    report_period = None
+    if graph_paths:
+        report_period = next(iter(graph_paths.values())).parent.name
+    else:
+        report_period, graph_paths = _find_latest_graph_paths(seller.user_id)
+
+    if not graph_paths:
+        raise HTTPException(404, "no analytics graph data found for this seller")
+
+    graphs: list[AnalyticsGraph] = []
+    for key in GRAPH_FILE_NAMES:
+        path = graph_paths.get(key)
+        if not path:
+            continue
+        try:
+            image_data = base64.b64encode(path.read_bytes()).decode("ascii")
+        except OSError as err:
+            raise HTTPException(500, f"failed to read graph file: {path}") from err
+        graphs.append(
+            AnalyticsGraph(
+                key=key,
+                title=GRAPH_TITLES.get(key, key),
+                image_data_url=f"data:image/png;base64,{image_data}",
+            )
+        )
+
+    if not graphs:
+        raise HTTPException(404, "analytics graphs are unavailable for this seller")
+
+    return AnalyticsGraphsResponse(report_period=report_period, graphs=graphs)
 
 
 @router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])

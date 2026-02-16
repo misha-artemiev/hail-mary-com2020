@@ -13,6 +13,8 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
 import DeveloperProfile from "../pages/DeveloperProfile";
+import Analysis from "../pages/Analysis";
+import AboutUs from "../pages/AboutUs";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -65,6 +67,18 @@ export const ROUTES = [
     {
         path: "/user/:username",
         element: <User />,
+    },
+    {
+        path: "/analysis",
+        element: (
+            <ProtectedRoute allowedRoles={["seller"]}>
+                <Analysis />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/about",
+        element: <AboutUs />,
     },
     // Catch-all (i.e. 404)
     {
