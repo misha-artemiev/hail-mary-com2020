@@ -9,12 +9,16 @@ from internal.auth.middleware import consumer_auth
 from internal.database.manager import database_manager
 from main import app
 
-# Constants to satisfy magic number linter (PLR2004)
 TEST_RESERVATION_ID = 101
 TEST_BUNDLE_ID = 5
 
+
 def override_consumer_auth() -> MagicMock:
-    """Mock the consumer authentication dependency."""
+    """Mock the consumer authentication dependency.
+
+    Returns:
+        MagicMock: Mock Object simualator.
+    """
     return MagicMock()
 
 
@@ -49,23 +53,19 @@ class TestConsumers(unittest.TestCase):
         app.dependency_overrides[consumer_auth] = override_consumer_auth
 
         mock_instance = mock_querier.return_value
-        
-        # FIX: Explicitly set attributes required by the Response Model
-        # Pydantic will crash if these are MagicMocks instead of strings/enums
+
         mock_res = MagicMock()
         mock_res.reservation_id = TEST_RESERVATION_ID
         mock_res.bundle_id = TEST_BUNDLE_ID
-        mock_res.claim_code = "ABC123XYZ"  # Must be a string
-        mock_res.status = "reserved"       # Must match your Enum (reserved/collected/no_show)
-        
-        # If your model has other required fields (like timestamp, etc.), set them here too.
+        mock_res.claim_code = "ABC123XYZ"
+        mock_res.status = "reserved"
 
         mock_instance.get_consumers_reservations.return_value = [mock_res]
 
         response = self.client.get("/consumers/me/reservations")
 
         # Debug print if it fails again to see validation errors
-        if response.status_code != 200:
+        if response.status_code != status.HTTP_200_OK:
             print(response.text)
 
         assert response.status_code == status.HTTP_200_OK
@@ -112,7 +112,7 @@ class TestConsumers(unittest.TestCase):
         app.dependency_overrides[consumer_auth] = override_consumer_auth
 
         mock_instance = mock_querier.return_value
-        mock_instance.update_consumer.return_value = None 
+        mock_instance.update_consumer.return_value = None
 
         payload = {"first_name": "X", "last_name": "Y"}
 
