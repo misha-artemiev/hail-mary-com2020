@@ -15,7 +15,7 @@ from internal.queries import models
 CREATE_BUNDLE = """-- name: create_bundle \\:one
 INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
 VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8)
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -31,7 +31,7 @@ class CreateBundleParams(pydantic.BaseModel):
 
 
 GET_BUNDLE = """-- name: get_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 LIMIT 1
@@ -39,7 +39,7 @@ LIMIT 1
 
 
 GET_BUNDLE_LOCK = """-- name: get_bundle_lock \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 FOR UPDATE
@@ -48,20 +48,20 @@ LIMIT 1
 
 
 GET_BUNDLES = """-- name: get_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 """
 
 
 GET_SELLERS_ACTIVE_BUNDLES = """-- name: get_sellers_active_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
-WHERE seller_id=:p1 AND NOW() BETWEEN window_start AND window_end AND status='available'
+WHERE seller_id=:p1 AND NOW() BETWEEN window_start AND window_end
 """
 
 
 GET_SELLERS_BUNDLE = """-- name: get_sellers_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1 AND bundle_id=:p2
 LIMIT 1
@@ -74,7 +74,7 @@ class GetSellersBundleParams(pydantic.BaseModel):
 
 
 GET_SELLERS_BUNDLES = """-- name: get_sellers_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1
 """
@@ -84,15 +84,7 @@ UPDATE_BUNDLE = """-- name: update_bundle \\:one
 UPDATE bundles
 SET bundle_name=:p3, description=:p4, total_qty=:p5, price=:p6, discount_percentage=:p7, window_start=:p8, window_end=:p9
 WHERE bundle_id=:p1 AND seller_id=:p2
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
-"""
-
-
-UPDATE_BUNDLE_STATUS = """-- name: update_bundle_status \\:one
-UPDATE bundles
-SET status=:p2
-WHERE bundle_id=:p1
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, status, created_at
+RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -135,8 +127,7 @@ class Querier:
             discount_percentage=row[6],
             window_start=row[7],
             window_end=row[8],
-            status=row[9],
-            created_at=row[10],
+            created_at=row[9],
         )
 
     def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
@@ -153,8 +144,7 @@ class Querier:
             discount_percentage=row[6],
             window_start=row[7],
             window_end=row[8],
-            status=row[9],
-            created_at=row[10],
+            created_at=row[9],
         )
 
     def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
@@ -171,8 +161,7 @@ class Querier:
             discount_percentage=row[6],
             window_start=row[7],
             window_end=row[8],
-            status=row[9],
-            created_at=row[10],
+            created_at=row[9],
         )
 
     def get_bundles(self) -> Iterator[models.Bundle]:
@@ -188,8 +177,7 @@ class Querier:
                 discount_percentage=row[6],
                 window_start=row[7],
                 window_end=row[8],
-                status=row[9],
-                created_at=row[10],
+                created_at=row[9],
             )
 
     def get_sellers_active_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
@@ -205,8 +193,7 @@ class Querier:
                 discount_percentage=row[6],
                 window_start=row[7],
                 window_end=row[8],
-                status=row[9],
-                created_at=row[10],
+                created_at=row[9],
             )
 
     def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
@@ -223,8 +210,7 @@ class Querier:
             discount_percentage=row[6],
             window_start=row[7],
             window_end=row[8],
-            status=row[9],
-            created_at=row[10],
+            created_at=row[9],
         )
 
     def get_sellers_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
@@ -240,8 +226,7 @@ class Querier:
                 discount_percentage=row[6],
                 window_start=row[7],
                 window_end=row[8],
-                status=row[9],
-                created_at=row[10],
+                created_at=row[9],
             )
 
     def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
@@ -268,28 +253,5 @@ class Querier:
             discount_percentage=row[6],
             window_start=row[7],
             window_end=row[8],
-            status=row[9],
-            created_at=row[10],
-        )
-
-    def update_bundle_status(
-        self, *, bundle_id: int, status: models.BundleStatus
-    ) -> Optional[models.Bundle]:
-        row = self._conn.execute(
-            sqlalchemy.text(UPDATE_BUNDLE_STATUS), {"p1": bundle_id, "p2": status}
-        ).first()
-        if row is None:
-            return None
-        return models.Bundle(
-            bundle_id=row[0],
-            seller_id=row[1],
-            bundle_name=row[2],
-            description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            status=row[9],
-            created_at=row[10],
+            created_at=row[9],
         )

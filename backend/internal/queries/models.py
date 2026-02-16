@@ -31,11 +31,6 @@ class DayOfWeek(str, enum.Enum):
     SUNDAY = "Sunday"
 
 
-class BundleStatus(str, enum.Enum):
-    AVAILABLE = "available"
-    UNAVAILABLE = "unavailable"
-
-
 class IssueStatus(str, enum.Enum):
     OPEN = "open"
     IN_PROGRESS = "in_progress"
@@ -119,7 +114,6 @@ class Bundle(pydantic.BaseModel):
     discount_percentage: int
     window_start: datetime.datetime
     window_end: datetime.datetime
-    status: BundleStatus
     created_at: datetime.datetime
 
 
