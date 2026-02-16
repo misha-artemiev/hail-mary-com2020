@@ -161,7 +161,7 @@ def generate_profiles(
         "Noé": "Bouchard",
         "Misha": "Artemiev",
         "Furkan": "Yalcintepe",
-        "Ed": "Ed_lol",
+        "Ed": "Brown",
     }
     for userid, (first, last) in zip(admin_ids, admin_names.items()):
         admins.append({"user_id": userid, "fname": first, "lname": last})
@@ -170,30 +170,47 @@ def generate_profiles(
 
 
 def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.DataFrame:
-    """Makes 2 bundles for each seller every day for the 6 weeks.
+    """Makes 2 bundles for each seller every day, using pre-defined pickup windows.
 
     Args:
       seller_ids: list of sellers ids
-      windows_df: dataframe bundle of windows
+      windows_df: dataframe of pickup windows (e.g. 8-9, 9-10)
 
     Returns:
       dataframe of bundles
     """
+    # Convert dataframe to a list of dictionaries for easier random selection
     window_records = windows_df.to_dict("records")
+    
     bundles = []
     bundle_id = 1
+    
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
+        
         for seller_id in seller_ids:
             for _ in range(2):
+                # Randomly select one of the defined pickup slots
+                selected_window = random.choice(window_records)
+                
+                # Set Pickup Date (The Next Day)
+                pickup_date = current_date + timedelta(days=1)
+                
+                # Create datetime objects for the window start/end
+                win_start = pickup_date.replace(
+                    hour=selected_window['window_start'], minute=0, second=0, microsecond=0
+                )
+                win_end = pickup_date.replace(
+                    hour=selected_window['window_end'], minute=0, second=0, microsecond=0
+                )
+                
+                # Set Listing Time (Evening of the current day, e.g., 4PM-8PM)
+                # This ensures the item is listed BEFORE the pickup window starts
                 closing_hour = random.randint(16, 20)
                 created_at = current_date.replace(
-                    hour=closing_hour, minute=0, second=0, microsecond=0
+                    hour=closing_hour, minute=random.randint(0, 59), second=0, microsecond=0
                 )
-                win_end = (current_date + timedelta(days=1)).replace(
-                    hour=closing_hour, minute=0, second=0, microsecond=0
-                )
-                win_start = win_end - timedelta(hours=10)
+
                 bundles.append({
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
@@ -202,11 +219,13 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "total_qty": secure_rng.randint(1, 4),
                     "price": round(secure_rng.uniform(3.00, 7.50), 2),
                     "discount_percentage": secure_rng.choice([50, 60, 70]),
+                    # Using the specific window times
                     "window_start": win_start,
                     "window_end": win_end,
                     "created_at": created_at,
                 })
                 bundle_id += 1
+                
     return pd.DataFrame(bundles)
 
 
