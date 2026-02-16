@@ -10,8 +10,7 @@ import { createSession, storeAuthToken } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 
 // Set the default base API route
-const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 /**
  * Constructs a payload and selects an endpoint based on the selected role.
