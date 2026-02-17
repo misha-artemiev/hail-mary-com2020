@@ -28,7 +28,7 @@ import { useSignup } from "../hooks/useSignup";
  * @returns {JSX.Elements} the signup page
  */
 export default function Signup() {
-    const navigate = useNavigate;
+    const navigate = useNavigate();
     const { form, handleChange, role, setRole, error, loading, handleSubmit } =
         useSignup();
 
