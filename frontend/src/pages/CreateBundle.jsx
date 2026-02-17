@@ -22,6 +22,9 @@ import DropdownSelect from "../components/forms/DropdownSelect";
 import SubmitButton from "../components/forms/SubmitButton";
 import Divider from "../components/Divider";
 
+// Config
+import { CREATE_BUNDLE_FORM_FIELDS } from "../config/createBundleFormFields";
+
 /**
  * The bundle creation page of the site.
  * Allows sellers to create new bundles.
@@ -40,7 +43,7 @@ export default function CreateBundle() {
     const { creating, createBundle } = useCreateBundle();
 
     // State object: stores form data
-    const [formData, setFormData] = useState({
+    const [form, setFormData] = useState({
         bundle_name: "",
         description: "",
         price: "",
@@ -101,9 +104,32 @@ export default function CreateBundle() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const result = await createBundle(formData);
+        const result = await createBundle(form);
         navigate(`/bundles/${result.bundle_id}`);
     };
+
+    /**
+     * Dynamically renders given information fields.
+     *
+     * @param {Object} fields
+     * @returns {JSX.Element} a set of FormInput elements.
+     */
+    const renderFields = (fields) =>
+        fields.map((field) => (
+            <FormInput
+                key={field.name}
+                label={field.label}
+                name={field.name}
+                type={field.type}
+                min={field.min}
+                max={field.max}
+                step={field.step}
+                value={form[field.name]}
+                onChange={handleChange}
+                required={field.required}
+                placeholder={field.placeholder}
+            />
+        ));
 
     return (
         <div className="max-w-2xl mx-auto p-6">
@@ -115,14 +141,7 @@ export default function CreateBundle() {
 
                 {/* Login form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <FormInput
-                        label="Bundle Name"
-                        name="bundle_name"
-                        value={formData.bundle_name}
-                        onChange={handleChange}
-                        required
-                        placeholder="e.g., Evening Surprise Bag"
-                    />
+                    {renderFields(CREATE_BUNDLE_FORM_FIELDS.top)}
 
                     {/* Larger description container */}
                     <div>
@@ -131,74 +150,20 @@ export default function CreateBundle() {
                         </label>
                         <textarea
                             name="description"
-                            value={formData.description}
+                            value={form.description}
                             onChange={handleChange}
                             required
                             rows={3}
                             placeholder="Describe what's in this bundle..."
-                            className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"
+                            className="w-full rounded-md px-3 py-2 border
+                                       focus:ring-2 focus:ring-green-500
+                                       focus:outline-none"
                         />
                     </div>
 
-                    {/* Quantity */}
-                    <FormInput
-                        label="Total Quantity"
-                        type="number"
-                        min="1"
-                        step="1"
-                        name="total_qty"
-                        value={formData.total_qty}
-                        onChange={handleChange}
-                        required
-                    />
-
                     {/* 2-wide grid container */}
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Original price */}
-                        <FormInput
-                            label="Original Price (£)"
-                            name="price"
-                            type="number"
-                            min="0"
-                            step="0.5"
-                            value={formData.price}
-                            onChange={handleChange}
-                            required
-                            placeholder="10.00"
-                        />
-
-                        {/* Discount percentage */}
-                        <FormInput
-                            label="Discount (%)"
-                            name="discount_percentage"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={formData.discount_percentage}
-                            onChange={handleChange}
-                            required
-                            placeholder="50"
-                        />
-
-                        {/* Available from */}
-                        <FormInput
-                            label="Pickup Window Start"
-                            name="window_start"
-                            type="datetime-local"
-                            value={formData.window_start}
-                            onChange={handleChange}
-                            required
-                        />
-
-                        {/* Available until */}
-                        <FormInput
-                            label="Pickup Window End"
-                            name="window_end"
-                            type="datetime-local"
-                            value={formData.window_end}
-                            onChange={handleChange}
-                            required
-                        />
+                        {renderFields(CREATE_BUNDLE_FORM_FIELDS.grid)}
                     </div>
 
                     <Divider />
@@ -207,21 +172,23 @@ export default function CreateBundle() {
                     {!categoriesLoading && (
                         <DropdownSelect
                             options={categoryOptions}
-                            value={formData.categories}
+                            value={form.categories}
                             name="category"
                             onChange={handleCategoriesChange}
                         />
                     )}
 
+                    {/* Allergens option dropdown */}
                     {!allergensLoading && (
                         <DropdownSelect
                             options={allergenOptions}
-                            value={formData.allergens}
+                            value={form.allergens}
                             name="allergen"
                             onChange={handleAllergensChange}
                         />
                     )}
 
+                    {/* Submit button */}
                     <SubmitButton disabled={creating}>
                         {creating ? "Creating Bundle..." : "Create Bundle"}
                     </SubmitButton>
