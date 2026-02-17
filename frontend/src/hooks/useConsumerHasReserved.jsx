@@ -70,6 +70,17 @@ export function useConsumerReservations() {
         return reservations.some((res) => res.bundle_id === bundleId);
     };
 
-    // Exit with the confirmation function
-    return { hasReservedBundle };
+    /**
+     * Gets the reservation for a specific bundle.
+     *
+     * @param {Number} bundleId - The ID of the bundle.
+     *
+     * @returns {Object|undefined} the reservation for that bundle.
+     */
+    const getReservationForBundle = (bundleId) => {
+        return reservations.find((res) => res.bundle_id === bundleId);
+    };
+
+    // Exit with the confirmation function and reservations
+    return { hasReservedBundle, getReservationForBundle, reservations };
 }

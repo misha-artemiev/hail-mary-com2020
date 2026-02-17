@@ -36,7 +36,8 @@ export default function Bundle() {
     const { id } = useParams();
 
     // Get if the user has already reserved
-    const { hasReservedBundle } = useConsumerReservations();
+    const { hasReservedBundle, getReservationForBundle } =
+        useConsumerReservations();
 
     // Get the role of the logged in user
     const { userRole } = useAuth();
@@ -205,11 +206,49 @@ export default function Bundle() {
                         </div>
                     ) : hasReservedBundle(parseInt(id)) ? (
                         // Reservation was previously made:
-                        <div className="text-center py-4">
-                            <p className="text-green-600 font-semibold text-lg">
-                                Already reserved!
-                            </p>
-                        </div>
+                        (() => {
+                            // Get reservation status
+                            const reservation = getReservationForBundle(
+                                parseInt(id),
+                            );
+                            const isCollected =
+                                reservation?.status === "collected";
+
+                            return (
+                                <div className="text-center py-4">
+                                    {isCollected ? (
+                                        // If it has been collected
+                                        <div
+                                            className="w-full px-4 py-3 rounded-md
+                                                       font-semibold text-lg text-blue-600 bg-blue-50
+                                                       border border-blue-600"
+                                        >
+                                            Collected!
+                                        </div>
+                                    ) : (
+                                        // If not collected, but active reservation
+                                        <p className="font-semibold text-lg text-green-600">
+                                            Reservation{" "}
+                                            <span className="font-mono font-bold">
+                                                #{reservation.reservation_id}
+                                            </span>{" "}
+                                            active
+                                        </p>
+                                    )}
+
+                                    {/* Display the collection code */}
+                                    {!isCollected &&
+                                        reservation?.claim_code && (
+                                            <p className="text-gray-600 mt-2">
+                                                Your collection code:{" "}
+                                                <span className="font-mono font-bold text-lg">
+                                                    {reservation.claim_code}
+                                                </span>
+                                            </p>
+                                        )}
+                                </div>
+                            );
+                        })()
                     ) : (
                         // Otherwise, able to make new reservation:
                         <Button onClick={handleReserve} disabled={reserving}>
