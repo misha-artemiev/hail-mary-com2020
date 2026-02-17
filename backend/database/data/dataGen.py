@@ -37,7 +37,7 @@ NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
-START_DATE = datetime(2025, 1, 15)
+START_DATE = datetime(2026, 1, 1)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [
@@ -282,7 +282,7 @@ def generate_bundle_categories(
 def generate_pickup_windows() -> pd.DataFrame:
     """Creates a list of pickup time windows.
 
-    from 8am in 1 hour increments for the 10 windows
+    from 8am in 2 hour increments for the 10 windows
 
     Returns:
         dataframe of pickup windows
@@ -292,7 +292,7 @@ def generate_pickup_windows() -> pd.DataFrame:
     for i in range(NUM_PICKUP_WINDOWS):
         windows.append({
             "window_start": start_hour + i,
-            "window_end": start_hour + i + 1,
+            "window_end": start_hour + i + 2,
         })
     return pd.DataFrame(windows)
 
