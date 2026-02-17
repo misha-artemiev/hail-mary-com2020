@@ -1,6 +1,6 @@
 /**
  * useCollectReservation.jsx
- * Hook for collecting a reservation using a claim code.
+ * @author Thomas Noakes
  */
 
 import { useState } from "react";

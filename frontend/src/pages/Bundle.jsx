@@ -1,6 +1,6 @@
 /**
  * Bundle.jsx
- * Page displaying information about a specific bundle
+ * @author Thomas Noakes
  */
 
 import React from "react";
