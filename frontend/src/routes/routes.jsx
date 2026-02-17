@@ -14,6 +14,7 @@ import Signup from "../pages/Signup";
 import User from "../pages/User";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
+import CreateBundle from "../pages/CreateBundle";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -68,6 +69,14 @@ export const ROUTES = [
         element: (
             <ProtectedRoute>
                 <Collect />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/bundles/create",
+        element: (
+            <ProtectedRoute>
+                <CreateBundle />
             </ProtectedRoute>
         ),
     },
