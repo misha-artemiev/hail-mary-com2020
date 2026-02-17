@@ -13,6 +13,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
 import Bundle from "../pages/Bundle";
+import Collect from "../pages/Collect";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -61,6 +62,14 @@ export const ROUTES = [
     {
         path: "/bundles/:id",
         element: <Bundle />,
+    },
+    {
+        path: "/bundles/:id/collect",
+        element: (
+            <ProtectedRoute>
+                <Collect />
+            </ProtectedRoute>
+        ),
     },
     // Catch-all (i.e. 404)
     {
