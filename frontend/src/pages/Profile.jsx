@@ -26,9 +26,9 @@ export default function Profile() {
     /**
      * Handles clicking the edit button.
      */
+
     const handleEdit = () => {
-        // TODO: add edit profile
-        alert("Clicked");
+        navigate("/editprofile");
     };
 
     return (

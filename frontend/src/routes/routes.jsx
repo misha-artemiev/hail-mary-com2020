@@ -12,6 +12,7 @@ import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
+import EditProfile from "../pages/EditProfile";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
@@ -37,6 +38,14 @@ export const ROUTES = [
         element: (
             <ProtectedRoute>
                 <Profile />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/editprofile",
+        element: (
+            <ProtectedRoute>
+                <EditProfile />
             </ProtectedRoute>
         ),
     },
