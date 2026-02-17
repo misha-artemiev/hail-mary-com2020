@@ -44,13 +44,13 @@ export const CREATE_BUNDLE_FORM_FIELDS = {
             placeholder: "20%",
         },
         {
-            name: "window_end",
+            name: "window_start",
             label: "Pickup Window: available from",
             type: "datetime-local",
             required: true,
         },
         {
-            name: "window_start",
+            name: "window_end",
             label: "Pickup Window: available until",
             type: "datetime-local",
             required: true,
