@@ -20,7 +20,12 @@ import { useAuth } from "../context/AuthContext";
 export default function ProtectedRoute({ children }) {
     const location = useLocation();
 
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
+
+    // Wait for loading to complete
+    if (loading) {
+        return null;
+    }
 
     // Redirect to the login page
     if (!isAuthenticated) {
