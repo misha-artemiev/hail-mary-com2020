@@ -37,7 +37,7 @@ NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
-START_DATE = datetime(2026, 1, 1)
+START_DATE = datetime(2026, 2, 1)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [
