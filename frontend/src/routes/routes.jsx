@@ -43,7 +43,7 @@ export const ROUTES = [
     {
         path: "/devprofile",
         element: (
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["developer"]}>
                 <DeveloperProfile />,
             </ProtectedRoute>
         ),

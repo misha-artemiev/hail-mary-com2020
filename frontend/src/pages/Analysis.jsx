@@ -1,5 +1,6 @@
 /**
  * Analysis.jsx
+ * @Author Noe Bouchard
  */
 
 import React from "react";
