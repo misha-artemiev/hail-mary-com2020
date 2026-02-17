@@ -6,6 +6,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../context/AuthContext";
+
 // Components
 import Card from "../components/Card";
 import InfoLine from "../components/InfoLine";
@@ -14,6 +16,13 @@ import InfoLine from "../components/InfoLine";
 import defaultProfile from "../assets/default-user.jpg";
 
 export default function Profile() {
+    const { logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+    };
     /**
      * Handles clicking the edit button.
      */
@@ -33,13 +42,23 @@ export default function Profile() {
                         Profile
                     </h1>
 
-                    {/* Edit profile button */}
-                    <button
-                        onClick={handleEdit}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                        Edit Profile
-                    </button>
+                    <div className="flex gap-2">
+                        {/* Logout button */}
+                        <button
+                            onClick={handleLogout}
+                            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                        >
+                            Log out
+                        </button>
+
+                        {/* Edit profile button */}
+                        <button
+                            onClick={handleEdit}
+                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        >
+                            Edit Profile
+                        </button>
+                    </div>
                 </div>
 
                 {/* Profile picture */}

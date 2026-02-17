@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAuthToken, clearAuthToken } from "../services/authService";
+import { getAuthToken, logout as logoutService } from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
      * Removes token data from context.
      */
     const logout = () => {
-        clearAuthToken();
+        logoutService();
         setIsAuthenticated(false);
         setUserRole(null);
     };
