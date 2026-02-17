@@ -13,6 +13,9 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
 import EditProfile from "../pages/EditProfile";
+import Bundle from "../pages/Bundle";
+import Collect from "../pages/Collect";
+import CreateBundle from "../pages/CreateBundle";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -65,6 +68,26 @@ export const ROUTES = [
     {
         path: "/user/:username",
         element: <User />,
+    },
+    {
+        path: "/bundles/:id",
+        element: <Bundle />,
+    },
+    {
+        path: "/bundles/:id/collect",
+        element: (
+            <ProtectedRoute>
+                <Collect />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/bundles/create",
+        element: (
+            <ProtectedRoute>
+                <CreateBundle />
+            </ProtectedRoute>
+        ),
     },
     // Catch-all (i.e. 404)
     {
