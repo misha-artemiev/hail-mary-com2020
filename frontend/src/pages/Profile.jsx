@@ -27,7 +27,6 @@ export default function Profile() {
      * Handles clicking the edit button.
      */
 
-    const navigate = useNavigate();
     const handleEdit = () => {
         navigate("/editprofile");
     };
