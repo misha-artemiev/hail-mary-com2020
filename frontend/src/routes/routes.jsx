@@ -7,6 +7,8 @@ import React from "react";
 
 // Routes (individual pages)
 import Home from "../pages/Home";
+import AboutUs from "../pages/AboutUs";
+import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
@@ -31,6 +33,14 @@ export const ROUTES = [
     {
         path: "/",
         element: <Home />,
+    },
+    {
+        path: "/aboutus",
+        element: <AboutUs />,
+    },
+    {
+        path: "/analytics",
+        element: <Analytics />,
     },
     {
         path: "/profile",
