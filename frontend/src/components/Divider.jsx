@@ -17,12 +17,12 @@ export default function Divider({ children }) {
     return (
         // Flex container
         <div className="flex items-center my-6">
-            <div className="flex-grow border-t border-gray-300" />
+            <div className="grow border-t border-gray-300" />
 
             {/* Text */}
             <span className="px-3 text-gray-500 text-sm">{children}</span>
 
-            <div className="flex-grow border-t border-gray-300" />
+            <div className="grow border-t border-gray-300" />
         </div>
     );
 }
