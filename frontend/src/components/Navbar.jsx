@@ -29,14 +29,22 @@ export default function Navbar() {
 
     return (
         <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            {/* Home page logo */}
-            <NavLink to="/">
-                <img
-                    src={logoFull}
-                    alt="Logo"
-                    className="h-16 w-auto hover:scale-102 transition"
-                />
-            </NavLink>
+            <div className="flex items-center gap-8">
+                {/* Home page logo */}
+                <NavLink to="/">
+                    <img
+                        src={logoFull}
+                        alt="Logo"
+                        className="h-16 w-auto hover:scale-102 transition"
+                    />
+                </NavLink>
+                <NavLink to="/analytics" className="text-bold text-lg">
+                    Analytics
+                </NavLink>
+                <NavLink to="/aboutus" className="text-bold text-lg">
+                    About Us
+                </NavLink>
+            </div>
 
             <div className="flex items-center gap-8">
                 {/* If user is a seller, show create bundle link */}
