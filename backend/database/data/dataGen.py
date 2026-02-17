@@ -215,13 +215,6 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     hour=selected_window['window_end'], minute=0, second=0, microsecond=0
                 )
                 # Simulated preferred collection-time label for analytics (nullable).
-                collection_window = secure_rng.choice(window_records)
-                collection_time_label = (
-                    f"{collection_window['window_start']:02d}:00-"
-                    f"{collection_window['window_end']:02d}:00"
-                    if secure_rng.random() >= 0.35
-                    else None
-                )
                 
                 # Set Listing Time (Evening of the current day, e.g., 4PM-8PM)
                 # This ensures the item is listed BEFORE the pickup window starts
@@ -241,8 +234,6 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     # Using the specific window times
                     "window_start": win_start,
                     "window_end": win_end,
-                    "collection_time_label": collection_time_label,
-                    "status": "available",
                     "created_at": created_at,
                 })
                 bundle_id += 1
@@ -363,24 +354,6 @@ def generate_reservations(
         })
 
     return pd.DataFrame(reservations)
-
-
-def sync_bundle_status(
-    bundles_df: pd.DataFrame, reservations_df: pd.DataFrame
-) -> pd.DataFrame:
-    """Updates bundle availability status based on reservation count and capacity."""
-    reservation_counts = reservations_df.groupby("bundle_id").size().to_dict()
-    updated = bundles_df.copy()
-    updated["status"] = updated.apply(
-        lambda row: (
-            "unavailable"
-            if reservation_counts.get(int(row["bundle_id"]), 0) >= int(row["total_qty"])
-            else "available"
-        ),
-        axis=1,
-    )
-    return updated
-
 
 def generate_issue_reports(
     reservations_df: pd.DataFrame, users_df: pd.DataFrame
@@ -614,7 +587,6 @@ if __name__ == "__main__":
 
     # reservations with different states (collected, no-show, expired)
     df_reservations = generate_reservations(df_bundles, df_consumers)
-    df_bundles = sync_bundle_status(df_bundles, df_reservations)
     print(f"   Generated {len(df_reservations)} reservations")
 
     # support and game
