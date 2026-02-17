@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 // Hooks
 import useBundle from "../hooks/useBundle";
@@ -32,6 +32,7 @@ import defaultListing from "../assets/default-listing.jpg";
  * @returns the specific bundle page.
  */
 export default function Bundle() {
+    const navigate = useNavigate();
     const { id } = useParams();
 
     // Get if the user has already reserved
@@ -221,10 +222,23 @@ export default function Bundle() {
             {/* Seller reservations section */}
             {userRole === "seller" && (
                 <Card>
-                    {/* Subtitle */}
-                    <h2 className="text-xl font-bold text-green-700 mb-4">
-                        Active Reservations
-                    </h2>
+                    <div className="flex items-center justify-between mb-6">
+                        {/* Subtitle */}
+                        <h2 className="text-xl font-bold text-green-700 mb-4">
+                            Active Reservations
+                        </h2>
+
+                        {/* Collect bundle link */}
+                        <div className="">
+                            <Button
+                                onClick={() =>
+                                    navigate(`/bundles/${id}/collect`)
+                                }
+                            >
+                                Complete Collection
+                            </Button>
+                        </div>
+                    </div>
 
                     {/* Depends on reservation status */}
                     {sellerReservations.length === 0 ? (
