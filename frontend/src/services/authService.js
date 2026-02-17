@@ -69,3 +69,10 @@ export function clearAuthToken() {
     localStorage.removeItem("tokenExpiresAt");
     localStorage.removeItem("userRole");
 }
+
+/**
+ * Logs out the user by removing the token from local storage.
+ */
+export function logout() {
+    clearAuthToken();
+}
