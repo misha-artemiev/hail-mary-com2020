@@ -116,6 +116,7 @@ export default function Bundle() {
                 key={reservation.reservation_id}
                 id={reservation.reservation_id}
                 reserved_at={reservation.reserved_at}
+                claimCode={reservation.claim_code}
             />
         ));
 

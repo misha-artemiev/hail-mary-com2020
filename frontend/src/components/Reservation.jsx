@@ -11,12 +11,13 @@ import React from "react";
  * @param {Object} props
  * @param {number} props.id - The ID of the reservation.
  * @param {Date} props.reserved_at - The date the reservation was made.
+ * @param {string} props.claimCode - The code to claim with.
  * @param {(event: React.MouseEvent<HTMLDivElement>) => void} [props.onClick]
  *          - Optional click event handler
  *
  * @returns {JSX.Element} a reservation panel.
  */
-export default function Reservation({ id, reserved_at, onClick }) {
+export default function Reservation({ id, reserved_at, claimCode, onClick }) {
     return (
         <div
             onClick={onClick}
@@ -32,7 +33,10 @@ export default function Reservation({ id, reserved_at, onClick }) {
                     <span className="font-mono font-bold">#{id}</span>
                 </p>
 
-                {/* TODO: user to claim */}
+                <p className="text-sm text-gray-500">
+                    Claim Code:{" "}
+                    <span className="font-mono font-bold">{claimCode}</span>
+                </p>
             </div>
 
             {/* Date of reservation */}
