@@ -22,6 +22,13 @@ import DropdownSelect from "../components/forms/DropdownSelect";
 import SubmitButton from "../components/forms/SubmitButton";
 import Divider from "../components/Divider";
 
+/**
+ * The bundle creation page of the site.
+ * Allows sellers to create new bundles.
+ * Not accessible to consumers (errors).
+ *
+ * @returns {JSX.Element} the bundle creation page
+ */
 export default function CreateBundle() {
     const navigate = useNavigate();
     const { userRole } = useAuth();

@@ -8,10 +8,21 @@ import { useState } from "react";
 // Set the default base API route
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
+/**
+ * A custom React hook to create a new bundle.
+ *
+ * @returns {{ creating: boolean, createBundle: () => Promise<void> }}
+ */
 export default function useCreateBundle() {
     // State object: stores status of creating bundle
     const [creating, setCreating] = useState(false);
 
+    /**
+     * Create a new bundle with the given data.
+     *
+     * @param {Object} bundleData - The data of the bundle
+     * @returns {Promise<void>}
+     */
     async function createBundle(bundleData) {
         setCreating(true);
 
@@ -48,7 +59,7 @@ export default function useCreateBundle() {
             // Catch bad HTTP codes
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || "Failed to create bundle");
+                throw new Error(errorData.message);
             }
 
             const data = await response.json();
