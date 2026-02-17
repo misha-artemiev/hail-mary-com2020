@@ -3,7 +3,7 @@
  * @author Ed Brown
  */
 
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Components
@@ -12,7 +12,7 @@ import Card from "../components/Card";
 // Resources
 import defaultProfile from "../assets/default-user.jpg";
 
-export default function EditProfile({ role = "consumer"}) {
+export default function EditProfile({ role = "consumer" }) {
     const navigate = useNavigate();
     // Form state
     const [email, setEmail] = useState("");
@@ -32,7 +32,7 @@ export default function EditProfile({ role = "consumer"}) {
     // Consumer fields
     const [fName, setFName] = useState("User");
     const [lName, setLName] = useState("Example");
-    
+
     // Handles profile image changes
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -43,7 +43,7 @@ export default function EditProfile({ role = "consumer"}) {
 
     const handleAddressChange = (e) => {
         const { name, value } = e.target;
-        setAddress((prev) => ({ ...prev, [name]: value}));
+        setAddress((prev) => ({ ...prev, [name]: value }));
     };
 
     // Handles form submission
@@ -91,7 +91,6 @@ export default function EditProfile({ role = "consumer"}) {
                 </h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-
                     {/* Profile Image */}
                     <div className="flex flex-col items-center">
                         <img
@@ -153,7 +152,9 @@ export default function EditProfile({ role = "consumer"}) {
                                 <input
                                     type="text"
                                     value={sellerName}
-                                    onChange={(e) => setSellerName(e.target.value)}
+                                    onChange={(e) =>
+                                        setSellerName(e.target.value)
+                                    }
                                     required
                                     className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
                                 />
