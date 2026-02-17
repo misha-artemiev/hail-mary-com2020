@@ -5,6 +5,10 @@
 
 import { useEffect, useState } from "react";
 
+// Set the default base API route
+const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
 /**
  * Custom React hook for fetching all allergens.
  */
@@ -18,7 +22,7 @@ export default function useAllergens() {
         let cancelled = false;
 
         async function fetchAllergens() {
-            const res = await fetch("/api/allergens");
+            const res = await fetch(`${API_BASE_URL}/allergens/`);
             const data = await res.json();
 
             if (!cancelled) {

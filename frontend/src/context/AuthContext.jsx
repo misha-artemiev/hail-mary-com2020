@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
     // State object: if the user (within context) is authenticated
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const token = getAuthToken();
@@ -30,6 +31,7 @@ export function AuthProvider({ children }) {
             setIsAuthenticated(true);
             setUserRole(role);
         }
+        setLoading(false);
     }, []);
 
     /**
@@ -53,7 +55,7 @@ export function AuthProvider({ children }) {
 
     return (
         <AuthContext.Provider
-            value={{ isAuthenticated, userRole, login, logout }}
+            value={{ isAuthenticated, userRole, login, logout, loading }}
         >
             {children}
         </AuthContext.Provider>
