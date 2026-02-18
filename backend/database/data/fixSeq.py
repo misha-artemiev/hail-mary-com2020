@@ -1,32 +1,13 @@
 """Fixes index shift after manual id insertion."""
 
-import os
-import sys
-from pathlib import Path
-
-from dotenv import load_dotenv
+from internal.settings.env import database_settings
 from sqlalchemy import create_engine, text
 
-script_dir = Path(__file__).resolve().parent
-
-env_path = None
-for parent in [script_dir, *list(script_dir.parents)]:
-    possible_path = parent / ".env"
-    if possible_path.exists():
-        env_path = possible_path
-        break
-
-if not env_path:
-    print("Error: Could not find .env file in any parent directory.")
-    sys.exit(1)
-
-print(f"Loaded .env from: {env_path}")
-load_dotenv(dotenv_path=env_path)
-user = os.getenv("DATABASE_USERNAME")
-pw = os.getenv("DATABASE_PASSWORD")
-host = os.getenv("DATABASE_HOST")
-port = os.getenv("DATABASE_PORT")
-db = os.getenv("DATABASE_DATABASE")
+user = database_settings.username
+pw = database_settings.password
+host = database_settings.host
+port = database_settings.port
+db = database_settings.database
 url = f"postgresql://{user}:{pw}@{host}:{port}/{db}"
 engine = create_engine(url)
 
