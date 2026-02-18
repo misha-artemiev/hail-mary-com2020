@@ -47,7 +47,7 @@ class DatabaseSettings(BaseSettings):
 class AuthSettings(BaseSettings):
     """Settings for authentication hardness."""
 
-    token_exparation: int = 360
+    token_exparation: int = 432000  # 5 days
 
     model_config = SettingsConfigDict(
         env_prefix="AUTH",

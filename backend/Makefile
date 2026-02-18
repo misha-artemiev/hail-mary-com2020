@@ -1,4 +1,4 @@
-SRC = main.py internal routers database
+SRC = main.py internal routers database testing
 
 ifneq (,$(wildcard ./.env))
     include .env
@@ -59,6 +59,7 @@ upload-db:
 		csvsql --db "postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_DATABASE)" --insert --no-create --no-inference "synthetic_data/$$file.csv"; \
 	done
 	@rm -r ./synthetic_data
+	@python -m database.data.fixSeq
 
 docs:
 	@mv .env .env.bak || true
