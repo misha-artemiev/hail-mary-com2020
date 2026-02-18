@@ -1,6 +1,6 @@
 {
     "name": "com2020-frontend",
-    "version": "0.5.7",
+    "version": "0.5.8",
     "description": "Frontend for the COM2020 Group Project",
     "type": "module",
     "scripts": {
