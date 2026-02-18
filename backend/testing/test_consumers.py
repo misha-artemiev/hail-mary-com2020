@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 from fastapi import status
 from fastapi.testclient import TestClient
 from internal.auth.middleware import consumer_auth
-from internal.database.manager import database_manager
 from main import app
+from testing.test_database import init_database
 
 TEST_RESERVATION_ID = 101
 TEST_BUNDLE_ID = 5
@@ -27,8 +27,8 @@ class TestConsumers(TestCase):
 
     def setUp(self) -> None:
         """Runs before every test to set up the client."""
+        init_database()
         self.client = TestClient(app)
-        database_manager.initialise()
 
     @patch("routers.consumers.create_consumer")
     def test_register_consumer(self, mock_create: MagicMock) -> None:
