@@ -89,6 +89,7 @@ select = [
 ]
 extend-ignore = [
     "COM812", # missing-trailing-comma
+    "S101" , # assert
 ]
 
 [tool.ruff.lint.pydocstyle]

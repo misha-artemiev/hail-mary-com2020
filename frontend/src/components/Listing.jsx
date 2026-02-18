@@ -15,14 +15,14 @@ import defaultListing from "../assets/default-listing.jpg";
  * @param {string} props.title - The title of the listing post.
  * @param {Array<{ label: string, value: string | number }>} props.info
  *          - An array of label-value pairs of additional information.
- * @param {React.ReactNode} [props.footer]
- *          - An optional footer with additional information.
  * @param {(event: React.MouseEvent<HTMLDivElement>) => void} props.onClick
  *          - Click event handler.
+ * @param {React.ReactNode} props.children
+ *          - Additional elements to add to the card.
  *
  * @returns {JSX.Element} a card with a listing and any information.
  */
-export default function Listing({ title, info, footer, onClick }) {
+export default function Listing({ title, info, onClick, children }) {
     return (
         <div
             className="bg-white border rounded-xl
@@ -56,8 +56,8 @@ export default function Listing({ title, info, footer, onClick }) {
                     ))}
                 </div>
 
-                {/* Footer, if present */}
-                {footer && <p>{footer}</p>}
+                {/* Additional children, if present */}
+                {children}
             </div>
         </div>
     );
