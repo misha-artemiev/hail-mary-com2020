@@ -12,6 +12,6 @@ def init_database() -> None:
         port=5432,
         username="hail-mary",
         database="hail-mary",
-        password="password",
+        password="password",  # noqa: S106
     )
     database_manager.initialise()
