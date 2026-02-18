@@ -1,13 +1,16 @@
+"""Fixes index shift after manual id insertion."""
+
 import os
 import sys
-from sqlalchemy import create_engine, text
 from pathlib import Path
+
 from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
 
 script_dir = Path(__file__).resolve().parent
 
 env_path = None
-for parent in [script_dir] + list(script_dir.parents):
+for parent in [script_dir, *list(script_dir.parents)]:
     possible_path = parent / ".env"
     if possible_path.exists():
         env_path = possible_path
@@ -19,22 +22,17 @@ if not env_path:
 
 print(f"Loaded .env from: {env_path}")
 load_dotenv(dotenv_path=env_path)
-
-try:
-    user = os.getenv("DATABASE_USERNAME")
-    pw = os.getenv("DATABASE_PASSWORD")
-    host = os.getenv("DATABASE_HOST")
-    port = os.getenv("DATABASE_PORT")
-    db = os.getenv("DATABASE_DATABASE")
-    url = f"postgresql://{user}:{pw}@{host}:{port}/{db}"
-
-    engine = create_engine(url)
-except Exception as e:
-    print(f"Connection failed: {e}")
-    sys.exit(1)
+user = os.getenv("DATABASE_USERNAME")
+pw = os.getenv("DATABASE_PASSWORD")
+host = os.getenv("DATABASE_HOST")
+port = os.getenv("DATABASE_PORT")
+db = os.getenv("DATABASE_DATABASE")
+url = f"postgresql://{user}:{pw}@{host}:{port}/{db}"
+engine = create_engine(url)
 
 
-def fix_sequences():
+def fix_sequences() -> None:
+    """Fixes index shift after manual id insertion."""
     print("Fixing auto-increment sequences...")
     with engine.connect() as conn:
         tables = [
@@ -50,19 +48,14 @@ def fix_sequences():
         ]
 
         for table, pk in tables:
-            try:
-                query = text(f"""
-                    SELECT setval(
-                        pg_get_serial_sequence('{table}', '{pk}'), 
-                        COALESCE((SELECT MAX({pk}) FROM {table}), 1)
-                    );
-                """)
-                conn.execute(query)
-                print(f"Fixed sequence for: {table}")
-            except Exception as e:
-                # If a table doesn't exist or has no sequence, we skip it
-                print(f"Skipped {table}: {e}")
-
+            query = text(f"""
+                SELECT setval(
+                    pg_get_serial_sequence('{table}', '{pk}'),
+                    COALESCE((SELECT MAX({pk}) FROM {table}), 1)
+                );
+            """)  # noqa: S608
+            conn.execute(query)
+            print(f"Fixed sequence for: {table}")
         conn.commit()
 
 

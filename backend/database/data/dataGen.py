@@ -13,13 +13,13 @@ so we can make improvements and get more realistic data therefore more marks for
 
 import pathlib
 import random
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from secrets import SystemRandom
 from typing import Any
 
 import pandas as pd
 from faker import Faker
-from internal.auth.security import generate_token
+from internal.auth.security import generate_claim_code, generate_token
 
 # setting the Faker library to use UK countries
 fake = Faker("en_GB")
@@ -37,7 +37,7 @@ NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
-START_DATE = datetime(2026, 2, 1)
+START_DATE = datetime(year=2026, month=2, day=1, tzinfo=UTC)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [
@@ -53,17 +53,6 @@ DEFAULT_CATEGORY_NAMES = [
 
 Faker.seed(42)
 secure_rng = SystemRandom()
-
-
-def _generate_claim_code(used_codes: set[str]) -> str:
-    """Generate unique claim code without external dependency."""
-    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    while True:
-        raw_code = "".join(secure_rng.choice(alphabet) for _ in range(4))
-        code = f"{raw_code[:2]}-{raw_code[2:]}"
-        if code not in used_codes:
-            used_codes.add(code)
-            return code
 
 
 def generate_users() -> pd.DataFrame:
@@ -192,35 +181,44 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
     """
     # Convert dataframe to a list of dictionaries for easier random selection
     window_records = windows_df.to_dict("records")
-    
+
     bundles = []
     bundle_id = 1
-    
+
     for day in range(WEEKS * 7):
         current_date = START_DATE + timedelta(days=day)
-        
+
         for seller_id in seller_ids:
             for _ in range(2):
                 # Randomly select one of the defined pickup slots
-                selected_window = random.choice(window_records)
-                
+                selected_window = secure_rng.choice(window_records)
+
                 # Set Pickup Date (The Next Day)
                 pickup_date = current_date + timedelta(days=1)
-                
+
                 # Create datetime objects for the window start/end
                 win_start = pickup_date.replace(
-                    hour=selected_window['window_start'], minute=0, second=0, microsecond=0
+                    hour=selected_window["window_start"],
+                    minute=0,
+                    second=0,
+                    microsecond=0,
                 )
                 win_end = pickup_date.replace(
-                    hour=selected_window['window_end'], minute=0, second=0, microsecond=0
+                    hour=selected_window["window_end"],
+                    minute=0,
+                    second=0,
+                    microsecond=0,
                 )
                 # Simulated preferred collection-time label for analytics (nullable).
-                
+
                 # Set Listing Time (Evening of the current day, e.g., 4PM-8PM)
                 # This ensures the item is listed BEFORE the pickup window starts
-                closing_hour = random.randint(16, 20)
+                closing_hour = secure_rng.randint(16, 20)
                 created_at = current_date.replace(
-                    hour=closing_hour, minute=random.randint(0, 59), second=0, microsecond=0
+                    hour=closing_hour,
+                    minute=secure_rng.randint(0, 59),
+                    second=0,
+                    microsecond=0,
                 )
 
                 bundles.append({
@@ -237,7 +235,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "created_at": created_at,
                 })
                 bundle_id += 1
-                
+
     return pd.DataFrame(bundles)
 
 
@@ -317,7 +315,6 @@ def generate_reservations(
     random.shuffle(statuses)
 
     reservations = []
-    claim_codes = set()
     # create a list of bundle records from the bundles dataframe
     bundle_records = bundles_df.to_dict("records")
     # create a list of consumer ids from the consumers dataframe
@@ -341,7 +338,7 @@ def generate_reservations(
         else:
             collected_at = None
 
-        code = _generate_claim_code(claim_codes)
+        code = generate_claim_code([])
 
         reservations.append({
             "reservation_id": reservation_id,
@@ -354,6 +351,7 @@ def generate_reservations(
         })
 
     return pd.DataFrame(reservations)
+
 
 def generate_issue_reports(
     reservations_df: pd.DataFrame, users_df: pd.DataFrame
@@ -553,7 +551,6 @@ def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
                 "expires_at": created + timedelta(hours=24),
             })
     return pd.DataFrame(tokens)
-    
 
 
 # main execution
