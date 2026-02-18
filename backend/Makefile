@@ -72,3 +72,6 @@ docs:
 
 sql:
 	@sqlc generate
+
+test:
+	@python -m unittest testing.tests

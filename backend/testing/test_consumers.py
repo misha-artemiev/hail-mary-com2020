@@ -1,6 +1,6 @@
 """Tests for consumer endpoints."""
 
-import unittest
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from fastapi import status
@@ -22,7 +22,7 @@ def override_consumer_auth() -> MagicMock:
     return MagicMock()
 
 
-class TestConsumers(unittest.TestCase):
+class TestConsumers(TestCase):
     """Test suite for consumer-related functionality."""
 
     def setUp(self) -> None:
@@ -121,7 +121,3 @@ class TestConsumers(unittest.TestCase):
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
         del app.dependency_overrides[consumer_auth]
-
-
-if __name__ == "__main__":
-    unittest.main()
