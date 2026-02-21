@@ -1,0 +1,53 @@
+services:
+  database:
+    image: postgres:18-alpine
+    container_name: hail-mary-database
+    restart: always
+    expose:
+      - "5432"
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_DATABASE}
+  database-init:
+    build:
+      context: ../../
+      dockerfile: ./deployment/database-init.dockerfile
+    env_file:
+      - ./.env
+    depends_on:
+      - database
+  frontend:
+    build:
+      context: ../../
+      dockerfile: ./deployment/frontend.dockerfile
+    container_name: hail-mary-frontend
+    restart: always
+    expose:
+      - "80"
+  backend:
+    build:
+      context: ../../
+      dockerfile: ./deployment/backend.dockerfile
+    container_name: hail-mary-backend
+    restart: always
+    expose:
+      - "8080"
+    env_file:
+      - ./.env
+    depends_on:
+      - database
+      - database-init
+  nginx:
+    image: nginx:1.29-alpine
+    container_name: hail-mary-proxy
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx-docker.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - backend

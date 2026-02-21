@@ -1,4 +1,12 @@
+/**
+ * useSearchBundles.jsx
+ * @author Misha Artemiev
+ */
+
 import { useState, useCallback, useEffect } from "react";
+
+// Set the default base API route
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 export default function useSearchBundles() {
     const [listings, setListings] = useState([]);
@@ -41,7 +49,7 @@ export default function useSearchBundles() {
                         : [],
                 };
 
-                const response = await fetch("/api/bundles/search", {
+                const response = await fetch(`${API_BASE_URL}/bundles/search`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload),

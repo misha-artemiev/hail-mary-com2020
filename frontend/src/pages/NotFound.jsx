@@ -28,7 +28,7 @@ export default function NotFound() {
                     <img
                         src={logoIcon}
                         alt="Logo"
-                        className="h-56 w-auto object-contain flex-shrink-0"
+                        className="h-56 w-auto object-contain shrink-0"
                     />
 
                     {/* Header */}

@@ -1,3 +1,10 @@
-**/.vscode
 **/.DS_Store
-
+**/.vscode
+**/__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cache/
+**/synthetic_data
+dist/
+docs/
+.env
