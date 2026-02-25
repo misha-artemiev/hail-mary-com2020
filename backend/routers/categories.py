@@ -8,7 +8,12 @@ from internal.queries.models import Category
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get all categories",
+    description="Retrieves a list of all defined bundle categories.",
+)
 async def get_categories(conn: database_dependency) -> list[Category]:
     """Get all categories.
 

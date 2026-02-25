@@ -25,7 +25,12 @@ from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get all bundles",
+    description="Retrieves a list of all available bundles.",
+)
 async def get_bundles(conn: database_dependency) -> list[Bundle]:
     """Get all bundles.
 
@@ -47,7 +52,12 @@ async def get_bundles(conn: database_dependency) -> list[Bundle]:
     return list(bundles)
 
 
-@router.get("/{bundle_id}")
+@router.get(
+    "/{bundle_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle by ID",
+    description="Retrieves details of a specific bundle by its ID.",
+)
 async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     """Get bundle.
 
@@ -69,7 +79,15 @@ async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     return bundle
 
 
-@router.post("/{bundle_id}/reservations", tags=["reservations"])
+@router.post(
+    "/{bundle_id}/reservations",
+    tags=["reservations"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Reserve a bundle",
+    description=(
+        "Creates a reservation for a specific bundle for the authenticated consumer."
+    ),
+)
 async def reserve_bundle(
     bundle_id: str,
     conn: database_dependency,
@@ -148,7 +166,14 @@ class SearchBundlesResponse(BaseModel):
     dist: float
 
 
-@router.post("/search")
+@router.post(
+    "/search",
+    status_code=status.HTTP_200_OK,
+    summary="Search bundles",
+    description=(
+        "Searches for bundles based on location, distance, price, and other filters."
+    ),
+)
 async def search_bundles(
     form: SearchBundlesForm, conn: database_dependency
 ) -> list[SearchBundlesResponse]:

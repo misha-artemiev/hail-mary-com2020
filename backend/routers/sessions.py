@@ -132,7 +132,7 @@ sequenceDiagram
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Response, Security
+from fastapi import APIRouter, Security, status
 from internal.auth.middleware import BasicAuthResponse, basic_auth, bearer_auth
 from internal.auth.token import create_token, delete_token
 from internal.database.dependency import database_dependency
@@ -151,7 +151,13 @@ class TokenResponseModel(BaseModel):
     role: UserRole
 
 
-@router.post("", response_model=TokenResponseModel, status_code=201)
+@router.post(
+    "",
+    response_model=TokenResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create session",
+    description="Authenticates a user and creates a new session token.",
+)
 def create_session(
     conn: database_dependency, user: Annotated[BasicAuthResponse, Security(basic_auth)]
 ) -> TokenResponseModel:
@@ -170,19 +176,20 @@ def create_session(
     )
 
 
-@router.delete("", status_code=200)
+@router.delete(
+    "",
+    status_code=status.HTTP_200_OK,
+    summary="Delete session",
+    description="Deletes the current authenticated session token.",
+)
 def delete_session(
     conn: database_dependency,
     session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> Response:
+) -> None:
     """Delete session from database.
 
     Args:
       conn: database connection
       session: authorised users information
-
-    Returns:
-      when user session was deleted
     """
     delete_token(session.token, conn)
-    return Response("Session was deleted", 200)

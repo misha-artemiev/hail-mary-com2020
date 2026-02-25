@@ -8,7 +8,12 @@ from internal.queries.models import Allergen
 router = APIRouter(prefix="/allergens", tags=["allergens"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get all allergens",
+    description="Retrieves a list of all defined allergens.",
+)
 async def get_allergens(conn: database_dependency) -> list[Allergen]:
     """Get all allergens.
 

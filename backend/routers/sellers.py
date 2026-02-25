@@ -65,7 +65,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security, status
+from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
 from internal.database.dependency import database_dependency
@@ -84,21 +84,20 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
 
-@router.post("", status_code=201)
-async def register_seller(
-    form: CreateSellerForm, conn: database_dependency
-) -> Response:
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register seller",
+    description="Creates a new seller and their corresponding user entity.",
+)
+async def register_seller(form: CreateSellerForm, conn: database_dependency) -> None:
     """Creates seller and coressponding user.
 
     Args:
       form: signup form from user
       conn: database connection
-
-    Returns:
-      if seller was registered
     """
     _ = create_seller(form, conn)
-    return Response("Seller was registered", 201)
 
 
 class BundleForm(BaseModel):
@@ -113,7 +112,13 @@ class BundleForm(BaseModel):
     window_end: datetime
 
 
-@router.post("/me/bundles", tags=["bundles"])
+@router.post(
+    "/me/bundles",
+    tags=["bundles"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create bundle",
+    description="Creates a new bundle for the authenticated seller.",
+)
 async def create_bundle(
     form: BundleForm,
     conn: database_dependency,
@@ -152,7 +157,13 @@ async def create_bundle(
     return bundle
 
 
-@router.patch("/me/bundles/{bundle_id}", tags=["bundles"])
+@router.patch(
+    "/me/bundles/{bundle_id}",
+    tags=["bundles"],
+    status_code=status.HTTP_200_OK,
+    summary="Update bundle",
+    description="Updates an existing bundle for the authenticated seller.",
+)
 async def update_bundle(
     bundle_id: str,
     form: BundleForm,
@@ -194,7 +205,12 @@ async def update_bundle(
     return bundle
 
 
-@router.get("/me/bundles")
+@router.get(
+    "/me/bundles",
+    status_code=status.HTTP_200_OK,
+    summary="Get seller bundles",
+    description="Retrieves all bundles created by the authenticated seller.",
+)
 async def get_bundles(
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
@@ -220,7 +236,16 @@ async def get_bundles(
     return list(bundles)
 
 
-@router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])
+@router.get(
+    "/me/bundles/{bundle_id}/reservations",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle reservations",
+    description=(
+        "Retrieves all reservations for a specific bundle owned "
+        "by the authenticated seller."
+    ),
+)
 async def get_reservations(
     bundle_id: str,
     conn: database_dependency,
@@ -257,7 +282,13 @@ async def get_reservations(
     return list(reservations)
 
 
-@router.patch("/me/bundles/{bundle_id}/reservations/collect", tags=["reservations"])
+@router.patch(
+    "/me/bundles/{bundle_id}/reservations/collect",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Collect reservation",
+    description="Confirms the collection of a reservation using a claim code.",
+)
 async def reservation_collection(
     bundle_id: str,
     claim_code: str,
