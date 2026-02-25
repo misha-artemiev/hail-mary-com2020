@@ -67,9 +67,12 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
-from internal.queries.consumer import GetConsumerRow, GetConsumersRow
+from internal.queries.consumer import (
+    GetConsumerRow,
+    GetConsumersRow,
+    UpdateConsumerParams,
+)
 from internal.queries.consumer import Querier as ConsumerQuerier
-from internal.queries.consumer import UpdateConsumerParams
 from internal.queries.models import Reservation
 from internal.queries.reservations import Querier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
@@ -84,9 +87,7 @@ router = APIRouter(prefix="/consumers", tags=["consumers"])
     summary="Get all consumers",
     description="Retrieves a list of all registered consumers.",
 )
-async def get_consumers(
-    conn: database_dependency,
-) -> list[GetConsumersRow]:
+async def get_consumers(conn: database_dependency) -> list[GetConsumersRow]:
     """Get all consumers.
 
     Args:
@@ -124,8 +125,7 @@ async def get_consumer_me(
     consumer_profile = ConsumerQuerier(conn).get_consumer(user_id=consumer.user_id)
     if not consumer_profile:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Consumer profile not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Consumer profile not found"
         )
     return consumer_profile
 
@@ -137,8 +137,7 @@ async def get_consumer_me(
     description="Retrieves the profile of a consumer by their unique ID.",
 )
 async def get_consumer_by_id(
-    consumer_id: int,
-    conn: database_dependency,
+    consumer_id: int, conn: database_dependency
 ) -> GetConsumerRow:
     """Get consumer profile by ID.
 
@@ -155,8 +154,7 @@ async def get_consumer_by_id(
     consumer_profile = ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
     if not consumer_profile:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Consumer not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Consumer not found"
         )
     return consumer_profile
 

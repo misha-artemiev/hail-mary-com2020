@@ -92,9 +92,7 @@ router = APIRouter(prefix="/sellers", tags=["sellers"])
     summary="Get all sellers",
     description="Retrieves a list of all registered sellers.",
 )
-async def get_sellers(
-    conn: database_dependency,
-) -> list[GetSellersRow]:
+async def get_sellers(conn: database_dependency) -> list[GetSellersRow]:
     """Get all sellers.
 
     Args:
@@ -132,8 +130,7 @@ async def get_seller_me(
     seller_profile = SellerQuerier(conn).get_seller(user_id=seller.user_id)
     if not seller_profile:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller profile not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seller profile not found"
         )
     return seller_profile
 
@@ -144,10 +141,7 @@ async def get_seller_me(
     summary="Get seller by ID",
     description="Retrieves the profile of a seller by their unique ID.",
 )
-async def get_seller_by_id(
-    seller_id: int,
-    conn: database_dependency,
-) -> GetSellerRow:
+async def get_seller_by_id(seller_id: int, conn: database_dependency) -> GetSellerRow:
     """Get seller profile by ID.
 
     Args:
@@ -163,8 +157,7 @@ async def get_seller_by_id(
     seller_profile = SellerQuerier(conn).get_seller(user_id=seller_id)
     if not seller_profile:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seller not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
         )
     return seller_profile
 
