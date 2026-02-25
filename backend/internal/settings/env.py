@@ -57,6 +57,20 @@ class AuthSettings(BaseSettings):
     )
 
 
+class BadgesSettings(BaseSettings):
+    """Settings for badges."""
+
+    rules_path: Path = Path("./internal/settings/badges_rules.yaml")
+
+    model_config = SettingsConfigDict(
+        env_prefix="BADGES",
+        case_sensitive=False,
+        env_file=BASE_DIR / ".env",
+        extra="ignore",
+    )
+
+
 host_settings = HostSettings()
 database_settings = DatabaseSettings()
 auth_settings = AuthSettings()
+badges_settings = BadgesSettings()

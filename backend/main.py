@@ -7,6 +7,7 @@ from importlib.metadata import version
 from fastapi import APIRouter, FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
+from internal.settings.config import badges_config
 from internal.settings.env import host_settings
 from routers.allergens import router as allergens_router
 from routers.bundles import router as bundle_router
@@ -21,6 +22,7 @@ from uvicorn import run
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Manages startup and shutdown."""
+    badges_config.initialise()
     logger.info("Initialising database engine")
     await database_manager.initialise()
     logger.info("Database ready")

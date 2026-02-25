@@ -1,0 +1,6 @@
+rules:
+  - rule_name: "some badge rule"
+    badge_id: 0
+    count: 1
+    streak:
+      days: 1
