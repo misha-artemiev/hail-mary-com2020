@@ -7,6 +7,7 @@ import pydantic
 from typing import Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -51,12 +52,12 @@ class GetSessionByTokenRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_token(self, arg: CreateTokenParams) -> Optional[models.Token]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_TOKEN), {"p1": arg.user_id, "p2": arg.token, "p3": arg.expires_at}).first()
+    async def create_token(self, arg: CreateTokenParams) -> Optional[models.Token]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_TOKEN), {"p1": arg.user_id, "p2": arg.token, "p3": arg.expires_at})).first()
         if row is None:
             return None
         return models.Token(
@@ -67,8 +68,8 @@ class Querier:
             expires_at=row[4],
         )
 
-    def delete_token(self, *, token: str) -> Optional[models.Token]:
-        row = self._conn.execute(sqlalchemy.text(DELETE_TOKEN), {"p1": token}).first()
+    async def delete_token(self, *, token: str) -> Optional[models.Token]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_TOKEN), {"p1": token})).first()
         if row is None:
             return None
         return models.Token(
@@ -79,8 +80,8 @@ class Querier:
             expires_at=row[4],
         )
 
-    def get_session_by_token(self, *, token: str) -> Optional[GetSessionByTokenRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_SESSION_BY_TOKEN), {"p1": token}).first()
+    async def get_session_by_token(self, *, token: str) -> Optional[GetSessionByTokenRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_SESSION_BY_TOKEN), {"p1": token})).first()
         if row is None:
             return None
         return GetSessionByTokenRow(

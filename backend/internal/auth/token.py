@@ -2,17 +2,17 @@
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import AsyncConnection
 
 from internal.queries.models import Token
+from internal.queries.token import AsyncQuerier as TokenQuerier
 from internal.queries.token import CreateTokenParams
-from internal.queries.token import Querier as TokenQuerier
 from internal.settings.env import auth_settings
 
 from .security import generate_token
 
 
-def create_token(user_id: int, conn: Connection) -> Token:
+async def create_token(user_id: int, conn: AsyncConnection) -> Token:
     """Create, insert into database and return token for the user.
 
     Args:
@@ -25,7 +25,7 @@ def create_token(user_id: int, conn: Connection) -> Token:
     Raises:
       ValueError: if database failed to insert token
     """
-    token = TokenQuerier(conn).create_token(
+    token = await TokenQuerier(conn).create_token(
         CreateTokenParams(
             user_id=user_id,
             token=generate_token(),
@@ -38,7 +38,7 @@ def create_token(user_id: int, conn: Connection) -> Token:
     return token
 
 
-def delete_token(token: str, conn: Connection) -> None:
+async def delete_token(token: str, conn: AsyncConnection) -> None:
     """Delete given token from database.
 
     Args:
@@ -48,6 +48,6 @@ def delete_token(token: str, conn: Connection) -> None:
     Raises:
       ValueError: if failed to delete or find given token
     """
-    deleted_token = TokenQuerier(conn).delete_token(token=token)
+    deleted_token = await TokenQuerier(conn).delete_token(token=token)
     if not deleted_token:
         raise ValueError("Failed to delete token")

@@ -4,9 +4,10 @@
 # source: consumer.sql
 import datetime
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -74,12 +75,12 @@ class UpdateConsumerParams(pydantic.BaseModel):
     lname: str
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_consumer(self, arg: CreateConsumerParams) -> Optional[models.Consumer]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
+    async def create_consumer(self, arg: CreateConsumerParams) -> Optional[models.Consumer]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname})).first()
         if row is None:
             return None
         return models.Consumer(
@@ -88,8 +89,8 @@ class Querier:
             lname=row[2],
         )
 
-    def get_consumer(self, *, user_id: int) -> Optional[GetConsumerRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_CONSUMER), {"p1": user_id}).first()
+    async def get_consumer(self, *, user_id: int) -> Optional[GetConsumerRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_CONSUMER), {"p1": user_id})).first()
         if row is None:
             return None
         return GetConsumerRow(
@@ -102,9 +103,9 @@ class Querier:
             created_at=row[6],
         )
 
-    def get_consumers(self) -> Iterator[GetConsumersRow]:
-        result = self._conn.execute(sqlalchemy.text(GET_CONSUMERS))
-        for row in result:
+    async def get_consumers(self) -> AsyncIterator[GetConsumersRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_CONSUMERS))
+        async for row in result:
             yield GetConsumersRow(
                 user_id=row[0],
                 username=row[1],
@@ -115,8 +116,8 @@ class Querier:
                 created_at=row[6],
             )
 
-    def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
+    async def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname})).first()
         if row is None:
             return None
         return models.Consumer(
