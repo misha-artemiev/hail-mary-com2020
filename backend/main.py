@@ -16,6 +16,7 @@ from routers.consumers import router as consumers_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
 from routers.users import router as users_router
+from routers.badges import router as badges_router
 from uvicorn import run
 
 
@@ -51,6 +52,7 @@ def register_routers(app: FastAPI) -> None:
         users_router,
         allergens_router,
         categories_router,
+        badges_router,
     ]
     for router in routers:
         app.include_router(router)
