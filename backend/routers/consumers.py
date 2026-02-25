@@ -67,9 +67,9 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
-from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
 from internal.queries.badge import GetConsumerBadgesRow
+from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import (
     GetConsumerRow,
     GetConsumersRow,
@@ -259,12 +259,18 @@ async def update_consumer(
             detail="Failed to update consumer",
         )
 
-@router.get("/me/badges", status_code=200,
+
+@router.get(
+    "/me/badges",
+    status_code=200,
     summary="Consumer badges",
     description="Get all acquired badges by consumer",
-    tags=["badges"]
+    tags=["badges"],
 )
-async def get_consumer_badges(conn: database_dependency, consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)]) -> list[GetConsumerBadgesRow]:
+async def get_consumer_badges(
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> list[GetConsumerBadgesRow]:
     """Get badges acquired by consumer.
 
     Args:
@@ -274,4 +280,9 @@ async def get_consumer_badges(conn: database_dependency, consumer: Annotated[Get
     Returns:
       list of acquired badges
     """
-    return [badge async for badge in BadgeQuerier(conn).get_consumer_badges(user_id=consumer.user_id)]
+    return [
+        badge
+        async for badge in BadgeQuerier(conn).get_consumer_badges(
+            user_id=consumer.user_id
+        )
+    ]
