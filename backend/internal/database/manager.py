@@ -2,7 +2,7 @@
 
 from collections.abc import Generator
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import Connection, Engine, create_engine, text
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 
@@ -24,7 +24,8 @@ class DatabaseManager:
         credentials: str = f"{database_settings.username}:{database_settings.password}"
         full_host: str = f"{database_settings.host}:{database_settings.port}"
         self.engine = create_engine(
-            f"postgresql+psycopg://{credentials}@{full_host}/{database_settings.database}",
+            f"postgresql+psycopg://{credentials}@{full_host}/"
+            f"{database_settings.database}",
             pool_size=database_settings.pool_size,
             max_overflow=database_settings.max_overflow,
             pool_pre_ping=True,
@@ -55,12 +56,17 @@ class DatabaseManager:
             with self.engine.begin() as conn:
                 yield conn
         except OperationalError:
-            raise HTTPException(503, "Service unavailable")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service unavailable",
+            )
         except IntegrityError:
-            raise HTTPException(409, "Conflict")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Conflict")
         except ValueError as err:
             logger.error(f"Validation Error: {err}")
-            raise HTTPException(400, "Validation Error")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Validation error"
+            )
 
 
 database_manager = DatabaseManager()

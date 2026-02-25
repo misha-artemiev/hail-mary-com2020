@@ -63,7 +63,7 @@ sequenceDiagram
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
@@ -77,24 +77,31 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
 
-@router.post("", status_code=201)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register consumer",
+    description="Registers a new consumer and their corresponding user entity.",
+)
 async def register_consumer(
     form: CreateConsumerForm, conn: database_dependency
-) -> Response:
+) -> None:
     """Register consumer and corresponding user.
 
     Args:
       form: signup information for the user
       conn: database connection
-
-    Returns:
-      if consumer was registered
     """
     _ = create_consumer(form, conn)
-    return Response("Consumer was registered", 201)
 
 
-@router.get("/me/reservations", tags=["reservations"])
+@router.get(
+    "/me/reservations",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Get consumer reservations",
+    description="Retrieves all reservations made by the authenticated consumer.",
+)
 async def get_reservations(
     conn: database_dependency,
     consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
@@ -114,8 +121,11 @@ async def get_reservations(
     reservations = ReservationsQuerier(conn).get_consumers_reservations(
         consumer_id=consumer.user_id
     )
-    if not reservations:
-        raise HTTPException(500, "failed to get reservations")
+    if reservations is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get reservations",
+        )
     return list(reservations)
 
 
@@ -126,21 +136,26 @@ class UpdateConsumerForm(BaseModel):
     last_name: str
 
 
-@router.patch("/me")
+@router.patch(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Update consumer profile",
+    description=(
+        "Updates the profile information (first and last name) "
+        "for the authenticated consumer."
+    ),
+)
 async def update_consumer(
     form: UpdateConsumerForm,
     conn: database_dependency,
     consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> Response:
+) -> None:
     """Consumer name update.
 
     Args:
         form: consumer update form
         conn: database connection
         consumer: consumer session
-
-    Returns:
-        if consumer was update
 
     Raises:
         HTTPException: if failed to update consumer
@@ -151,5 +166,7 @@ async def update_consumer(
         )
     )
     if not updated_consumer:
-        raise HTTPException(500, "failed to update consumer")
-    return Response("consumer was updated", 200)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update consumer",
+        )

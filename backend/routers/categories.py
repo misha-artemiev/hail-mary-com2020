@@ -1,6 +1,6 @@
 """Endpoint for categories."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from internal.database.dependency import database_dependency
 from internal.queries.category import Querier as CategoriesQuerier
 from internal.queries.models import Category
@@ -8,7 +8,12 @@ from internal.queries.models import Category
 router = APIRouter(prefix="/categories", tags=["categories"])
 
 
-@router.get("/")
+@router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    summary="Get all categories",
+    description="Retrieves a list of all defined bundle categories.",
+)
 async def get_categories(conn: database_dependency) -> list[Category]:
     """Get all categories.
 
@@ -19,6 +24,9 @@ async def get_categories(conn: database_dependency) -> list[Category]:
         HTTPException: if failed to get categories
     """
     categories = CategoriesQuerier(conn).get_categories()
-    if not categories:
-        raise HTTPException(500, "failed to get allergens")
+    if categories is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get categories",
+        )
     return list(categories)
