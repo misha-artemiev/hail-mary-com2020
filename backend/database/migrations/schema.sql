@@ -64,6 +64,7 @@ CREATE TYPE weather_flag AS ENUM (
 
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(250) NOT NULL UNIQUE,
     pw_hash VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'consumer',

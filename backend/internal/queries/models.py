@@ -216,6 +216,7 @@ class Token(pydantic.BaseModel):
 
 class User(pydantic.BaseModel):
     user_id: int
+    username: str
     email: str
     pw_hash: str
     role: UserRole

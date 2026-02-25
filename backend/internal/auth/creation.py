@@ -14,13 +14,17 @@ from internal.queries.user import CreateUserParams, CreateUserRow
 
 from .security import hash_password
 
-
-async def create_user(
-    email: EmailStr, password: SecretStr, role: UserRole, conn: AsyncConnection
+def create_user(
+    username: str,
+    email: EmailStr,
+    password: SecretStr,
+    role: UserRole,
+    conn: AsyncConnection,
 ) -> CreateUserRow:
     """Create and insert base user entiry.
 
     Args:
+      username: username for user
       email: users email
       password: users plain text password
       role: users role, seller or consumer
@@ -33,8 +37,8 @@ async def create_user(
       ValueError: if database failed to create user
     """
     pw_hash = hash_password(password.get_secret_value())
-    user = await UserQuery(conn).create_user(
-        CreateUserParams(email=email, pw_hash=pw_hash, role=role)
+    user = UserQuery(conn).create_user(
+        CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
         raise ValueError("Failed to create user")
@@ -44,6 +48,7 @@ async def create_user(
 class CreateConsumerForm(BaseModel):
     """Form with information to create consumer."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     first_name: str
@@ -63,7 +68,9 @@ async def create_consumer(form: CreateConsumerForm, conn: AsyncConnection) -> Co
     Raises:
       ValueError: if database failed to create consumer
     """
-    user = await create_user(form.email, form.password, UserRole.CONSUMER, conn)
+    user = create_user(
+        form.username, form.email, form.password, UserRole.CONSUMER, conn
+    )
     consumer = await ConsumerQuerier(conn).create_consumer(
         CreateConsumerParams(
             user_id=user.user_id, fname=form.first_name, lname=form.last_name
@@ -77,6 +84,7 @@ async def create_consumer(form: CreateConsumerForm, conn: AsyncConnection) -> Co
 class CreateSellerForm(BaseModel):
     """Form with information to create seller."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     seller_name: str
@@ -101,7 +109,7 @@ async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller
     Raises:
       ValueError: database failed to create a seller
     """
-    user = await create_user(form.email, form.password, UserRole.SELLER, conn)
+    user = await create_user(form.username, form.email, form.password, UserRole.SELLER, conn)
     address: str = ""
     address += f"{form.address_line1}"
     if form.address_line2:
