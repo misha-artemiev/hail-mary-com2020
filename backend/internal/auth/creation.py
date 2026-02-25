@@ -16,11 +16,16 @@ from .security import hash_password
 
 
 def create_user(
-    email: EmailStr, password: SecretStr, role: UserRole, conn: Connection
+    username: str,
+    email: EmailStr,
+    password: SecretStr,
+    role: UserRole,
+    conn: Connection,
 ) -> CreateUserRow:
     """Create and insert base user entiry.
 
     Args:
+      username: username for user
       email: users email
       password: users plain text password
       role: users role, seller or consumer
@@ -34,7 +39,7 @@ def create_user(
     """
     pw_hash = hash_password(password.get_secret_value())
     user = UserQuery(conn).create_user(
-        CreateUserParams(email=email, pw_hash=pw_hash, role=role)
+        CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
         raise ValueError("Failed to create user")
@@ -44,6 +49,7 @@ def create_user(
 class CreateConsumerForm(BaseModel):
     """Form with information to create consumer."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     first_name: str
@@ -63,7 +69,9 @@ def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
     Raises:
       ValueError: if database failed to create consumer
     """
-    user = create_user(form.email, form.password, UserRole.CONSUMER, conn)
+    user = create_user(
+        form.username, form.email, form.password, UserRole.CONSUMER, conn
+    )
     consumer = ConsumerQuerier(conn).create_consumer(
         CreateConsumerParams(
             user_id=user.user_id, fname=form.first_name, lname=form.last_name
@@ -77,6 +85,7 @@ def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
 class CreateSellerForm(BaseModel):
     """Form with information to create seller."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     seller_name: str
@@ -101,7 +110,7 @@ def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
     Raises:
       ValueError: database failed to create a seller
     """
-    user = create_user(form.email, form.password, UserRole.SELLER, conn)
+    user = create_user(form.username, form.email, form.password, UserRole.SELLER, conn)
     address: str = ""
     address += f"{form.address_line1}"
     if form.address_line2:

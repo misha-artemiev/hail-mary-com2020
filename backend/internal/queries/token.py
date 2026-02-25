@@ -32,7 +32,7 @@ RETURNING token_id, user_id, token, created_at, expires_at
 
 
 GET_SESSION_BY_TOKEN = """-- name: get_session_by_token \\:one
-SELECT u.user_id, u.email, u.role, t.token, t.expires_at, t.created_at
+SELECT u.user_id, u.username, u.email, u.role, t.token, t.expires_at, t.created_at
 FROM token t
 JOIN users u ON u.user_id = t.user_id
 WHERE t.token = :p1
@@ -43,6 +43,7 @@ LIMIT 1
 
 class GetSessionByTokenRow(pydantic.BaseModel):
     user_id: int
+    username: str
     email: str
     role: models.UserRole
     token: str
@@ -84,9 +85,10 @@ class Querier:
             return None
         return GetSessionByTokenRow(
             user_id=row[0],
-            email=row[1],
-            role=row[2],
-            token=row[3],
-            expires_at=row[4],
-            created_at=row[5],
+            username=row[1],
+            email=row[2],
+            role=row[3],
+            token=row[4],
+            expires_at=row[5],
+            created_at=row[6],
         )

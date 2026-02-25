@@ -32,7 +32,7 @@ class CreateSellerParams(pydantic.BaseModel):
 
 
 GET_SELLER = """-- name: get_seller \\:one
-SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
+SELECT u.user_id, u.username, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
 FROM sellers s
 INNER JOIN users u ON s.user_id=u.user_id
 WHERE u.user_id=:p1
@@ -42,6 +42,7 @@ LIMIT 1
 
 class GetSellerRow(pydantic.BaseModel):
     user_id: int
+    username: str
     email: str
     seller_name: str
     address_line1: str
@@ -59,7 +60,7 @@ class GetSellerRow(pydantic.BaseModel):
 
 
 GET_SELLER_BY_LOCATION = """-- name: get_seller_by_location \\:many
-SELECT u.user_id, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
+SELECT u.user_id, u.username, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
 FROM sellers s
 INNER JOIN users u ON s.user_id=u.user_id
 WHERE s.latitude < :p1 AND s.latitude > :p2 AND s.longitude < :p3 AND s.longitude > :p4
@@ -75,6 +76,7 @@ class GetSellerByLocationParams(pydantic.BaseModel):
 
 class GetSellerByLocationRow(pydantic.BaseModel):
     user_id: int
+    username: str
     email: str
     seller_name: str
     address_line1: str
@@ -131,20 +133,21 @@ class Querier:
             return None
         return GetSellerRow(
             user_id=row[0],
-            email=row[1],
-            seller_name=row[2],
-            address_line1=row[3],
-            address_line2=row[4],
-            city=row[5],
-            post_code=row[6],
-            region=row[7],
-            country=row[8],
-            verified_by=row[9],
-            verification_date=row[10],
-            last_login=row[11],
-            created_at=row[12],
-            latitude=row[13],
-            longitude=row[14],
+            username=row[1],
+            email=row[2],
+            seller_name=row[3],
+            address_line1=row[4],
+            address_line2=row[5],
+            city=row[6],
+            post_code=row[7],
+            region=row[8],
+            country=row[9],
+            verified_by=row[10],
+            verification_date=row[11],
+            last_login=row[12],
+            created_at=row[13],
+            latitude=row[14],
+            longitude=row[15],
         )
 
     def get_seller_by_location(self, arg: GetSellerByLocationParams) -> Iterator[GetSellerByLocationRow]:
@@ -157,18 +160,19 @@ class Querier:
         for row in result:
             yield GetSellerByLocationRow(
                 user_id=row[0],
-                email=row[1],
-                seller_name=row[2],
-                address_line1=row[3],
-                address_line2=row[4],
-                city=row[5],
-                post_code=row[6],
-                region=row[7],
-                country=row[8],
-                verified_by=row[9],
-                verification_date=row[10],
-                last_login=row[11],
-                created_at=row[12],
-                latitude=row[13],
-                longitude=row[14],
+                username=row[1],
+                email=row[2],
+                seller_name=row[3],
+                address_line1=row[4],
+                address_line2=row[5],
+                city=row[6],
+                post_code=row[7],
+                region=row[8],
+                country=row[9],
+                verified_by=row[10],
+                verification_date=row[11],
+                last_login=row[12],
+                created_at=row[13],
+                latitude=row[14],
+                longitude=row[15],
             )
