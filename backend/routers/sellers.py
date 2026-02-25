@@ -78,10 +78,95 @@ from internal.queries.bundle import Querier as BundleQuerier
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.reservations import Querier as ReservationsQuerier
+from internal.queries.seller import GetSellerRow, GetSellersRow
+from internal.queries.seller import Querier as SellerQuerier
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
+
+
+@router.get(
+    "",
+    status_code=status.HTTP_200_OK,
+    summary="Get all sellers",
+    description="Retrieves a list of all registered sellers.",
+)
+async def get_sellers(
+    conn: database_dependency,
+) -> list[GetSellersRow]:
+    """Get all sellers.
+
+    Args:
+      conn: database connection
+
+    Returns:
+      list of all sellers
+    """
+    sellers = SellerQuerier(conn).get_sellers()
+    return list(sellers)
+
+
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Get authenticated seller",
+    description="Retrieves the profile of the authenticated seller.",
+)
+async def get_seller_me(
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> GetSellerRow:
+    """Get authenticated seller profile.
+
+    Args:
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      seller profile
+
+    Raises:
+      HTTPException: if seller not found
+    """
+    seller_profile = SellerQuerier(conn).get_seller(user_id=seller.user_id)
+    if not seller_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seller profile not found",
+        )
+    return seller_profile
+
+
+@router.get(
+    "/{seller_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get seller by ID",
+    description="Retrieves the profile of a seller by their unique ID.",
+)
+async def get_seller_by_id(
+    seller_id: int,
+    conn: database_dependency,
+) -> GetSellerRow:
+    """Get seller profile by ID.
+
+    Args:
+      seller_id: unique identifier of the seller
+      conn: database connection
+
+    Returns:
+      seller profile
+
+    Raises:
+      HTTPException: if seller not found
+    """
+    seller_profile = SellerQuerier(conn).get_seller(user_id=seller_id)
+    if not seller_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seller not found",
+        )
+    return seller_profile
 
 
 @router.post(

@@ -93,6 +93,32 @@ class GetSellerByLocationRow(pydantic.BaseModel):
     longitude: float
 
 
+GET_SELLERS = """-- name: get_sellers \\:many
+SELECT u.user_id, u.username, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
+FROM sellers s
+INNER JOIN users u ON s.user_id=u.user_id
+"""
+
+
+class GetSellersRow(pydantic.BaseModel):
+    user_id: int
+    username: str
+    email: str
+    seller_name: str
+    address_line1: str
+    address_line2: Optional[str]
+    city: str
+    post_code: str
+    region: Optional[str]
+    country: str
+    verified_by: Optional[int]
+    verification_date: Optional[datetime.datetime]
+    last_login: datetime.datetime
+    created_at: datetime.datetime
+    latitude: float
+    longitude: float
+
+
 class Querier:
     def __init__(self, conn: sqlalchemy.engine.Connection):
         self._conn = conn
@@ -159,6 +185,28 @@ class Querier:
         })
         for row in result:
             yield GetSellerByLocationRow(
+                user_id=row[0],
+                username=row[1],
+                email=row[2],
+                seller_name=row[3],
+                address_line1=row[4],
+                address_line2=row[5],
+                city=row[6],
+                post_code=row[7],
+                region=row[8],
+                country=row[9],
+                verified_by=row[10],
+                verification_date=row[11],
+                last_login=row[12],
+                created_at=row[13],
+                latitude=row[14],
+                longitude=row[15],
+            )
+
+    def get_sellers(self) -> Iterator[GetSellersRow]:
+        result = self._conn.execute(sqlalchemy.text(GET_SELLERS))
+        for row in result:
+            yield GetSellersRow(
                 user_id=row[0],
                 username=row[1],
                 email=row[2],
