@@ -7,6 +7,7 @@ import pydantic
 from typing import Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -115,12 +116,12 @@ class UpdateUserPasswordRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_user(self, arg: CreateUserParams) -> Optional[CreateUserRow]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": arg.email, "p2": arg.pw_hash, "p3": arg.role}).first()
+    async def create_user(self, arg: CreateUserParams) -> Optional[CreateUserRow]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_USER), {"p1": arg.email, "p2": arg.pw_hash, "p3": arg.role})).first()
         if row is None:
             return None
         return CreateUserRow(
@@ -130,8 +131,8 @@ class Querier:
             created_at=row[3],
         )
 
-    def delete_user(self, *, user_id: int) -> Optional[DeleteUserRow]:
-        row = self._conn.execute(sqlalchemy.text(DELETE_USER), {"p1": user_id}).first()
+    async def delete_user(self, *, user_id: int) -> Optional[DeleteUserRow]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_USER), {"p1": user_id})).first()
         if row is None:
             return None
         return DeleteUserRow(
@@ -141,8 +142,8 @@ class Querier:
             created_at=row[3],
         )
 
-    def get_user(self, *, user_id: int) -> Optional[GetUserRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id}).first()
+    async def get_user(self, *, user_id: int) -> Optional[GetUserRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_USER), {"p1": user_id})).first()
         if row is None:
             return None
         return GetUserRow(
@@ -152,8 +153,8 @@ class Querier:
             created_at=row[3],
         )
 
-    def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email}).first()
+    async def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email})).first()
         if row is None:
             return None
         return GetUserLoginRow(
@@ -163,8 +164,8 @@ class Querier:
             role=row[3],
         )
 
-    def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_USER_EMAIL), {"p1": arg.user_id, "p2": arg.email}).first()
+    async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_USER_EMAIL), {"p1": arg.user_id, "p2": arg.email})).first()
         if row is None:
             return None
         return UpdateUserEmailRow(
@@ -174,8 +175,8 @@ class Querier:
             created_at=row[3],
         )
 
-    def update_user_password(self, arg: UpdateUserPasswordParams) -> Optional[UpdateUserPasswordRow]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_USER_PASSWORD), {"p1": arg.user_id, "p2": arg.pw_hash}).first()
+    async def update_user_password(self, arg: UpdateUserPasswordParams) -> Optional[UpdateUserPasswordRow]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_USER_PASSWORD), {"p1": arg.user_id, "p2": arg.pw_hash})).first()
         if row is None:
             return None
         return UpdateUserPasswordRow(

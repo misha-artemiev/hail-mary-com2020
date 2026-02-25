@@ -1,6 +1,5 @@
 """Fastapi server entrypoint."""
 
-from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
@@ -23,13 +22,13 @@ from uvicorn import run
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Manages startup and shutdown."""
     logger.info("Initialising database engine")
-    await to_thread(database_manager.initialise)
+    await database_manager.initialise()
     logger.info("Database ready")
 
     yield
 
     logger.info("Cleaning database engine")
-    database_manager.cleanup()
+    await database_manager.cleanup()
 
 
 app = FastAPI(

@@ -12,9 +12,9 @@ from pydantic import BaseModel
 from internal.auth.security import check_password
 from internal.database.dependency import database_dependency
 from internal.queries.models import UserRole
+from internal.queries.token import AsyncQuerier as TokenQuerier
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.token import Querier as TokenQuerier
-from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import AsyncQuerier as UserQuerier
 
 
 class BasicAuthResponse(BaseModel):
@@ -24,7 +24,7 @@ class BasicAuthResponse(BaseModel):
     role: UserRole
 
 
-def basic_auth(
+async def basic_auth(
     conn: database_dependency, credentials: HTTPBasicCredentials = Security(HTTPBasic())
 ) -> BasicAuthResponse:
     """Fetches user id for endpoint with basic auth.
@@ -39,7 +39,7 @@ def basic_auth(
     Raises:
         HTTPException: if user wasn't found in the database or password incorrect
     """
-    user = UserQuerier(conn).get_user_login(email=credentials.username)
+    user = await UserQuerier(conn).get_user_login(email=credentials.username)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
@@ -51,7 +51,7 @@ def basic_auth(
     return BasicAuthResponse(user_id=user.user_id, role=user.role)
 
 
-def bearer_auth(
+async def bearer_auth(
     conn: database_dependency,
     credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
 ) -> GetSessionByTokenRow:
@@ -67,7 +67,9 @@ def bearer_auth(
     Raises:
       HTTPException: if user wasn't found in the database
     """
-    session = TokenQuerier(conn).get_session_by_token(token=credentials.credentials)
+    session = await TokenQuerier(conn).get_session_by_token(
+        token=credentials.credentials
+    )
     if not session:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session"

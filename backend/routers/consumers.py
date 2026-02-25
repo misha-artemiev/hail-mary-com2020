@@ -28,7 +28,7 @@ sequenceDiagram
     activate consumers.py
     dd->>consumers.py: yield connection
     activate dd
-    consumers.py->>creation.py: create_consumer()
+    consumers.py->>creation.py: await create_consumer()
     activate creation.py
     creation.py->>creation.py: create_user()
     creation.py->>security.py: hash_password()
@@ -67,10 +67,10 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
-from internal.queries.consumer import Querier as ConsumerQuerier
+from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import UpdateConsumerParams
 from internal.queries.models import Reservation
-from internal.queries.reservations import Querier as ReservationsQuerier
+from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
@@ -92,7 +92,7 @@ async def register_consumer(
       form: signup information for the user
       conn: database connection
     """
-    _ = create_consumer(form, conn)
+    _ = await create_consumer(form, conn)
 
 
 @router.get(
@@ -118,9 +118,12 @@ async def get_reservations(
     Raises:
         HTTPException: if failed to get reservations
     """
-    reservations = ReservationsQuerier(conn).get_consumers_reservations(
-        consumer_id=consumer.user_id
-    )
+    reservations = [
+        item
+        async for item in ReservationsQuerier(conn).get_consumers_reservations(
+            consumer_id=consumer.user_id
+        )
+    ]
     if reservations is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -160,7 +163,7 @@ async def update_consumer(
     Raises:
         HTTPException: if failed to update consumer
     """
-    updated_consumer = ConsumerQuerier(conn).update_consumer(
+    updated_consumer = await ConsumerQuerier(conn).update_consumer(
         UpdateConsumerParams(
             user_id=consumer.user_id, fname=form.first_name, lname=form.last_name
         )

@@ -7,7 +7,7 @@ from internal.auth.middleware import bearer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserEmailParams
 from pydantic import EmailStr
 
@@ -32,7 +32,7 @@ async def update_password(
       conn: database connection
       session: users session
     """
-    _ = update_pw(session.email, form, conn)
+    _ = await update_pw(session.email, form, conn)
 
 
 @router.patch(
@@ -56,7 +56,7 @@ async def update_email(
     Raises:
       HTTPException: failed to update user email
     """
-    user = UserQuerier(conn).update_user_email(
+    user = await UserQuerier(conn).update_user_email(
         UpdateUserEmailParams(user_id=session.user_id, email=email)
     )
     if not user:

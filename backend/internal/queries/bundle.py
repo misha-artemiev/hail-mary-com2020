@@ -5,9 +5,10 @@
 import datetime
 import decimal
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -100,12 +101,12 @@ class UpdateBundleParams(pydantic.BaseModel):
     window_end: datetime.datetime
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_bundle(self, arg: CreateBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_BUNDLE), {
+    async def create_bundle(self, arg: CreateBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_BUNDLE), {
             "p1": arg.seller_id,
             "p2": arg.bundle_name,
             "p3": arg.description,
@@ -114,7 +115,7 @@ class Querier:
             "p6": arg.discount_percentage,
             "p7": arg.window_start,
             "p8": arg.window_end,
-        }).first()
+        })).first()
         if row is None:
             return None
         return models.Bundle(
@@ -130,8 +131,8 @@ class Querier:
             created_at=row[9],
         )
 
-    def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_BUNDLE), {"p1": bundle_id}).first()
+    async def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_BUNDLE), {"p1": bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -147,8 +148,8 @@ class Querier:
             created_at=row[9],
         )
 
-    def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_BUNDLE_LOCK), {"p1": bundle_id}).first()
+    async def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_BUNDLE_LOCK), {"p1": bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -164,9 +165,9 @@ class Querier:
             created_at=row[9],
         )
 
-    def get_bundles(self) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLES))
-        for row in result:
+    async def get_bundles(self) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLES))
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
@@ -180,9 +181,9 @@ class Querier:
                 created_at=row[9],
             )
 
-    def get_sellers_active_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_ACTIVE_BUNDLES), {"p1": seller_id})
-        for row in result:
+    async def get_sellers_active_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLERS_ACTIVE_BUNDLES), {"p1": seller_id})
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
@@ -196,8 +197,8 @@ class Querier:
                 created_at=row[9],
             )
 
-    def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLE), {"p1": arg.seller_id, "p2": arg.bundle_id}).first()
+    async def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLE), {"p1": arg.seller_id, "p2": arg.bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -213,9 +214,9 @@ class Querier:
             created_at=row[9],
         )
 
-    def get_sellers_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLES), {"p1": seller_id})
-        for row in result:
+    async def get_sellers_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLERS_BUNDLES), {"p1": seller_id})
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
@@ -229,8 +230,8 @@ class Querier:
                 created_at=row[9],
             )
 
-    def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_BUNDLE), {
+    async def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_BUNDLE), {
             "p1": arg.bundle_id,
             "p2": arg.seller_id,
             "p3": arg.bundle_name,
@@ -240,7 +241,7 @@ class Querier:
             "p7": arg.discount_percentage,
             "p8": arg.window_start,
             "p9": arg.window_end,
-        }).first()
+        })).first()
         if row is None:
             return None
         return models.Bundle(

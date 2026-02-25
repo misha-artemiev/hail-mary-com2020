@@ -1,10 +1,11 @@
 """Manages database connection for the entire server."""
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 
 from fastapi import HTTPException, status
-from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 
 from internal.logger.logger import logger
 from internal.settings.env import database_settings
@@ -13,9 +14,9 @@ from internal.settings.env import database_settings
 class DatabaseManager:
     """Starts, keeps and serves connections."""
 
-    engine: Engine
+    engine: AsyncEngine
 
-    def initialise(self) -> None:
+    async def initialise(self) -> None:
         """Starts and checks connection pool.
 
         Raises:
@@ -23,7 +24,7 @@ class DatabaseManager:
         """
         credentials: str = f"{database_settings.username}:{database_settings.password}"
         full_host: str = f"{database_settings.host}:{database_settings.port}"
-        self.engine = create_engine(
+        self.engine = create_async_engine(
             f"postgresql+psycopg://{credentials}@{full_host}/"
             f"{database_settings.database}",
             pool_size=database_settings.pool_size,
@@ -33,17 +34,17 @@ class DatabaseManager:
         )
 
         try:
-            with self.engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
+            async with self.engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
         except SQLAlchemyError as err:
             raise Exception(f"Failed to initiate connection with database: {err}")
 
-    def cleanup(self) -> None:
+    async def cleanup(self) -> None:
         """Closes database connection."""
         if self.engine:
-            self.engine.dispose()
+            await self.engine.dispose()
 
-    def get_connection(self) -> Generator[Connection]:
+    async def get_connection(self) -> AsyncGenerator[AsyncConnection]:
         """Gets connection session and returns it for dependency use.
 
         Yields:
@@ -53,7 +54,7 @@ class DatabaseManager:
           HTTPException: user facing error if failed to process database request
         """
         try:
-            with self.engine.begin() as conn:
+            async with self.engine.begin() as conn:
                 yield conn
         except OperationalError:
             raise HTTPException(

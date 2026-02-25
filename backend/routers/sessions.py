@@ -45,7 +45,7 @@ sequenceDiagram
     deactivate database.py
     database.py->>sessions.py: yield connection
     activate database.py
-    sessions.py->>token.py: create_token()
+    sessions.py->>token.py: await create_token()
     activate token.py
     token.py->>security.py: generate_token()
     activate security.py
@@ -110,7 +110,7 @@ sequenceDiagram
     deactivate database.py
     database.py->>sessions.py: yield connection
     activate database.py
-    sessions.py->>token.py: delete_token()
+    sessions.py->>token.py: await delete_token()
     activate token.py
     token.py->>tq: Querier.delete_token()
     activate tq
@@ -158,7 +158,7 @@ class TokenResponseModel(BaseModel):
     summary="Create session",
     description="Authenticates a user and creates a new session token.",
 )
-def create_session(
+async def create_session(
     conn: database_dependency, user: Annotated[BasicAuthResponse, Security(basic_auth)]
 ) -> TokenResponseModel:
     """Create session if user exists.
@@ -170,7 +170,7 @@ def create_session(
     Returns:
       user session information
     """
-    token = create_token(user.user_id, conn)
+    token = await create_token(user.user_id, conn)
     return TokenResponseModel(
         token=token.token, expires_at=token.expires_at, role=user.role
     )
@@ -182,7 +182,7 @@ def create_session(
     summary="Delete session",
     description="Deletes the current authenticated session token.",
 )
-def delete_session(
+async def delete_session(
     conn: database_dependency,
     session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
 ) -> None:
@@ -192,4 +192,4 @@ def delete_session(
       conn: database connection
       session: authorised users information
     """
-    delete_token(session.token, conn)
+    await delete_token(session.token, conn)

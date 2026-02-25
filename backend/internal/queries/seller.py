@@ -4,9 +4,10 @@
 # source: seller.sql
 import datetime
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -91,12 +92,12 @@ class GetSellerByLocationRow(pydantic.BaseModel):
     longitude: float
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_seller(self, arg: CreateSellerParams) -> Optional[models.Seller]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
+    async def create_seller(self, arg: CreateSellerParams) -> Optional[models.Seller]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_SELLER), {
             "p1": arg.user_id,
             "p2": arg.seller_name,
             "p3": arg.address_line1,
@@ -107,7 +108,7 @@ class Querier:
             "p8": arg.country,
             "p9": arg.latitude,
             "p10": arg.longitude,
-        }).first()
+        })).first()
         if row is None:
             return None
         return models.Seller(
@@ -125,8 +126,8 @@ class Querier:
             longitude=row[11],
         )
 
-    def get_seller(self, *, user_id: int) -> Optional[GetSellerRow]:
-        row = self._conn.execute(sqlalchemy.text(GET_SELLER), {"p1": user_id}).first()
+    async def get_seller(self, *, user_id: int) -> Optional[GetSellerRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_SELLER), {"p1": user_id})).first()
         if row is None:
             return None
         return GetSellerRow(
@@ -147,14 +148,14 @@ class Querier:
             longitude=row[14],
         )
 
-    def get_seller_by_location(self, arg: GetSellerByLocationParams) -> Iterator[GetSellerByLocationRow]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLER_BY_LOCATION), {
+    async def get_seller_by_location(self, arg: GetSellerByLocationParams) -> AsyncIterator[GetSellerByLocationRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLER_BY_LOCATION), {
             "p1": arg.lat_max,
             "p2": arg.lat_min,
             "p3": arg.lon_max,
             "p4": arg.lon_min,
         })
-        for row in result:
+        async for row in result:
             yield GetSellerByLocationRow(
                 user_id=row[0],
                 email=row[1],

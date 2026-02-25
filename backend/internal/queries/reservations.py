@@ -3,9 +3,10 @@
 #   sqlc v1.30.0
 # source: reservations.sql
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -65,12 +66,12 @@ class GetReservationCollectionParams(pydantic.BaseModel):
     claim_code: str
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def collect_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
-        row = self._conn.execute(sqlalchemy.text(COLLECT_RESERVATION), {"p1": reservation_id}).first()
+    async def collect_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
+        row = (await self._conn.execute(sqlalchemy.text(COLLECT_RESERVATION), {"p1": reservation_id})).first()
         if row is None:
             return None
         return models.Reservation(
@@ -83,8 +84,8 @@ class Querier:
             collected_at=row[6],
         )
 
-    def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_RESERVATION), {"p1": arg.bundle_id, "p2": arg.consumer_id, "p3": arg.claim_code}).first()
+    async def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_RESERVATION), {"p1": arg.bundle_id, "p2": arg.consumer_id, "p3": arg.claim_code})).first()
         if row is None:
             return None
         return models.Reservation(
@@ -97,9 +98,9 @@ class Querier:
             collected_at=row[6],
         )
 
-    def get_bundle_reservations(self, *, bundle_id: int) -> Iterator[models.Reservation]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_RESERVATIONS), {"p1": bundle_id})
-        for row in result:
+    async def get_bundle_reservations(self, *, bundle_id: int) -> AsyncIterator[models.Reservation]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLE_RESERVATIONS), {"p1": bundle_id})
+        async for row in result:
             yield models.Reservation(
                 reservation_id=row[0],
                 bundle_id=row[1],
@@ -110,9 +111,9 @@ class Querier:
                 collected_at=row[6],
             )
 
-    def get_consumers_reservations(self, *, consumer_id: int) -> Iterator[models.Reservation]:
-        result = self._conn.execute(sqlalchemy.text(GET_CONSUMERS_RESERVATIONS), {"p1": consumer_id})
-        for row in result:
+    async def get_consumers_reservations(self, *, consumer_id: int) -> AsyncIterator[models.Reservation]:
+        result = await self._conn.stream(sqlalchemy.text(GET_CONSUMERS_RESERVATIONS), {"p1": consumer_id})
+        async for row in result:
             yield models.Reservation(
                 reservation_id=row[0],
                 bundle_id=row[1],
@@ -123,8 +124,8 @@ class Querier:
                 collected_at=row[6],
             )
 
-    def get_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
-        row = self._conn.execute(sqlalchemy.text(GET_RESERVATION), {"p1": reservation_id}).first()
+    async def get_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_RESERVATION), {"p1": reservation_id})).first()
         if row is None:
             return None
         return models.Reservation(
@@ -137,8 +138,8 @@ class Querier:
             collected_at=row[6],
         )
 
-    def get_reservation_collection(self, arg: GetReservationCollectionParams) -> Optional[models.Reservation]:
-        row = self._conn.execute(sqlalchemy.text(GET_RESERVATION_COLLECTION), {"p1": arg.bundle_id, "p2": arg.claim_code}).first()
+    async def get_reservation_collection(self, arg: GetReservationCollectionParams) -> Optional[models.Reservation]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_RESERVATION_COLLECTION), {"p1": arg.bundle_id, "p2": arg.claim_code})).first()
         if row is None:
             return None
         return models.Reservation(
