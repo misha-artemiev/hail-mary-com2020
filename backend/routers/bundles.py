@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Security
+from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.middleware import consumer_auth
 from internal.auth.security import generate_claim_code
 from internal.database.dependency import database_dependency
@@ -39,8 +39,11 @@ async def get_bundles(conn: database_dependency) -> list[Bundle]:
       HTTPException: if failed to get bundles
     """
     bundles = BundleQuerier(conn).get_bundles()
-    if not bundles:
-        raise HTTPException(500, "failed to find bundles")
+    if bundles is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find bundles",
+        )
     return list(bundles)
 
 
@@ -60,7 +63,9 @@ async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     """
     bundle = BundleQuerier(conn).get_bundle(bundle_id=int(bundle_id))
     if not bundle:
-        raise HTTPException(500, "failed to find bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
     return bundle
 
 
@@ -85,15 +90,22 @@ async def reserve_bundle(
     """
     bundle = BundleQuerier(conn).get_bundle_lock(bundle_id=int(bundle_id))
     if not bundle:
-        raise HTTPException(500, "failed to find bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
     reservations_querier = ReservationQuerier(conn)
     reservations = reservations_querier.get_bundle_reservations(
         bundle_id=int(bundle_id)
     )
-    if not reservations:
-        raise HTTPException(500, "failed to find reservations")
+    if reservations is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find reservations",
+        )
     if bundle.total_qty <= len(list(reservations)):
-        raise HTTPException(409, "no reservations available")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="No reservations available"
+        )
     used_codes = [rese.claim_code for rese in reservations]
     reservation = reservations_querier.create_reservation(
         CreateReservationParams(
@@ -103,7 +115,10 @@ async def reserve_bundle(
         )
     )
     if not reservation:
-        raise HTTPException(500, "failed to create reservation")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create reservation",
+        )
     return reservation
 
 
@@ -162,7 +177,10 @@ async def search_bundles(
         )
     )
     if not sellers:
-        raise HTTPException(500, "failed to get sellers")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get sellers",
+        )
     filtered_bundles: list[SearchBundlesResponse] = []
     for seller in sellers:
         dist = get_distance(

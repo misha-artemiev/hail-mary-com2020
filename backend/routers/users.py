@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, HTTPException, Response, Security, status
 from internal.auth.middleware import bearer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
@@ -57,5 +57,8 @@ async def update_email(
         UpdateUserEmailParams(user_id=session.user_id, email=email)
     )
     if not user:
-        raise HTTPException(500, "failed to update users email")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update users email",
+        )
     return Response("user email was updated", 201)

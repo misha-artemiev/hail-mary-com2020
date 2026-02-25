@@ -3,7 +3,7 @@
 from secrets import choice, token_urlsafe
 
 from bcrypt import checkpw, gensalt, hashpw
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from pydantic import BaseModel, SecretStr
 from sqlalchemy import Connection
 
@@ -77,9 +77,14 @@ def update_pw(
     querier = UserQuerier(conn)
     user = querier.get_user_login(email=email)
     if not user:
-        raise HTTPException(500)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find user",
+        )
     if not check_password(form.old_password.get_secret_value(), user.pw_hash):
-        raise HTTPException(403)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Old password is incorrect"
+        )
     user_updated = querier.update_user_password(
         UpdateUserPasswordParams(
             user_id=user.user_id,
@@ -87,7 +92,10 @@ def update_pw(
         )
     )
     if not user_updated:
-        raise HTTPException(500)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update password",
+        )
     return user_updated
 
 

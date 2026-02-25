@@ -63,7 +63,7 @@ sequenceDiagram
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, HTTPException, Response, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
@@ -114,8 +114,11 @@ async def get_reservations(
     reservations = ReservationsQuerier(conn).get_consumers_reservations(
         consumer_id=consumer.user_id
     )
-    if not reservations:
-        raise HTTPException(500, "failed to get reservations")
+    if reservations is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get reservations",
+        )
     return list(reservations)
 
 
@@ -151,5 +154,8 @@ async def update_consumer(
         )
     )
     if not updated_consumer:
-        raise HTTPException(500, "failed to update consumer")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update consumer",
+        )
     return Response("consumer was updated", 200)

@@ -65,7 +65,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, HTTPException, Response, Security, status
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
 from internal.database.dependency import database_dependency
@@ -145,7 +145,10 @@ async def create_bundle(
         )
     )
     if not bundle:
-        raise HTTPException(500, "failed to crete bundle")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create bundle",
+        )
     return bundle
 
 
@@ -184,7 +187,10 @@ async def update_bundle(
         )
     )
     if not bundle:
-        raise HTTPException(406, "failed to update bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bundle not found or not owned by seller",
+        )
     return bundle
 
 
@@ -206,8 +212,11 @@ async def get_bundles(
       HTTPException: if failed to get bundles
     """
     bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
-    if not bundles:
-        raise HTTPException(500, "failed to get bundles")
+    if bundles is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get bundles",
+        )
     return list(bundles)
 
 
@@ -234,12 +243,17 @@ async def get_reservations(
         GetSellersBundleParams(bundle_id=int(bundle_id), seller_id=seller.user_id)
     )
     if not bundle:
-        raise HTTPException(500, "failed to find bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
     reservations = ReservationsQuerier(conn).get_bundle_reservations(
         bundle_id=bundle.bundle_id
     )
-    if not reservations:
-        raise HTTPException(500, "failed to find bundle reservations")
+    if reservations is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find bundle reservations",
+        )
     return list(reservations)
 
 
@@ -269,13 +283,20 @@ async def reservation_collection(
         GetReservationCollectionParams(bundle_id=int(bundle_id), claim_code=claim_code)
     )
     if not reservation:
-        raise HTTPException(500, "failed to find reservation")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Reservation not found"
+        )
     bundle = BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
     if not bundle or bundle.seller_id != seller.user_id:
-        raise HTTPException(500, "failed to find bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
     claimed_reservation = reservation_querier.collect_reservation(
         reservation_id=reservation.reservation_id
     )
     if not claimed_reservation:
-        raise HTTPException(500, "failed to update reservation status")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update reservation status",
+        )
     return claimed_reservation

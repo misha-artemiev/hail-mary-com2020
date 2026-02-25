@@ -1,6 +1,6 @@
 """Middlewares to include in routes for auto authorisation."""
 
-from fastapi import HTTPException, Security
+from fastapi import HTTPException, Security, status
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBasic,
@@ -37,13 +37,17 @@ def basic_auth(
       user id and role if user authenticated
 
     Raises:
-        ValueError: if user wasn't found in the database
+        HTTPException: if user wasn't found in the database or password incorrect
     """
     user = UserQuerier(conn).get_user_login(email=credentials.username)
     if not user:
-        raise ValueError("No user was found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+        )
     if not check_password(credentials.password, user.pw_hash):
-        raise ValueError("No user was found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+        )
     return BasicAuthResponse(user_id=user.user_id, role=user.role)
 
 
@@ -61,11 +65,13 @@ def bearer_auth(
       user session with user and session information
 
     Raises:
-      ValueError: if user wasn't found in the database
+      HTTPException: if user wasn't found in the database
     """
     session = TokenQuerier(conn).get_session_by_token(token=credentials.credentials)
     if not session:
-        raise ValueError("No user was found")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session"
+        )
     return session
 
 
@@ -85,7 +91,9 @@ def consumer_auth(
     """
     if session.role == UserRole.CONSUMER:
         return session
-    raise HTTPException(401, "Not authorised as consumer")
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as consumer"
+    )
 
 
 def seller_auth(
@@ -104,7 +112,9 @@ def seller_auth(
     """
     if session.role == UserRole.SELLER:
         return session
-    raise HTTPException(401, "Not authorised as seller")
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as seller"
+    )
 
 
 def admin_auth(
@@ -123,4 +133,6 @@ def admin_auth(
     """
     if session.role == UserRole.ADMIN:
         return session
-    raise HTTPException(401, "Not authorised as admin")
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as admin"
+    )
