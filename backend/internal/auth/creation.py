@@ -14,7 +14,8 @@ from internal.queries.user import CreateUserParams, CreateUserRow
 
 from .security import hash_password
 
-def create_user(
+
+async def create_user(
     username: str,
     email: EmailStr,
     password: SecretStr,
@@ -37,7 +38,7 @@ def create_user(
       ValueError: if database failed to create user
     """
     pw_hash = hash_password(password.get_secret_value())
-    user = UserQuery(conn).create_user(
+    user = await UserQuery(conn).create_user(
         CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
@@ -68,7 +69,7 @@ async def create_consumer(form: CreateConsumerForm, conn: AsyncConnection) -> Co
     Raises:
       ValueError: if database failed to create consumer
     """
-    user = create_user(
+    user = await create_user(
         form.username, form.email, form.password, UserRole.CONSUMER, conn
     )
     consumer = await ConsumerQuerier(conn).create_consumer(
@@ -109,7 +110,9 @@ async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller
     Raises:
       ValueError: database failed to create a seller
     """
-    user = await create_user(form.username, form.email, form.password, UserRole.SELLER, conn)
+    user = await create_user(
+        form.username, form.email, form.password, UserRole.SELLER, conn
+    )
     address: str = ""
     address += f"{form.address_line1}"
     if form.address_line2:

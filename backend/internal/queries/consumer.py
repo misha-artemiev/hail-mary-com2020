@@ -4,7 +4,7 @@
 # source: consumer.sql
 import datetime
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
@@ -103,9 +103,9 @@ class AsyncQuerier:
             created_at=row[6],
         )
 
-    def get_consumers(self) -> Iterator[GetConsumersRow]:
-        result = self._conn.execute(sqlalchemy.text(GET_CONSUMERS))
-        for row in result:
+    async def get_consumers(self) -> AsyncIterator[GetConsumersRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_CONSUMERS))
+        async for row in result:
             yield GetConsumersRow(
                 user_id=row[0],
                 username=row[1],
@@ -116,8 +116,8 @@ class AsyncQuerier:
                 created_at=row[6],
             )
 
-    def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
+    async def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname})).first()
         if row is None:
             return None
         return models.Consumer(

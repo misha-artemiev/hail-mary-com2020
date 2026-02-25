@@ -204,9 +204,9 @@ class AsyncQuerier:
                 longitude=row[15],
             )
 
-    def get_sellers(self) -> Iterator[GetSellersRow]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLERS))
-        for row in result:
+    async def get_sellers(self) -> AsyncIterator[GetSellersRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLERS))
+        async for row in result:
             yield GetSellersRow(
                 user_id=row[0],
                 username=row[1],

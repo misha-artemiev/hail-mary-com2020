@@ -78,8 +78,8 @@ from internal.queries.bundle import (
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
+from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
-from internal.queries.seller import Querier as SellerQuerier
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
@@ -101,8 +101,7 @@ async def get_sellers(conn: database_dependency) -> list[GetSellersRow]:
     Returns:
       list of all sellers
     """
-    sellers = SellerQuerier(conn).get_sellers()
-    return list(sellers)
+    return [seller async for seller in SellerQuerier(conn).get_sellers()]
 
 
 @router.get(
@@ -127,7 +126,7 @@ async def get_seller_me(
     Raises:
       HTTPException: if seller not found
     """
-    seller_profile = SellerQuerier(conn).get_seller(user_id=seller.user_id)
+    seller_profile = await SellerQuerier(conn).get_seller(user_id=seller.user_id)
     if not seller_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Seller profile not found"
@@ -154,7 +153,7 @@ async def get_seller_by_id(seller_id: int, conn: database_dependency) -> GetSell
     Raises:
       HTTPException: if seller not found
     """
-    seller_profile = SellerQuerier(conn).get_seller(user_id=seller_id)
+    seller_profile = await SellerQuerier(conn).get_seller(user_id=seller_id)
     if not seller_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"

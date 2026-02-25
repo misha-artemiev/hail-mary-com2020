@@ -127,13 +127,13 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_user(self, arg: CreateUserParams) -> Optional[CreateUserRow]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_USER), {
+    async def create_user(self, arg: CreateUserParams) -> Optional[CreateUserRow]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_USER), {
             "p1": arg.email,
             "p2": arg.username,
             "p3": arg.pw_hash,
             "p4": arg.role,
-        }).first()
+        })).first()
         if row is None:
             return None
         return CreateUserRow(

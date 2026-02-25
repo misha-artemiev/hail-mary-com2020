@@ -67,13 +67,12 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
+from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import (
     GetConsumerRow,
     GetConsumersRow,
     UpdateConsumerParams,
 )
-from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
-from internal.queries.consumer import UpdateConsumerParams
 from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
@@ -97,8 +96,7 @@ async def get_consumers(conn: database_dependency) -> list[GetConsumersRow]:
     Returns:
       list of all consumers
     """
-    consumers = ConsumerQuerier(conn).get_consumers()
-    return list(consumers)
+    return [c async for c in ConsumerQuerier(conn).get_consumers()]
 
 
 @router.get(
@@ -123,7 +121,9 @@ async def get_consumer_me(
     Raises:
       HTTPException: if consumer not found
     """
-    consumer_profile = ConsumerQuerier(conn).get_consumer(user_id=consumer.user_id)
+    consumer_profile = await ConsumerQuerier(conn).get_consumer(
+        user_id=consumer.user_id
+    )
     if not consumer_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Consumer profile not found"
@@ -152,7 +152,7 @@ async def get_consumer_by_id(
     Raises:
       HTTPException: if consumer not found
     """
-    consumer_profile = ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
+    consumer_profile = await ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
     if not consumer_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Consumer not found"
