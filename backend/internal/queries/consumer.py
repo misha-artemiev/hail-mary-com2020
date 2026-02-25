@@ -4,7 +4,7 @@
 # source: consumer.sql
 import datetime
 import pydantic
-from typing import Optional
+from typing import Iterator, Optional
 
 import sqlalchemy
 
@@ -25,7 +25,7 @@ class CreateConsumerParams(pydantic.BaseModel):
 
 
 GET_CONSUMER = """-- name: get_consumer \\:one
-SELECT u.user_id, u.email, c.fName, c.lName, u.last_login, u.created_at
+SELECT u.user_id, u.username, u.email, c.fName, c.lName, u.last_login, u.created_at
 FROM consumers  c
 INNER JOIN users u ON c.user_id = u.user_id
 WHERE u.user_id=:p1
@@ -35,6 +35,24 @@ LIMIT 1
 
 class GetConsumerRow(pydantic.BaseModel):
     user_id: int
+    username: str
+    email: str
+    fname: str
+    lname: str
+    last_login: datetime.datetime
+    created_at: datetime.datetime
+
+
+GET_CONSUMERS = """-- name: get_consumers \\:many
+SELECT u.user_id, u.username, u.email, c.fName, c.lName, u.last_login, u.created_at
+FROM consumers c
+INNER JOIN users u ON c.user_id = u.user_id
+"""
+
+
+class GetConsumersRow(pydantic.BaseModel):
+    user_id: int
+    username: str
     email: str
     fname: str
     lname: str
@@ -76,12 +94,26 @@ class Querier:
             return None
         return GetConsumerRow(
             user_id=row[0],
-            email=row[1],
-            fname=row[2],
-            lname=row[3],
-            last_login=row[4],
-            created_at=row[5],
+            username=row[1],
+            email=row[2],
+            fname=row[3],
+            lname=row[4],
+            last_login=row[5],
+            created_at=row[6],
         )
+
+    def get_consumers(self) -> Iterator[GetConsumersRow]:
+        result = self._conn.execute(sqlalchemy.text(GET_CONSUMERS))
+        for row in result:
+            yield GetConsumersRow(
+                user_id=row[0],
+                username=row[1],
+                email=row[2],
+                fname=row[3],
+                lname=row[4],
+                last_login=row[5],
+                created_at=row[6],
+            )
 
     def update_consumer(self, arg: UpdateConsumerParams) -> Optional[models.Consumer]:
         row = self._conn.execute(sqlalchemy.text(UPDATE_CONSUMER), {"p1": arg.user_id, "p2": arg.fname, "p3": arg.lname}).first()
