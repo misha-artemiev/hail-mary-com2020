@@ -26,6 +26,7 @@ import Listing from "../components/Listing";
  */
 export default function Home() {
     const navigate = useNavigate();
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     // State object: holds all fields for the form
     const [filters, setFilters] = useState({
@@ -162,62 +163,95 @@ export default function Home() {
     return (
         <div className="max-w-8xl mx-auto p-4 md:p-6">
             <Card>
-                <h2 className="text-xl font-semibold text-gray-700 mb-4">
-                    Filters
-                </h2>
-
-                {/* Restaurant filter */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormInput
-                        placeholder="Restaurant Name"
-                        name="restaurant"
-                        type="text"
-                        value={filters.restaurant}
-                        onChange={handleChange}
-                    />
-
-                    {/* Max price filter */}
-                    <FormInput
-                        placeholder="Max Price (£)"
-                        name="maxPrice"
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={filters.maxPrice}
-                        onChange={handleChange}
-                    />
-
-                    {/* Max distance filter */}
-                    <FormInput
-                        placeholder="Max Distance (km)"
-                        name="maxDistance"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={filters.maxDistance}
-                        onChange={handleChange}
-                    />
-
-                    {/* Allergen filter */}
-                    <DropdownSelect
-                        value={filters.allergens}
-                        name="allergen"
-                        onChange={handleAllergensChange}
-                        options={allergenOptions}
-                    />
-                </div>
-
-                {/* Categories div */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {renderCategories(categoryOptions)}
-                </div>
-
-                <Button
-                    onClick={handleSearch}
-                    className="w-full md:w-auto mt-4"
+                {/* Toggle button for filters */}
+                <button
+                    className="w-full flex items-center justify-between text-left"
+                    onClick={() => setFiltersOpen(!filtersOpen)}
                 >
-                    Search Bundles
-                </Button>
+                    <h2 className="text-xl font-semibold text-gray-700">
+                        Filters
+                    </h2>
+                    <svg
+                        className={`w-5 h-5 text-gray-500
+                                    transition-transform duration-250 ${
+                                        // Rotate if open
+                                        filtersOpen ? "rotate-180" : ""
+                                    }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        {/* Chevron */}
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                        />
+                    </svg>
+                </button>
+
+                {/* Collapsible filter content */}
+                <div
+                    className={`overflow-hidden transition-all duration-250 ${
+                        filtersOpen
+                            ? "max-h-125 opacity-100 mt-4"
+                            : "max-h-0 opacity-0"
+                    }`}
+                >
+                    {/* Restaurant filter */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormInput
+                            placeholder="Restaurant Name"
+                            name="restaurant"
+                            type="text"
+                            value={filters.restaurant}
+                            onChange={handleChange}
+                        />
+
+                        {/* Max price filter */}
+                        <FormInput
+                            placeholder="Max Price (£)"
+                            name="maxPrice"
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={filters.maxPrice}
+                            onChange={handleChange}
+                        />
+
+                        {/* Max distance filter */}
+                        <FormInput
+                            placeholder="Max Distance (km)"
+                            name="maxDistance"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={filters.maxDistance}
+                            onChange={handleChange}
+                        />
+
+                        {/* Allergen filter */}
+                        <DropdownSelect
+                            value={filters.allergens}
+                            name="allergen"
+                            onChange={handleAllergensChange}
+                            options={allergenOptions}
+                        />
+                    </div>
+
+                    {/* Categories div */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {renderCategories(categoryOptions)}
+                    </div>
+
+                    <Button
+                        onClick={handleSearch}
+                        className="w-full md:w-auto mt-4"
+                    >
+                        Search Bundles
+                    </Button>
+                </div>
             </Card>
 
             <Card>
