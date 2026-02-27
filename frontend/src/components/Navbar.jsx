@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 
 // Authentication
@@ -13,6 +13,9 @@ import { useAuth } from "../context/AuthContext";
 import logoFull from "../assets/logos/logo-full-512.png";
 import defaultProfile from "../assets/default-user.jpg";
 
+// Components
+import HamburgerMenu from "./HamburgerMenu";
+
 /**
  * A simple navigation header with links to other pages.
  *
@@ -20,6 +23,7 @@ import defaultProfile from "../assets/default-user.jpg";
  */
 export default function Navbar() {
     const { isAuthenticated, userRole } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     // TODO: get correct user information
     const user = {
@@ -27,26 +31,28 @@ export default function Navbar() {
         profilePic: defaultProfile,
     };
 
+    const closeMenu = () => setIsMenuOpen(false);
+
     return (
-        <nav className="bg-green-600 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            <div className="flex items-center gap-8">
-                {/* Home page logo */}
-                <NavLink to="/">
-                    <img
-                        src={logoFull}
-                        alt="Logo"
-                        className="h-16 w-auto hover:scale-102 transition"
-                    />
-                </NavLink>
+        <nav className="bg-green-600 text-white px-4 py-3 flex justify-between items-center shadow-md relative">
+            {/* Home page logo */}
+            <NavLink to="/" onClick={closeMenu}>
+                <img
+                    src={logoFull}
+                    alt="Logo"
+                    className="h-10 md:h-16 w-auto hover:scale-102 transition"
+                />
+            </NavLink>
+
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-4 lg:gap-8">
                 <NavLink to="/analytics" className="text-bold text-lg">
                     Analytics
                 </NavLink>
                 <NavLink to="/aboutus" className="text-bold text-lg">
                     About Us
                 </NavLink>
-            </div>
 
-            <div className="flex items-center gap-8">
                 {/* If user is a seller, show create bundle link */}
                 {userRole === "seller" && (
                     <NavLink
@@ -65,7 +71,6 @@ export default function Navbar() {
                             <img
                                 src={user.profilePic}
                                 alt={`${user.displayName}'s profile`}
-                                // Grow on hover
                                 className="w-10 h-10 rounded-full"
                             />
                         </NavLink>
@@ -79,6 +84,40 @@ export default function Navbar() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+                className="md:hidden p-2"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+                {/* Menu icons */}
+                <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    {isMenuOpen ? (
+                        // 'Close' icon
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    ) : (
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 6h16M4 12h16M4 18h16"
+                        />
+                    )}
+                </svg>
+            </button>
+
+            {/* Mobile Menu Dropdown */}
+            <HamburgerMenu isOpen={isMenuOpen} onClose={closeMenu} />
         </nav>
     );
 }
