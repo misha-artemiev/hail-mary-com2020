@@ -8,6 +8,7 @@ import { Route, Routes } from "react-router-dom";
 
 // Components
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 // Dynamic routing
 import { ROUTES } from "./routes/routes";
@@ -19,15 +20,21 @@ import { ROUTES } from "./routes/routes";
  */
 export default function App() {
     return (
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-gray-50 min-h-screen flex flex-col">
             <Navbar />
 
             {/* Dynamically load pages in the React Router */}
-            <Routes>
-                {ROUTES.map(({ path, element }) => (
-                    <Route key={path} path={path} element={element} />
-                ))}
-            </Routes>
+            {/* Content expands to fill screen */}
+            <div className="grow">
+                <Routes>
+                    {ROUTES.map(({ path, element }) => (
+                        <Route key={path} path={path} element={element} />
+                    ))}
+                </Routes>
+            </div>
+
+            {/* Footer pushed to the bottom */}
+            <Footer />
         </div>
     );
 }
