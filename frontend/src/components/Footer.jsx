@@ -6,7 +6,30 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+// Config
+import { FOOTER_LINKS } from "../config/footerLinks";
+
 export default function Footer() {
+    /**
+     * Dynamically renders given links.
+     *
+     * @param {Object} links
+     * @param {string} links.to - The destination of the link.
+     * @param {string} links.description - The content of the link.
+     *
+     * @returns {JSX.Element} a set of Link elements.
+     */
+    const renderLinks = (links) =>
+        links.map((link) => (
+            <Link
+                key={link.to}
+                to={link.to}
+                className="hover:text-white hover:scale-102 transition text-sm"
+            >
+                {link.description}
+            </Link>
+        ));
+
     return (
         <footer className="bg-gray-800 text-gray-400 py-6 mt-auto">
             {/* Extra spacing */}
@@ -15,40 +38,8 @@ export default function Footer() {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     {/* Group links together */}
                     <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-                        <Link
-                            to="/legal"
-                            className="hover:text-white hover:scale-102 transition text-sm"
-                        >
-                            Legal
-                        </Link>
-
-                        <Link
-                            to="/privacy"
-                            className="hover:text-white hover:scale-102 transition text-sm"
-                        >
-                            Privacy Policy
-                        </Link>
-
-                        <Link
-                            to="/cookies"
-                            className="hover:text-white hover:scale-102 transition text-sm"
-                        >
-                            Cookie Policy
-                        </Link>
-
-                        <Link
-                            to="/terms"
-                            className="hover:text-white hover:scale-102 transition text-sm"
-                        >
-                            Terms and Conditions
-                        </Link>
-
-                        <Link
-                            to="/contact"
-                            className="hover:text-white hover:scale-102 transition text-sm"
-                        >
-                            Contact Us
-                        </Link>
+                        {/* Dynamically render all footer links */}
+                        {renderLinks(FOOTER_LINKS)}
                     </div>
 
                     <p className="text-xs">
