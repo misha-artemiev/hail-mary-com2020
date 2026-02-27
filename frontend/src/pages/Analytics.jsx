@@ -15,14 +15,15 @@ import img3 from "../assets/analysis_top_time_windows.png";
 
 export default function Analytics() {
     return (
-        <Card>
+        <div className="max-w-4xl mx-auto p-4 md:p-6">
+            <Card>
             {/* Header */}
             <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">
                 Analytics
             </h1>
 
             {/* Images */}
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                 <img
                     src={img1}
                     alt="title"
@@ -40,5 +41,6 @@ export default function Analytics() {
                 />
             </div>
         </Card>
+        </div>
     );
 }
