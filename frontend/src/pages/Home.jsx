@@ -212,7 +212,10 @@ export default function Home() {
                     {renderCategories(categoryOptions)}
                 </div>
 
-                <Button onClick={handleSearch} className="w-md mt-4">
+                <Button
+                    onClick={handleSearch}
+                    className="w-full md:w-auto mt-4"
+                >
                     Search Bundles
                 </Button>
             </Card>
