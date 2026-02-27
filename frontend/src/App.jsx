@@ -34,7 +34,9 @@ export default function App() {
             </div>
 
             {/* Footer pushed to the bottom */}
-            <Footer />
+            <div className="hidden md:block">
+                <Footer />
+            </div>
         </div>
     );
 }
