@@ -9,6 +9,11 @@ import { Link } from "react-router-dom";
 // Config
 import { FOOTER_LINKS } from "../config/footerLinks";
 
+/**
+ * A dark-gray footer containing links to various pages, and copyright info.
+ *
+ * @returns {JSX.Element} a footer container.
+ */
 export default function Footer() {
     /**
      * Dynamically renders given links.
