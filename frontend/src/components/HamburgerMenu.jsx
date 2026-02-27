@@ -1,5 +1,6 @@
 /**
  * HamburgerMenu.jsx
+ * @author Thomas Noakes
  */
 
 import React from "react";
@@ -9,6 +10,16 @@ import { useAuth } from "../context/AuthContext";
 // Images
 import defaultProfile from "../assets/default-user.jpg";
 
+/**
+ * A responsive 'Hamburger' menu for use on mobile screens.
+ * Replaces many options on Navbar hidden by small screens.
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen - State for if the menu should be open.
+ * @param {() => void} props.onClose - Callback to close the menu.
+ *
+ * @returns {JSX.Element} A positioned Hamburger menu
+ */
 export default function HamburgerMenu({ isOpen, onClose }) {
     const { isAuthenticated, userRole } = useAuth();
 
