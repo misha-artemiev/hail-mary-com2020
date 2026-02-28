@@ -2,6 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: reservations.sql
+import datetime
 import pydantic
 from typing import AsyncIterator, Optional
 
@@ -15,14 +16,14 @@ COLLECT_RESERVATION = """-- name: collect_reservation \\:one
 UPDATE reservations
 SET status='collected', collected_at=NOW()
 WHERE reservation_id=:p1
-RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 """
 
 
 CREATE_RESERVATION = """-- name: create_reservation \\:one
 INSERT INTO reservations (bundle_id, consumer_id, claim_code)
 VALUES (:p1,:p2,:p3)
-RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 """
 
 
@@ -33,28 +34,49 @@ class CreateReservationParams(pydantic.BaseModel):
 
 
 GET_BUNDLE_RESERVATIONS = """-- name: get_bundle_reservations \\:many
-SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
 WHERE bundle_id=:p1
 """
 
 
 GET_CONSUMERS_RESERVATIONS = """-- name: get_consumers_reservations \\:many
-SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
 WHERE consumer_id=:p1
 """
 
 
+GET_CONSUMERS_RESERVATIONS_FULL = """-- name: get_consumers_reservations_full \\:many
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
+FROM reservations r
+INNER JOIN bundles b ON b.bundle_id = r.bundle_id
+INNER JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+WHERE consumer_id=:p1
+"""
+
+
+class GetConsumersReservationsFullRow(pydantic.BaseModel):
+    reservation_id: int
+    bundle_id: int
+    reserved_at: datetime.datetime
+    collected_at: Optional[datetime.datetime]
+    seller_id: int
+    carbon_dioxide: float
+    window_start: datetime.datetime
+    window_end: datetime.datetime
+    category_id: int
+
+
 GET_RESERVATION = """-- name: get_reservation \\:one
-SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
 WHERE reservation_id=:p1
 """
 
 
 GET_RESERVATION_COLLECTION = """-- name: get_reservation_collection \\:one
-SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, status, collected_at
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
 WHERE bundle_id=:p1 AND claim_code=:p2 AND status='reserved'
 LIMIT 1
@@ -80,8 +102,7 @@ class AsyncQuerier:
             consumer_id=row[2],
             reserved_at=row[3],
             claim_code=row[4],
-            status=row[5],
-            collected_at=row[6],
+            collected_at=row[5],
         )
 
     async def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
@@ -94,8 +115,7 @@ class AsyncQuerier:
             consumer_id=row[2],
             reserved_at=row[3],
             claim_code=row[4],
-            status=row[5],
-            collected_at=row[6],
+            collected_at=row[5],
         )
 
     async def get_bundle_reservations(self, *, bundle_id: int) -> AsyncIterator[models.Reservation]:
@@ -107,8 +127,7 @@ class AsyncQuerier:
                 consumer_id=row[2],
                 reserved_at=row[3],
                 claim_code=row[4],
-                status=row[5],
-                collected_at=row[6],
+                collected_at=row[5],
             )
 
     async def get_consumers_reservations(self, *, consumer_id: int) -> AsyncIterator[models.Reservation]:
@@ -120,8 +139,22 @@ class AsyncQuerier:
                 consumer_id=row[2],
                 reserved_at=row[3],
                 claim_code=row[4],
-                status=row[5],
-                collected_at=row[6],
+                collected_at=row[5],
+            )
+
+    async def get_consumers_reservations_full(self, *, consumer_id: int) -> AsyncIterator[GetConsumersReservationsFullRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_CONSUMERS_RESERVATIONS_FULL), {"p1": consumer_id})
+        async for row in result:
+            yield GetConsumersReservationsFullRow(
+                reservation_id=row[0],
+                bundle_id=row[1],
+                reserved_at=row[2],
+                collected_at=row[3],
+                seller_id=row[4],
+                carbon_dioxide=row[5],
+                window_start=row[6],
+                window_end=row[7],
+                category_id=row[8],
             )
 
     async def get_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
@@ -134,8 +167,7 @@ class AsyncQuerier:
             consumer_id=row[2],
             reserved_at=row[3],
             claim_code=row[4],
-            status=row[5],
-            collected_at=row[6],
+            collected_at=row[5],
         )
 
     async def get_reservation_collection(self, arg: GetReservationCollectionParams) -> Optional[models.Reservation]:
@@ -148,6 +180,5 @@ class AsyncQuerier:
             consumer_id=row[2],
             reserved_at=row[3],
             claim_code=row[4],
-            status=row[5],
-            collected_at=row[6],
+            collected_at=row[5],
         )

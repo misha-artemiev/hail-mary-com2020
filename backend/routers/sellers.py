@@ -65,9 +65,10 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
+from internal.badges.engine import BadgeEngine
 from internal.database.dependency import database_dependency
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.bundle import (
@@ -379,6 +380,7 @@ async def reservation_collection(
     claim_code: str,
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    badge_engine: Annotated[BadgeEngine, Depends(BadgeEngine)],
 ) -> Reservation:
     """Confirm reservation collection.
 
@@ -387,6 +389,7 @@ async def reservation_collection(
         claim_code: claim code
         conn: database connection
         seller: sellers session
+        badge_engine: badge acquiry engine
 
     Returns:
       confirmed claimed reservation
@@ -415,4 +418,5 @@ async def reservation_collection(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update reservation status",
         )
+    badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation

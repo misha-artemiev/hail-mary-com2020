@@ -67,6 +67,8 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
+from internal.queries.badge import AsyncQuerier as BadgeQuerier
+from internal.queries.badge import GetConsumerBadgesRow
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import (
     GetConsumerRow,
@@ -256,3 +258,31 @@ async def update_consumer(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update consumer",
         )
+
+
+@router.get(
+    "/me/badges",
+    status_code=200,
+    summary="Consumer badges",
+    description="Get all acquired badges by consumer",
+    tags=["badges"],
+)
+async def get_consumer_badges(
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> list[GetConsumerBadgesRow]:
+    """Get badges acquired by consumer.
+
+    Args:
+      conn: database connection
+      consumer: consumer session
+
+    Returns:
+      list of acquired badges
+    """
+    return [
+        badge
+        async for badge in BadgeQuerier(conn).get_consumer_badges(
+            user_id=consumer.user_id
+        )
+    ]

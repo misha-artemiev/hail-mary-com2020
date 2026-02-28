@@ -1,0 +1,1 @@
+"""Badge engine module."""
