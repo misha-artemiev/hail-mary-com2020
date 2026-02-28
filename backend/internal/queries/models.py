@@ -101,6 +101,7 @@ class Badge(pydantic.BaseModel):
 class BadgesAcquired(pydantic.BaseModel):
     user_id: int
     badge_id: int
+    level: int
     acquired_at: datetime.datetime
 
 
@@ -109,6 +110,7 @@ class Bundle(pydantic.BaseModel):
     seller_id: int
     bundle_name: str
     description: str
+    carbon_dioxide: float
     total_qty: int
     price: decimal.Decimal
     discount_percentage: int
@@ -178,7 +180,6 @@ class Reservation(pydantic.BaseModel):
     consumer_id: int
     reserved_at: datetime.datetime
     claim_code: str
-    status: ReservationStatus
     collected_at: Optional[datetime.datetime]
 
 

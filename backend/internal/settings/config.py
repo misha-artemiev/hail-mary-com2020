@@ -1,9 +1,10 @@
 """Loading configs."""
 
 import pathlib
+from typing import Annotated, Literal
 
 import yaml  # type: ignore[import-untyped]
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
 from internal.settings.env import badges_settings
 
@@ -11,29 +12,100 @@ from internal.settings.env import badges_settings
 class BadgesConfig:
     """Badges config."""
 
-    class StreakTime(BaseModel):
-        """Streak time for badges."""
+    class BaseBadgeRule(BaseModel):
+        """Base model for all badge rules."""
 
-        days: int = 0
-        weeks: int = 0
-        month: int = 0
-        years: int = 0
+        level: int
 
-    class BadgeRule(BaseModel):
-        """Rules for badges."""
+    class QuantityGoal(BaseBadgeRule):
+        """Badge rule for quantity."""
 
-        rule_name: str
+        type: Literal["quantity"]
+        quantity: int
+
+        category_id: int | None = None
+        seller_id: int | None = None
+
+    class CO2Goal(BaseBadgeRule):
+        """Badge rule for carbon dioxide saving."""
+
+        type: Literal["co2"]
+        carbon_dioxide: float
+
+    class DiversityGoal(BaseBadgeRule):
+        """Badge rule for diverse reservations."""
+
+        type: Literal["diversity"]
+        dif_categories: int = 0
+        dif_sellers: int = 0
+
+        @model_validator(mode="after")
+        def exclusive_validator(self) -> BadgesConfig.DiversityGoal:
+            """Validates if no conflicting field are set.
+
+            Returns:
+                valid model
+
+            Raises:
+                ValueError: if model is not valid
+            """
+            if self.dif_categories < 1 and self.dif_sellers < 1:
+                raise ValueError(
+                    "Provide 'dif_categories' or 'dif_sellers' but not both"
+                )
+            if not self.dif_categories < 1 and not self.dif_sellers < 1:
+                raise ValueError("Provide 'dif_categories' or 'dif_sellers'")
+            if self.dif_categories < 0 or self.dif_sellers < 0:
+                raise ValueError("Invalid negative value")
+            return self
+
+    class StreakGoal(BaseBadgeRule):
+        """Badge rule for a steak of reservations."""
+
+        type: Literal["streak"]
+        streak_days: int = 0
+        streak_quantity: int = 0
+
+        category_id: int | None = None
+        seller_id: int | None = None
+
+        @model_validator(mode="after")
+        def exclusive_validator(self) -> BadgesConfig.StreakGoal:
+            """Validates if no conflicting field are set.
+
+            Returns:
+                valid model
+
+            Raises:
+                ValueError: if model is not valid
+            """
+            if self.streak_days < 1 and self.streak_quantity < 1:
+                raise ValueError(
+                    "Provide 'streak_days' or 'streak_quantity' but not both"
+                )
+            if not self.streak_days < 1 and not self.streak_quantity < 1:
+                raise ValueError("Provide 'streak_days' or 'streak_quantity'")
+            if self.streak_days < 0 or self.streak_quantity < 0:
+                raise ValueError("Invalid negative value")
+            return self
+
+    BadgeGoal = Annotated[
+        QuantityGoal | CO2Goal | DiversityGoal | StreakGoal, Field(discriminator="type")
+    ]
+
+    class BadgeRules(BaseModel):
+        """Full badge rule set."""
+
         badge_id: int
-        count: int
-        category: int | None = None
-        streak: BadgesConfig.StreakTime
+        badge_name: str | None = None
+        rules: list[BadgesConfig.BadgeGoal]
 
     class BadgesRules(BaseModel):
-        """List of all rules for all badges."""
+        """Rules for all badges."""
 
-        rules: list[BadgesConfig.BadgeRule]
+        badges_rules: list[BadgesConfig.BadgeRules]
 
-    badges_rules: BadgesRules
+    badges_rules: BadgesConfig.BadgesRules
 
     def initialise(self) -> None:
         """Load badges rules from file.

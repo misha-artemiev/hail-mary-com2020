@@ -1,6 +1,7 @@
-rules:
-  - rule_name: "some badge rule"
-    badge_id: 0
-    count: 1
-    streak:
-      days: 1
+badgesRules:
+  - badge_id: 0
+    badge_name: 'Green Starter | Rescue 1 meal'
+    rules:
+      - level: 1
+        type: 'quantity'
+        quantity: 1

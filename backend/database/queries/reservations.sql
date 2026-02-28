@@ -29,3 +29,10 @@ SELECT *
 FROM reservations
 WHERE bundle_id=$1 AND claim_code=$2 AND status='reserved'
 LIMIT 1;
+
+-- name: GetConsumersReservationsFull :many
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
+FROM reservations r
+INNER JOIN bundles b ON b.bundle_id = r.bundle_id
+INNER JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+WHERE consumer_id=$1;

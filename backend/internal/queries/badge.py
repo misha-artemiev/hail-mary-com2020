@@ -12,6 +12,19 @@ import sqlalchemy.ext.asyncio
 from internal.queries import models
 
 
+ACQUIRE_BADGE = """-- name: acquire_badge \\:one
+INSERT INTO badges_acquired (user_id, badge_id, level)
+VALUES (:p1, :p2, :p3)
+RETURNING user_id, badge_id, level, acquired_at
+"""
+
+
+class AcquireBadgeParams(pydantic.BaseModel):
+    user_id: int
+    badge_id: int
+    level: int
+
+
 GET_BADGE = """-- name: get_badge \\:one
 SELECT badge_id, name, description
 FROM badges
@@ -27,7 +40,7 @@ FROM badges
 
 
 GET_CONSUMER_BADGES = """-- name: get_consumer_badges \\:many
-SELECT b.badge_id, b.name, b.description, ba.acquired_at
+SELECT b.badge_id, b.name, b.description, ba.level, ba.acquired_at
 FROM badges b
 INNER JOIN badges_acquired ba ON ba.badge_id = b.badge_id
 WHERE ba.user_id = :p1
@@ -38,12 +51,24 @@ class GetConsumerBadgesRow(pydantic.BaseModel):
     badge_id: int
     name: str
     description: str
+    level: int
     acquired_at: datetime.datetime
 
 
 class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
+
+    async def acquire_badge(self, arg: AcquireBadgeParams) -> Optional[models.BadgesAcquired]:
+        row = (await self._conn.execute(sqlalchemy.text(ACQUIRE_BADGE), {"p1": arg.user_id, "p2": arg.badge_id, "p3": arg.level})).first()
+        if row is None:
+            return None
+        return models.BadgesAcquired(
+            user_id=row[0],
+            badge_id=row[1],
+            level=row[2],
+            acquired_at=row[3],
+        )
 
     async def get_badge(self, *, badge_id: int) -> Optional[models.Badge]:
         row = (await self._conn.execute(sqlalchemy.text(GET_BADGE), {"p1": badge_id})).first()
@@ -71,5 +96,6 @@ class AsyncQuerier:
                 badge_id=row[0],
                 name=row[1],
                 description=row[2],
-                acquired_at=row[3],
+                level=row[3],
+                acquired_at=row[4],
             )

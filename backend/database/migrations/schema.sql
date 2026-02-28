@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS bundles (
     seller_id INT NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
+    carbon_dioxide FLOAT NOT NULL,
     total_qty INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     discount_percentage INT NOT NULL,
@@ -151,7 +152,6 @@ CREATE TABLE IF NOT EXISTS reservations (
     consumer_id INT NOT NULL,
     reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     claim_code VARCHAR(20) NOT NULL,
-    status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES consumers(user_id),
@@ -167,6 +167,7 @@ CREATE TABLE IF NOT EXISTS badges (
 CREATE TABLE IF NOT EXISTS badges_acquired (
     user_id INT NOT NULL,
     badge_id INT NOT NULL,
+    level INT NOT NULL,
     acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, badge_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,

@@ -16,7 +16,7 @@ from internal.queries import models
 CREATE_BUNDLE = """-- name: create_bundle \\:one
 INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
 VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8)
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -32,7 +32,7 @@ class CreateBundleParams(pydantic.BaseModel):
 
 
 GET_BUNDLE = """-- name: get_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 LIMIT 1
@@ -40,7 +40,7 @@ LIMIT 1
 
 
 GET_BUNDLE_LOCK = """-- name: get_bundle_lock \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 FOR UPDATE
@@ -49,20 +49,20 @@ LIMIT 1
 
 
 GET_BUNDLES = """-- name: get_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 """
 
 
 GET_SELLERS_ACTIVE_BUNDLES = """-- name: get_sellers_active_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1 AND window_end >= NOW()
 """
 
 
 GET_SELLERS_BUNDLE = """-- name: get_sellers_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1 AND bundle_id=:p2
 LIMIT 1
@@ -75,7 +75,7 @@ class GetSellersBundleParams(pydantic.BaseModel):
 
 
 GET_SELLERS_BUNDLES = """-- name: get_sellers_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1
 """
@@ -85,7 +85,7 @@ UPDATE_BUNDLE = """-- name: update_bundle \\:one
 UPDATE bundles
 SET bundle_name=:p3, description=:p4, total_qty=:p5, price=:p6, discount_percentage=:p7, window_start=:p8, window_end=:p9
 WHERE bundle_id=:p1 AND seller_id=:p2
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -123,12 +123,13 @@ class AsyncQuerier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
     async def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
@@ -140,12 +141,13 @@ class AsyncQuerier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
     async def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
@@ -157,12 +159,13 @@ class AsyncQuerier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
     async def get_bundles(self) -> AsyncIterator[models.Bundle]:
@@ -173,12 +176,13 @@ class AsyncQuerier:
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
     async def get_sellers_active_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
@@ -189,12 +193,13 @@ class AsyncQuerier:
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
     async def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
@@ -206,12 +211,13 @@ class AsyncQuerier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
     async def get_sellers_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
@@ -222,12 +228,13 @@ class AsyncQuerier:
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
     async def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
@@ -249,10 +256,11 @@ class AsyncQuerier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
