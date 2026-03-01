@@ -17,3 +17,8 @@ def init_database() -> None:
         password="password",  # noqa: S106
     )
     asyncio.run(database_manager.initialise())
+
+
+def cleanup_database() -> None:
+    """Cleanup connection to test database."""
+    asyncio.run(database_manager.cleanup())
