@@ -18,6 +18,7 @@ import EditProfile from "../pages/EditProfile";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
+import AdminPage from "../pages/AdminPage";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -50,6 +51,18 @@ export const ROUTES = [
                 <Profile />
             </ProtectedRoute>
         ),
+    },
+    {
+        path: "/admin",
+        element: <AdminPage />, // Admin page is currently unprotected for development purposes
+        /** 
+        element: (
+            /** 
+            <ProtectedRoute>
+                <AdminPage />
+            </ProtectedRoute>
+            
+        ), */
     },
     {
         path: "/editprofile",
