@@ -11,9 +11,15 @@ import useSearchBundles from "../hooks/useSearchBundles";
 // Components
 import Card from "../components/Card";
 import Listing from "../components/Listing";
+import Tabs from "../components/Tabs";
 
 export default function DeveloperProfile() {
     const [activeTab, setActiveTab] = useState("listings");
+    const tabs = [
+        { id: "listings", label: "Listings" },
+        { id: "reservations", label: "Reservations" },
+        { id: "issues", label: "Issues" },
+    ];
     
     // Use hooks for data fetching (no direct API calls)
     const { listings, loading } = useSearchBundles();
@@ -194,38 +200,11 @@ export default function DeveloperProfile() {
 
             {/* Tab Navigation */}
             <Card>
-                <div className="flex space-x-2 border-b border-gray-200">
-                    <button
-                        onClick={() => setActiveTab("listings")}
-                        className={`px-4 py-2 font-semibold transition ${
-                            activeTab === "listings"
-                                ? "text-green-700 border-b-2 border-green-700"
-                                : "text-gray-600 hover:text-green-700"
-                        }`}
-                    >
-                        Listings
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("reservations")}
-                        className={`px-4 py-2 font-semibold transition ${
-                            activeTab === "reservations"
-                                ? "text-green-700 border-b-2 border-green-700"
-                                : "text-gray-600 hover:text-green-700"
-                        }`}
-                    >
-                        Reservations
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("issues")}
-                        className={`px-4 py-2 font-semibold transition ${
-                            activeTab === "issues"
-                                ? "text-green-700 border-b-2 border-green-700"
-                                : "text-gray-600 hover:text-green-700"
-                        }`}
-                    >
-                        Issues
-                    </button>
-                </div>
+                <Tabs
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
             </Card>
 
             {/* Tab Content */}
