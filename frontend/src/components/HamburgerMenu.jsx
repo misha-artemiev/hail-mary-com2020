@@ -40,13 +40,35 @@ export default function HamburgerMenu({ isOpen, onClose }) {
                               : "opacity-0 -translate-y-2 pointer-events-none"
                       }`}
         >
-            <NavLink
-                to="/analytics"
-                className="text-bold text-lg"
-                onClick={onClose}
-            >
-                Analytics
-            </NavLink>
+            {userRole === "consumer" && (
+                <>
+                    <NavLink
+                        to="/leaderboard"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        Leaderboard
+                    </NavLink>
+                    <NavLink
+                        to="/reservations"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        My Reservations
+                    </NavLink>
+                </>
+            )}
+
+            {userRole === "seller" && (
+                <NavLink
+                    to="/seller-dashboard"
+                    className="text-bold text-lg"
+                    onClick={onClose}
+                >
+                    Seller Dashboard
+                </NavLink>
+            )}
+
             <NavLink
                 to="/aboutus"
                 className="text-bold text-lg"
