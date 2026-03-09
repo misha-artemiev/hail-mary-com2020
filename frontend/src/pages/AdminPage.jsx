@@ -6,14 +6,20 @@
 import React, { useState } from "react";
 
 // Hooks
+import useAllergens from "../hooks/useAllergens";
+import useCategories from "../hooks/useCategories";
 import useSearchBundles from "../hooks/useSearchBundles";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 
 // Components
 import Card from "../components/Card";
+import Category from "../components/Category";
 import Listing from "../components/Listing";
 import Reservation from "../components/Reservation";
 import Tabs from "../components/Tabs";
+import Button from "../components/forms/Button";
+import DropdownSelect from "../components/forms/DropdownSelect";
+import FormInput from "../components/forms/FormInput";
 
 function BundleReservations({ bundleId, bundleName }) {
     const { sellerReservations } = useSellerBundleReservations(bundleId);
@@ -46,6 +52,15 @@ function BundleReservations({ bundleId, bundleName }) {
 
 export default function DeveloperProfile() {
     const [activeTab, setActiveTab] = useState("listings");
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        restaurant: "",
+        category: "",
+        allergens: [],
+        maxPrice: "",
+        maxDistance: "",
+    });
+
     const tabs = [
         { id: "listings", label: "Listings" },
         { id: "reservations", label: "Reservations" },
@@ -53,7 +68,44 @@ export default function DeveloperProfile() {
     ];
     
     // Use hooks for data fetching (no direct API calls)
-    const { listings, loading } = useSearchBundles();
+    const { listings, loading, search } = useSearchBundles();
+    const { allergenOptions } = useAllergens();
+    const { categoryOptions } = useCategories();
+
+    /**
+     * Handles changes to text and number filters.
+     */
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFilters((prev) => ({ ...prev, [name]: value }));
+    };
+
+    /**
+     * Handles toggling a category on/off.
+     */
+    const handleCategoryClick = (category) => {
+        setFilters((prev) => ({
+            ...prev,
+            category: prev.category === category ? "" : category,
+        }));
+    };
+
+    /**
+     * Handles allergen multi-select changes.
+     */
+    const handleAllergensChange = (nextAllergens) => {
+        setFilters((prev) => ({
+            ...prev,
+            allergens: nextAllergens,
+        }));
+    };
+
+    /**
+     * Run filtered bundle search, matching homepage behavior.
+     */
+    const handleSearch = () => {
+        search(filters);
+    };
 
     /**
      * Render active tab content.
@@ -70,6 +122,23 @@ export default function DeveloperProfile() {
                 return null;
         }
     };
+
+    /**
+     * Dynamically renders given categories.
+     *
+     * @param {Object} categories - The categories to display.
+     * @returns {JSX.Element} a set of Category elements
+     */
+    const renderCategories = (categories) =>
+        categories.map((category) => (
+            <Category
+                key={category.value}
+                selected={filters.category === category.value}
+                onClick={() => handleCategoryClick(category.value)}
+            >
+                {category.label}
+            </Category>
+        ));
 
     /**
      * Render listings management tab.
@@ -242,6 +311,91 @@ export default function DeveloperProfile() {
                     onTabChange={setActiveTab}
                 />
             </Card>
+
+            {activeTab === "listings" && (
+                <Card>
+                    <button
+                        className="w-full flex items-center justify-between text-left"
+                        onClick={() => setFiltersOpen(!filtersOpen)}
+                    >
+                        <h2 className="text-xl font-semibold text-gray-700">
+                            Filters
+                        </h2>
+                        <svg
+                            className={`w-5 h-5 text-gray-500
+                                    transition-transform duration-250 ${
+                                        filtersOpen ? "rotate-180" : ""
+                                    }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                            />
+                        </svg>
+                    </button>
+
+                    <div
+                        className={`overflow-hidden transition-all duration-250 ${
+                            filtersOpen
+                                ? "max-h-125 opacity-100 mt-4"
+                                : "max-h-0 opacity-0"
+                        }`}
+                    >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormInput
+                                placeholder="Restaurant Name"
+                                name="restaurant"
+                                type="text"
+                                value={filters.restaurant}
+                                onChange={handleChange}
+                            />
+
+                            <FormInput
+                                placeholder="Max Price (£)"
+                                name="maxPrice"
+                                type="number"
+                                min="0"
+                                step="0.5"
+                                value={filters.maxPrice}
+                                onChange={handleChange}
+                            />
+
+                            <FormInput
+                                placeholder="Max Distance (km)"
+                                name="maxDistance"
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={filters.maxDistance}
+                                onChange={handleChange}
+                            />
+
+                            <DropdownSelect
+                                value={filters.allergens}
+                                name="allergen"
+                                onChange={handleAllergensChange}
+                                options={allergenOptions}
+                            />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {renderCategories(categoryOptions)}
+                        </div>
+
+                        <Button
+                            onClick={handleSearch}
+                            className="w-full md:w-auto mt-4"
+                        >
+                            Search Bundles
+                        </Button>
+                    </div>
+                </Card>
+            )}
 
             {/* Tab Content */}
             {renderTabContent()}
