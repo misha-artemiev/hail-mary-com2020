@@ -50,16 +50,31 @@ class SellerAnalytics():
 
         return graph_points
 
-    def graph_category_distribution(self, bundles: "SellerAnalytics.GraphCategoryDistriutionBundlesModel") -> list[tuple[float,float]]: # list of x and y tuples
-        # some calcualtions/function calls
+    def graph_category_distribution(
+        self,
+        bundles: list["SellerAnalytics.GraphCategoryDistriutionBundlesModel"],
+    ) -> list[tuple[float, int]]:
+        """Return points for category distribution.
+
+        x: number of collected bundles for the category
+        y: corresponding category id
+
+        Returns only the top 5 categories by collected bundles.
+        """
+        collected_by_category: dict[int, float] = {}
+        for bundle in bundles:
+            collected_qty = float(max(bundle.collected, 0))
+            collected_by_category[bundle.category] = (
+                collected_by_category.get(bundle.category, 0.0) + collected_qty
+            )
+
+        top_categories = sorted(
+            collected_by_category.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:5]
+
+        graph_points: list[tuple[float, int]] = []
+        for category, collected_qty in top_categories:
+            graph_points.append((collected_qty, category))
+
         return graph_points
-
-    ...
-
-    # just request data that is needed, it will result in smaller ram footprint
-
-    # for graphs:
-    # line: x and y of points
-    # bar chart: x for cetegory/allergen/etc index and y for y
-    # pie chart: x for category/allergen/etc index and y for percentage of a pie chart
-    # multiline graph: not certain at this point, possible solution is to have a separate function for each line of the graph with graph_name_line_name() 
