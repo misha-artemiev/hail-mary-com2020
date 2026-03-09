@@ -7,11 +7,42 @@ import React, { useState } from "react";
 
 // Hooks
 import useSearchBundles from "../hooks/useSearchBundles";
+import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 
 // Components
 import Card from "../components/Card";
 import Listing from "../components/Listing";
+import Reservation from "../components/Reservation";
 import Tabs from "../components/Tabs";
+
+function BundleReservations({ bundleId, bundleName }) {
+    const { sellerReservations } = useSellerBundleReservations(bundleId);
+
+    return (
+        <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                {bundleName}
+            </h3>
+
+            {sellerReservations.length === 0 ? (
+                <p className="text-sm text-gray-600">
+                    No active reservations for this bundle.
+                </p>
+            ) : (
+                <div className="space-y-2">
+                    {sellerReservations.map((reservation) => (
+                        <Reservation
+                            key={reservation.reservation_id}
+                            id={reservation.reservation_id}
+                            reserved_at={reservation.reserved_at}
+                            claimCode={reservation.claim_code}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 export default function DeveloperProfile() {
     const [activeTab, setActiveTab] = useState("listings");
@@ -141,21 +172,26 @@ export default function DeveloperProfile() {
             <h2 className="text-2xl font-bold text-green-700 mb-4">
                 Manage Reservations
             </h2>
-            <p className="text-gray-600">
-                Reservations will be available once the
-                hooks created.
-            </p>
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Pending Implementation:
-                </h3>
-                <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                    <li>Create useReservations hook</li>
-                    <li>Fetch all reservations from backend</li>
-                    <li>Display reservation details with status</li>
-                    <li>Add cancel reservation functionality</li>
-                </ul>
-            </div>
+
+            {loading && (
+                <p className="text-gray-600">Loading listings and reservations...</p>
+            )}
+
+            {!loading && (!listings || listings.length === 0) && (
+                <p className="text-gray-600">No listings found.</p>
+            )}
+
+            {!loading && listings && listings.length > 0 && (
+                <div className="space-y-4">
+                    {listings.map((listing) => (
+                        <BundleReservations
+                            key={listing.bundle_id}
+                            bundleId={listing.bundle_id}
+                            bundleName={listing.bundle_name}
+                        />
+                    ))}
+                </div>
+            )}
         </Card>
     );
 
