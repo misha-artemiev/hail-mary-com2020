@@ -22,7 +22,7 @@ async def create_user(
     role: UserRole,
     conn: AsyncConnection,
 ) -> CreateUserRow:
-    """Create and insert base user entiry.
+    """Create and insert base user entry.
 
     Args:
       username: username for user
@@ -57,7 +57,7 @@ class CreateConsumerForm(BaseModel):
 
 
 async def create_consumer(form: CreateConsumerForm, conn: AsyncConnection) -> Consumer:
-    """Create and insert consumer and user entiry.
+    """Create and insert consumer and user entry.
 
     Args:
       form: form with consumers information
@@ -98,7 +98,7 @@ class CreateSellerForm(BaseModel):
 
 
 async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller:
-    """Creates and inserts seller and user entiry.
+    """Creates and inserts seller and user entry.
 
     Args:
       form: form with information for seller creation
