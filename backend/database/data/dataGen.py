@@ -39,7 +39,7 @@ TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
 START_DATE = datetime(year=2026, month=2, day=1, tzinfo=UTC)
 
-# categroy names can be changed
+# category names can be changed
 DEFAULT_CATEGORY_NAMES = [
     "Bakery",
     "Produce",
