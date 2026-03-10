@@ -486,73 +486,57 @@ def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
         })
     return pd.DataFrame(messages)
 
-import random
-import pandas as pd
-from datetime import timedelta
-from collections import defaultdict
-
-# Note: Make sure secure_rng, BADGE_PROBABILITY, and START_DATE 
-# are defined in your broader script before calling this function.
 
 def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Creates badge definitions and strictly assigns them to consumers chronologically.
+    """Creates base badge definitions and chronologically assigns tiered levels to consumers.
 
     Args:
       consumers_df: dataframe of consumers
 
     Returns:
-      tuple of badges dataframe and joining user and badge dataframe
+      tuple of badges dataframe and joining user-badge dataframe
     """
+    # base badge definitions from massimo
     badge_data = [
-        {"badge_id": 1, "name": "Green Starter", "level": 1, "description": "Rescue 1 meal"},
-        {"badge_id": 2, "name": "Local Hero", "level": 1, "description": "Rescue from 5 different sellers"},
-        {"badge_id": 3, "name": "Local Hero", "level": 2, "description": "Rescue from 10 different sellers"},
-        {"badge_id": 4, "name": "Local Hero", "level": 3, "description": "Rescue from 20 different sellers"},
-        {"badge_id": 5, "name": "Variety explorer", "level": 1, "description": "Rescue food from 5 different categories"},
-        {"badge_id": 6, "name": "Variety explorer", "level": 2, "description": "Rescue from 10 different categories"},
-        {"badge_id": 7, "name": "Variety explorer", "level": 3, "description": "Rescue from 20 different categories"},
-        {"badge_id": 8, "name": "Food Savior", "level": 1, "description": "Save Food 3 days in a row"},
-        {"badge_id": 9, "name": "Food Savior", "level": 2, "description": "Save Food 7 days in a row"},
-        {"badge_id": 10, "name": "Food Savior", "level": 3, "description": "Save food 15 days in a row"},
-        {"badge_id": 11, "name": "Sweet Tooth", "level": 1, "description": "Save Desserts 5 times"},
-        {"badge_id": 12, "name": "Sweet Tooth", "level": 2, "description": "Save desserts 10 times"},
-        {"badge_id": 13, "name": "Sweet Tooth", "level": 3, "description": "Save desserts 20 times"},
-        {"badge_id": 14, "name": "CO2 Cutter", "level": 1, "description": "Save approximately 10kg of CO2"},
-        {"badge_id": 15, "name": "CO2 Cutter", "level": 2, "description": "Save approximately 25kg of CO2"},
-        {"badge_id": 16, "name": "CO2 Cutter", "level": 3, "description": "Save approximately 50kg of CO2"},
-        {"badge_id": 17, "name": "Right On Time", "level": 1, "description": "Save 10 meals in a row without a no-show"},
-        {"badge_id": 18, "name": "Right On Time", "level": 2, "description": "Save 25 meals in a row without a no-show"},
-        {"badge_id": 19, "name": "Right On Time", "level": 3, "description": "Save 50 meals in a row without a no-show"},
+        {"badge_id": 1, "name": "Green Starter", "description": "Rescue your first meal"},
+        {"badge_id": 2, "name": "Local Hero", "description": "Rescue from multiple different sellers"},
+        {"badge_id": 3, "name": "Variety explorer", "description": "Rescue food from multiple categories"},
+        {"badge_id": 4, "name": "Food Savior", "description": "Save food multiple days in a row"},
+        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
+        {"badge_id": 6, "name": "CO2 Cutter", "description": "Save significant amounts of CO2"},
+        {"badge_id": 7, "name": "Right On Time", "description": "Consistently save meals without no-shows"},
     ]
 
-    # Group badges by category so we can process them sequentially by level
-    badges_by_category = defaultdict(list)
-    for b in badge_data:
-        badges_by_category[b["name"]].append(b)
+    # mapping badge id to max level 
+    badge_max_levels = {
+        1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3
+    }
 
     acquired = []
     consumer_ids = consumers_df["user_id"].tolist()
 
     for userid in consumer_ids:
         if secure_rng.random() < BADGE_PROBABILITY:
-            # Pick 1 to 2 random badge categories per user
+            # Picks 1 to 2 random base badges per user
             num_categories = secure_rng.randint(1, 2)
-            chosen_categories = random.sample(list(badges_by_category.keys()), num_categories)
+            chosen_badges = random.sample(badge_data, num_categories)
 
-            for cat in chosen_categories:
-                cat_badges = badges_by_category[cat]
+            for badge in chosen_badges:
+                b_id = badge["badge_id"]
+                max_level = badge_max_levels[b_id]
                 
-                # Pick the highest level the user achieved in this category (1 up to max available)
-                achieved_level = secure_rng.randint(1, len(cat_badges))
+                # Pick the highest level the user achieved in this category
+                achieved_level = secure_rng.randint(1, max_level)
 
-                # Set a random start date for when they earned the Level 1 badge
+                # Set a random start date for when they earned Level 1
                 current_date = START_DATE + timedelta(days=secure_rng.randint(1, 40))
 
-                # Award badges strictly from Level 1 up to their achieved_level
-                for i in range(achieved_level):
+                # Award badges chronologically from Level 1 up to their achieved_level
+                for lvl in range(1, achieved_level + 1):
                     acquired.append({
                         "user_id": userid,
-                        "badge_id": cat_badges[i]["badge_id"],
+                        "badge_id": b_id,
+                        "level": lvl, # Level is now tracked in the acquired table!
                         "acquired_at": current_date,
                     })
                     # Add 2 to 14 days of simulated time before they earn the next level
