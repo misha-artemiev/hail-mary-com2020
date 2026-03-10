@@ -551,7 +551,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
             chosen_badges = random.sample(badge_data, num_categories)
 
             for badge in chosen_badges:
-                b_id = int(badge["badge_id"])
+                b_id = int(str(badge["badge_id"]))
                 max_level = badge_max_levels[b_id]
 
                 # Pick the highest level the user achieved in this category
