@@ -22,6 +22,11 @@ class SellerAnalytics():
         sold_qty: int
         posted_qty: int
 
+    class GraphTimeWindowDistributionBundlesModel(BaseModel):
+        time_window: str
+        reservations: int
+        collected: int
+
     def graph_weekly_sales_vs_posted(
         self,
         seller_id: int,
@@ -76,5 +81,38 @@ class SellerAnalytics():
         graph_points: list[tuple[float, int]] = []
         for category, collected_qty in top_categories:
             graph_points.append((collected_qty, category))
+
+        return graph_points
+
+    def graph_time_window_distribution(
+        self,
+        time_windows: list["SellerAnalytics.GraphTimeWindowDistributionBundlesModel"],
+        top_n: int = 5,
+    ) -> list[tuple[float, str]]:
+        """Return points for time-window distribution.
+
+        x: number of collected bundles for the time window
+        y: corresponding time window
+
+        Returns the biggest time windows by collected bundles.
+        """
+        if top_n <= 0:
+            return []
+
+        collected_by_window: dict[str, float] = {}
+        for window in time_windows:
+            collected_qty = float(max(window.collected, 0))
+            collected_by_window[window.time_window] = (
+                collected_by_window.get(window.time_window, 0.0) + collected_qty
+            )
+
+        top_windows = sorted(
+            collected_by_window.items(),
+            key=lambda item: (-item[1], item[0]),
+        )[:top_n]
+
+        graph_points: list[tuple[float, str]] = []
+        for time_window, collected_qty in top_windows:
+            graph_points.append((collected_qty, time_window))
 
         return graph_points
