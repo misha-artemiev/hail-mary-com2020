@@ -1,0 +1,7 @@
+badgesRules:
+  - badge_id: 0
+    badge_name: 'Green Starter | Rescue 1 meal'
+    rules:
+      - level: 1
+        type: 'quantity'
+        quantity: 1

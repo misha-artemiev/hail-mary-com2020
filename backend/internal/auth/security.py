@@ -1,13 +1,14 @@
 """Sensitive information manimulation."""
 
+import asyncio
 from secrets import choice, token_urlsafe
 
 from bcrypt import checkpw, gensalt, hashpw
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from pydantic import BaseModel, SecretStr
-from sqlalchemy import Connection
+from sqlalchemy.ext.asyncio import AsyncConnection
 
-from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserPasswordParams, UpdateUserPasswordRow
 
 
@@ -58,8 +59,8 @@ class UpdatePasswordForm(BaseModel):
     new_password: SecretStr
 
 
-def update_pw(
-    email: str, form: UpdatePasswordForm, conn: Connection
+async def update_pw(
+    email: str, form: UpdatePasswordForm, conn: AsyncConnection
 ) -> UpdateUserPasswordRow:
     """Update user password with old password check.
 
@@ -75,19 +76,30 @@ def update_pw(
       HTTPException: if failed to perform update
     """
     querier = UserQuerier(conn)
-    user = querier.get_user_login(email=email)
+    user = await querier.get_user_login(email=email)
     if not user:
-        raise HTTPException(500)
-    if not check_password(form.old_password.get_secret_value(), user.pw_hash):
-        raise HTTPException(403)
-    user_updated = querier.update_user_password(
-        UpdateUserPasswordParams(
-            user_id=user.user_id,
-            pw_hash=hash_password(form.new_password.get_secret_value()),
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find user",
         )
+    is_valid = await asyncio.to_thread(
+        check_password, form.old_password.get_secret_value(), user.pw_hash
+    )
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Old password is incorrect"
+        )
+    new_hashed_pw = await asyncio.to_thread(
+        hash_password, form.new_password.get_secret_value()
+    )
+    user_updated = await querier.update_user_password(
+        UpdateUserPasswordParams(user_id=user.user_id, pw_hash=new_hashed_pw)
     )
     if not user_updated:
-        raise HTTPException(500)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update password",
+        )
     return user_updated
 
 

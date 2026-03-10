@@ -2,9 +2,10 @@
 # versions:
 #   sqlc v1.30.0
 # source: allergens.sql
-from typing import Iterator
+from typing import AsyncIterator
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -24,19 +25,19 @@ WHERE b.bundle_id=:p1
 """
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def get_allergens(self) -> Iterator[models.Allergen]:
-        result = self._conn.execute(sqlalchemy.text(GET_ALLERGENS))
-        for row in result:
+    async def get_allergens(self) -> AsyncIterator[models.Allergen]:
+        result = await self._conn.stream(sqlalchemy.text(GET_ALLERGENS))
+        async for row in result:
             yield models.Allergen(
                 allergen_id=row[0],
                 allergen_name=row[1],
             )
 
-    def get_bundle_allergens(self, *, bundle_id: int) -> Iterator[int]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_ALLERGENS), {"p1": bundle_id})
-        for row in result:
+    async def get_bundle_allergens(self, *, bundle_id: int) -> AsyncIterator[int]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLE_ALLERGENS), {"p1": bundle_id})
+        async for row in result:
             yield row[0]

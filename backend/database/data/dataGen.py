@@ -74,6 +74,7 @@ def generate_users() -> pd.DataFrame:
         role = roles[i - 1]
         users.append({
             "user_id": i,
+            "username": fake.unique.user_name(),
             "email": fake.unique.email(),
             "pw_hash": fake.sha256(),
             "role": role,

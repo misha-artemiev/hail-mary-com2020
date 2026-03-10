@@ -1,6 +1,5 @@
 """Fastapi server entrypoint."""
 
-from asyncio import to_thread
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
@@ -8,8 +7,10 @@ from importlib.metadata import version
 from fastapi import APIRouter, FastAPI
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
+from internal.settings.config import badges_config
 from internal.settings.env import host_settings
 from routers.allergens import router as allergens_router
+from routers.badges import router as badges_router
 from routers.bundles import router as bundle_router
 from routers.categories import router as categories_router
 from routers.consumers import router as consumers_router
@@ -22,14 +23,15 @@ from uvicorn import run
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     """Manages startup and shutdown."""
+    badges_config.initialise()
     logger.info("Initialising database engine")
-    await to_thread(database_manager.initialise)
+    await database_manager.initialise()
     logger.info("Database ready")
 
     yield
 
     logger.info("Cleaning database engine")
-    database_manager.cleanup()
+    await database_manager.cleanup()
 
 
 app = FastAPI(
@@ -50,6 +52,7 @@ def register_routers(app: FastAPI) -> None:
         users_router,
         allergens_router,
         categories_router,
+        badges_router,
     ]
     for router in routers:
         app.include_router(router)

@@ -1,26 +1,31 @@
 """Creates seller and consumer entities."""
 
 from pydantic import BaseModel, EmailStr, SecretStr
-from sqlalchemy import Connection
+from sqlalchemy.ext.asyncio import AsyncConnection
 
 from internal.geolocation.location import get_location
+from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import CreateConsumerParams
-from internal.queries.consumer import Querier as ConsumerQuerier
 from internal.queries.models import Consumer, Seller, UserRole
+from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import CreateSellerParams
-from internal.queries.seller import Querier as SellerQuerier
+from internal.queries.user import AsyncQuerier as UserQuery
 from internal.queries.user import CreateUserParams, CreateUserRow
-from internal.queries.user import Querier as UserQuery
 
 from .security import hash_password
 
 
-def create_user(
-    email: EmailStr, password: SecretStr, role: UserRole, conn: Connection
+async def create_user(
+    username: str,
+    email: EmailStr,
+    password: SecretStr,
+    role: UserRole,
+    conn: AsyncConnection,
 ) -> CreateUserRow:
-    """Create and insert base user entiry.
+    """Create and insert base user entry.
 
     Args:
+      username: username for user
       email: users email
       password: users plain text password
       role: users role, seller or consumer
@@ -33,8 +38,8 @@ def create_user(
       ValueError: if database failed to create user
     """
     pw_hash = hash_password(password.get_secret_value())
-    user = UserQuery(conn).create_user(
-        CreateUserParams(email=email, pw_hash=pw_hash, role=role)
+    user = await UserQuery(conn).create_user(
+        CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
         raise ValueError("Failed to create user")
@@ -44,14 +49,15 @@ def create_user(
 class CreateConsumerForm(BaseModel):
     """Form with information to create consumer."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     first_name: str
     last_name: str
 
 
-def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
-    """Create and insert consumer and user entiry.
+async def create_consumer(form: CreateConsumerForm, conn: AsyncConnection) -> Consumer:
+    """Create and insert consumer and user entry.
 
     Args:
       form: form with consumers information
@@ -63,8 +69,10 @@ def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
     Raises:
       ValueError: if database failed to create consumer
     """
-    user = create_user(form.email, form.password, UserRole.CONSUMER, conn)
-    consumer = ConsumerQuerier(conn).create_consumer(
+    user = await create_user(
+        form.username, form.email, form.password, UserRole.CONSUMER, conn
+    )
+    consumer = await ConsumerQuerier(conn).create_consumer(
         CreateConsumerParams(
             user_id=user.user_id, fname=form.first_name, lname=form.last_name
         )
@@ -77,6 +85,7 @@ def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
 class CreateSellerForm(BaseModel):
     """Form with information to create seller."""
 
+    username: str
     email: EmailStr
     password: SecretStr
     seller_name: str
@@ -88,8 +97,8 @@ class CreateSellerForm(BaseModel):
     country: str
 
 
-def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
-    """Creates and inserts seller and user entiry.
+async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller:
+    """Creates and inserts seller and user entry.
 
     Args:
       form: form with information for seller creation
@@ -101,7 +110,9 @@ def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
     Raises:
       ValueError: database failed to create a seller
     """
-    user = create_user(form.email, form.password, UserRole.SELLER, conn)
+    user = await create_user(
+        form.username, form.email, form.password, UserRole.SELLER, conn
+    )
     address: str = ""
     address += f"{form.address_line1}"
     if form.address_line2:
@@ -112,7 +123,7 @@ def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
         address += f", {form.region}"
     address += f", {form.country}"
     loc = get_location(address)
-    seller = SellerQuerier(conn).create_seller(
+    seller = await SellerQuerier(conn).create_seller(
         CreateSellerParams(
             user_id=user.user_id,
             seller_name=form.seller_name,
