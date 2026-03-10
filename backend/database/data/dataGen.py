@@ -519,11 +519,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
             "name": "Food Savior",
             "description": "Save food multiple days in a row",
         },
-        {
-            "badge_id": 5,
-            "name": "Sweet Tooth",
-            "description": "Save multiple desserts",
-        },
+        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
         {
             "badge_id": 6,
             "name": "CO2 Cutter",
@@ -537,9 +533,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
     ]
 
     # mapping badge id to max level
-    badge_max_levels = {
-        1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3
-    }
+    badge_max_levels = {1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3}
 
     acquired = []
     consumer_ids = consumers_df["user_id"].tolist()
