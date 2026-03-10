@@ -74,7 +74,6 @@ def generate_users() -> pd.DataFrame:
         role = roles[i - 1]
         users.append({
             "user_id": i,
-            "username": fake.unique.user_name(),
             "email": fake.unique.email(),
             "pw_hash": fake.sha256(),
             "role": role,
@@ -489,7 +488,7 @@ def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Creates base badge definitions and chronologically assigns tiered levels to consumers.
+    """Creates base badge definitions and assigns tiered levels to consumers.
 
     Args:
       consumers_df: dataframe of consumers
@@ -498,17 +497,46 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
       tuple of badges dataframe and joining user-badge dataframe
     """
     # base badge definitions from massimo
+    # base badge definitions
     badge_data = [
-        {"badge_id": 1, "name": "Green Starter", "description": "Rescue your first meal"},
-        {"badge_id": 2, "name": "Local Hero", "description": "Rescue from multiple different sellers"},
-        {"badge_id": 3, "name": "Variety explorer", "description": "Rescue food from multiple categories"},
-        {"badge_id": 4, "name": "Food Savior", "description": "Save food multiple days in a row"},
-        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
-        {"badge_id": 6, "name": "CO2 Cutter", "description": "Save significant amounts of CO2"},
-        {"badge_id": 7, "name": "Right On Time", "description": "Consistently save meals without no-shows"},
+        {
+            "badge_id": 1,
+            "name": "Green Starter",
+            "description": "Rescue your first meal",
+        },
+        {
+            "badge_id": 2,
+            "name": "Local Hero",
+            "description": "Rescue from multiple different sellers",
+        },
+        {
+            "badge_id": 3,
+            "name": "Variety explorer",
+            "description": "Rescue food from multiple categories",
+        },
+        {
+            "badge_id": 4,
+            "name": "Food Savior",
+            "description": "Save food multiple days in a row",
+        },
+        {
+            "badge_id": 5,
+            "name": "Sweet Tooth",
+            "description": "Save multiple desserts",
+        },
+        {
+            "badge_id": 6,
+            "name": "CO2 Cutter",
+            "description": "Save significant amounts of CO2",
+        },
+        {
+            "badge_id": 7,
+            "name": "Right On Time",
+            "description": "Consistently save meals without no-shows",
+        },
     ]
 
-    # mapping badge id to max level 
+    # mapping badge id to max level
     badge_max_levels = {
         1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3
     }
@@ -523,9 +551,9 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
             chosen_badges = random.sample(badge_data, num_categories)
 
             for badge in chosen_badges:
-                b_id = badge["badge_id"]
+                b_id = int(badge["badge_id"])
                 max_level = badge_max_levels[b_id]
-                
+
                 # Pick the highest level the user achieved in this category
                 achieved_level = secure_rng.randint(1, max_level)
 
@@ -537,13 +565,14 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
                     acquired.append({
                         "user_id": userid,
                         "badge_id": b_id,
-                        "level": lvl, # Level is now tracked in the acquired table!
+                        "level": lvl,
                         "acquired_at": current_date,
                     })
                     # Add 2 to 14 days of simulated time before they earn the next level
                     current_date += timedelta(days=secure_rng.randint(2, 14))
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
+
 
 def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
     """Generates auth tokens for the token table.
