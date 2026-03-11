@@ -489,44 +489,82 @@ def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Creates badge definitions and assigns them to consumers.
+    """Creates base badge definitions and assigns tiered levels to consumers.
 
     Args:
       consumers_df: dataframe of consumers
 
     Returns:
-      tuple of budges dataframe and joining user and badge dataframe
+      tuple of badges dataframe and joining user-badge dataframe
     """
-    # Badge Definitions
+    # base badge definitions from massimo
+    # base badge definitions
     badge_data = [
-        {"badge_id": 1, "name": "First Save", "description": "Saved your first bag"},
-        {"badge_id": 2, "name": "Eco Saver", "description": "Saved 10 bags total"},
+        {
+            "badge_id": 1,
+            "name": "Green Starter",
+            "description": "Rescue your first meal",
+        },
+        {
+            "badge_id": 2,
+            "name": "Local Hero",
+            "description": "Rescue from multiple different sellers",
+        },
         {
             "badge_id": 3,
-            "name": "Early Bird",
-            "description": "Picked up a bag before 10am",
+            "name": "Variety explorer",
+            "description": "Rescue food from multiple categories",
         },
-        {"badge_id": 4, "name": "Streak", "description": "Saved bags 3 days in a row"},
+        {
+            "badge_id": 4,
+            "name": "Food Savior",
+            "description": "Save food multiple days in a row",
+        },
+        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
+        {
+            "badge_id": 6,
+            "name": "CO2 Cutter",
+            "description": "Save significant amounts of CO2",
+        },
+        {
+            "badge_id": 7,
+            "name": "Right On Time",
+            "description": "Consistently save meals without no-shows",
+        },
     ]
 
-    # Badges Acquired (Junction)
+    # mapping badge id to max level
+    badge_max_levels = {1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3}
+
     acquired = []
     consumer_ids = consumers_df["user_id"].tolist()
 
-    for uid in consumer_ids:
-        # 40% chance a user has badges
+    for userid in consumer_ids:
         if secure_rng.random() < BADGE_PROBABILITY:
-            # Assign 1 to 3 random badges
-            num_badges = secure_rng.randint(1, 3)
-            my_badges = random.sample([b["badge_id"] for b in badge_data], num_badges)
+            # Picks 1 to 2 random base badges per user
+            num_categories = secure_rng.randint(1, 2)
+            chosen_badges = random.sample(badge_data, num_categories)
 
-            for bid in my_badges:
-                acquired.append({
-                    "user_id": uid,
-                    "badge_id": bid,
-                    "acquired_at": START_DATE
-                    + timedelta(days=secure_rng.randint(1, 40)),
-                })
+            for badge in chosen_badges:
+                b_id = int(str(badge["badge_id"]))
+                max_level = badge_max_levels[b_id]
+
+                # Pick the highest level the user achieved in this category
+                achieved_level = secure_rng.randint(1, max_level)
+
+                # Set a random start date for when they earned Level 1
+                current_date = START_DATE + timedelta(days=secure_rng.randint(1, 40))
+
+                # Award badges chronologically from Level 1 up to their achieved_level
+                for lvl in range(1, achieved_level + 1):
+                    acquired.append({
+                        "user_id": userid,
+                        "badge_id": b_id,
+                        "level": lvl,
+                        "acquired_at": current_date,
+                    })
+                    # Add 2 to 14 days of simulated time before they earn the next level
+                    current_date += timedelta(days=secure_rng.randint(2, 14))
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
 
