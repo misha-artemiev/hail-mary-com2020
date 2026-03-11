@@ -5,7 +5,7 @@ from logging.config import dictConfig
 from pathlib import Path
 from re import IGNORECASE, search, split
 from string.templatelib import Template
-
+from database.db_constants import CATEGORIES, ALLERGENS
 from internal.settings.env import database_settings
 from psycopg import Connection, Error, connect
 from uvicorn.config import LOGGING_CONFIG
@@ -139,6 +139,29 @@ def drop_all_tables(logger: Logger, table_queries: list[str], conn: Connection) 
             cursor.execute(Template(f"DROP {type_name[0]} IF EXISTS {type_name[1]};"))
             logger.info(f"table {type_name[1]} removed.")
     conn.commit()
+    
+def seed_static_data(logger: Logger, conn: Connection) -> None:
+    """Inserts categories and allergens into the db"""
+    try:
+        with conn.cursor() as cursor:
+            # Seed Categories
+            for cat_id, name in CATEGORIES.items():
+                cursor.execute(
+                    "INSERT INTO category (category_id, category_name) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (cat_id, name)
+                )
+            
+            # Seed Allergens
+            for all_id, name in ALLERGENS.items():
+                cursor.execute(
+                    "INSERT INTO allergens (allergen_id, allergen_name) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                    (all_id, name)
+                )
+        conn.commit()
+        logger.info("Successfully seeded categories and allergens.")
+    except Error as e:
+        logger.error(f"Error seeding data: {e}")
+        conn.rollback()
 
 
 def main() -> None:
@@ -161,6 +184,7 @@ def main() -> None:
         case 1:
             # Create all tables
             create_all_tables(logger, table_queries, conn)
+            seed_static_data(logger, conn)
         case 2:
             # Show all tables
             show_all_tables(logger, conn)

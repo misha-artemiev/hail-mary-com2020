@@ -16,7 +16,7 @@ import random
 from datetime import UTC, datetime, timedelta
 from secrets import SystemRandom
 from typing import Any
-
+from database.db_constants import CATEGORIES, ALLERGENS
 import pandas as pd
 from faker import Faker
 from internal.auth.security import generate_claim_code, generate_token
@@ -240,44 +240,6 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
     return pd.DataFrame(bundles)
 
 
-def generate_categories() -> pd.DataFrame:
-    """Creates the master list of product categories.
-
-    Returns:
-        dataframe of cetegories
-    """
-    # Using DEFAULT_CATEGORY_NAMES list
-    categories = []
-    for i, name in enumerate(DEFAULT_CATEGORY_NAMES, start=1):
-        categories.append({"category_id": i, "category_name": name})
-    return pd.DataFrame(categories)
-
-
-def generate_bundle_categories(
-    bundles_df: pd.DataFrame, categories_df: pd.DataFrame
-) -> pd.DataFrame:
-    """Links each bundle to 1-2 random categories.
-
-    Args:
-      bundles_df: dataframe of bundles
-      categories_df: dataframe of categories
-
-    Returns:
-      dataframe going categories and bundles
-    """
-    bundle_ids = bundles_df["bundle_id"].tolist()
-    category_ids = categories_df["category_id"].tolist()
-    links = []
-
-    for bundle_id in bundle_ids:
-        # Most bundles belong to 1 category, some might belong to 2
-        selected = secure_rng.sample(category_ids, secure_rng.randint(1, 2))
-        for category_id in selected:
-            links.append({"bundle_id": bundle_id, "category_id": category_id})
-
-    return pd.DataFrame(links)
-
-
 def generate_pickup_windows() -> pd.DataFrame:
     """Creates a list of pickup time windows.
 
@@ -426,43 +388,6 @@ def generate_issue_reports(
 
     return pd.DataFrame(seller_reports), pd.DataFrame(admin_reports)
 
-
-def generate_allergens() -> pd.DataFrame:
-    """Generates allergies.
-
-    Returns:
-      dataframe of allergens
-    """
-    allergen_names = ["Gluten", "Dairy", "Nuts", "Soy", "Eggs", "Sesame"]
-    allergens = []
-    for i, name in enumerate(allergen_names, start=1):
-        allergens.append({"allergen_id": i, "allergen_name": name})
-    return pd.DataFrame(allergens)
-
-
-def generate_bundle_allergens(
-    bundles_df: pd.DataFrame, allergens_df: pd.DataFrame
-) -> pd.DataFrame:
-    """Links each bundle to 1-3 random allergens.
-
-    Args:
-      bundles_df: dataframe of bundles
-      allergens_df: dataframe of allergens
-
-    Returns:
-      dataframe joining bundles and allergens
-    """
-    bundle_ids = bundles_df["bundle_id"].tolist()
-    allergen_ids = allergens_df["allergen_id"].tolist()
-    links = []
-    for bundle_id in bundle_ids:
-        # pick a random number of allergens for this food bag
-        selected = secure_rng.sample(allergen_ids, secure_rng.randint(0, 3))
-        for allergen_id in selected:
-            links.append({"bundle_id": bundle_id, "allergen_id": allergen_id})
-    return pd.DataFrame(links)
-
-
 def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
     """Generates welcome messages and system notifications.
 
@@ -568,6 +493,31 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
 
+def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
+    """Links each bundle to 1-2 random category IDs from constants."""
+    bundle_ids = bundles_df["bundle_id"].tolist()
+    category_ids = list(CATEGORIES.keys())
+    links = []
+
+    for bundle_id in bundle_ids:
+        selected = secure_rng.sample(category_ids, secure_rng.randint(1, 2))
+        for cat_id in selected:
+            links.append({"bundle_id": bundle_id, "category_id": cat_id})
+
+    return pd.DataFrame(links)
+
+def generate_bundle_allergens(bundles_df: pd.DataFrame) -> pd.DataFrame:
+    """Links each bundle to 0-3 random allergen IDs from constants."""
+    bundle_ids = bundles_df["bundle_id"].tolist()
+    allergen_ids = list(ALLERGENS.keys())
+    links = []
+
+    for bundle_id in bundle_ids:
+        selected = secure_rng.sample(allergen_ids, secure_rng.randint(0, 3))
+        for all_id in selected:
+            links.append({"bundle_id": bundle_id, "allergen_id": all_id})
+
+    return pd.DataFrame(links)
 
 def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
     """Generates auth tokens for the token table.
@@ -609,16 +559,14 @@ if __name__ == "__main__":
     print(f"   Generated {len(df_users)} users")
 
     # categories, allergens, and pickup windows
-    df_categories = generate_categories()
-    df_allergens = generate_allergens()
     df_windows = generate_pickup_windows()
 
     # Inventory
     df_bundles = generate_inventory(df_sellers["user_id"].tolist(), df_windows)
 
     # Junction Tables
-    df_bundle_cats = generate_bundle_categories(df_bundles, df_categories)
-    df_bundle_alls = generate_bundle_allergens(df_bundles, df_allergens)
+    df_bundle_cats = generate_bundle_categories(df_bundles)
+    df_bundle_alls = generate_bundle_allergens(df_bundles)
     print(f"   Generated {len(df_bundles)} bundles")
 
     # reservations with different states (collected, no-show, expired)
@@ -640,8 +588,6 @@ if __name__ == "__main__":
         "consumers": df_consumers,
         "admins": df_admins,
         "bundles": df_bundles,
-        "category": df_categories,
-        "allergens": df_allergens,
         "bundle_category": df_bundle_cats,
         "bundle_allergens": df_bundle_alls,
         "reservations": df_reservations,
