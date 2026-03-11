@@ -1,3 +1,5 @@
+"""Constants for database lookup tables including categories and allergens."""
+
 CATEGORIES = {
     1: "Bakery",
     2: "Produce",

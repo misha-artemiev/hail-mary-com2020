@@ -16,8 +16,9 @@ import random
 from datetime import UTC, datetime, timedelta
 from secrets import SystemRandom
 from typing import Any
-from database.db_constants import CATEGORIES, ALLERGENS
+
 import pandas as pd
+from database.db_constants import ALLERGENS, CATEGORIES
 from faker import Faker
 from internal.auth.security import generate_claim_code, generate_token
 
@@ -388,6 +389,7 @@ def generate_issue_reports(
 
     return pd.DataFrame(seller_reports), pd.DataFrame(admin_reports)
 
+
 def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
     """Generates welcome messages and system notifications.
 
@@ -493,8 +495,16 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
 
+
 def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
-    """Links each bundle to 1-2 random category IDs from constants."""
+    """Links each bundle to 1-2 random category IDs from constants.
+
+    Args:
+        bundles_df: Dataframe containing bundle IDs.
+
+    Returns:
+        Dataframe representing the junction table.
+    """
     bundle_ids = bundles_df["bundle_id"].tolist()
     category_ids = list(CATEGORIES.keys())
     links = []
@@ -506,8 +516,16 @@ def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.DataFrame(links)
 
+
 def generate_bundle_allergens(bundles_df: pd.DataFrame) -> pd.DataFrame:
-    """Links each bundle to 0-3 random allergen IDs from constants."""
+    """Links each bundle to 0-3 random allergen IDs from constants.
+
+    Args:
+        bundles_df: Dataframe containing bundle IDs.
+
+    Returns:
+        Dataframe representing the junction table.
+    """
     bundle_ids = bundles_df["bundle_id"].tolist()
     allergen_ids = list(ALLERGENS.keys())
     links = []
@@ -518,6 +536,7 @@ def generate_bundle_allergens(bundles_df: pd.DataFrame) -> pd.DataFrame:
             links.append({"bundle_id": bundle_id, "allergen_id": all_id})
 
     return pd.DataFrame(links)
+
 
 def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
     """Generates auth tokens for the token table.
