@@ -8,13 +8,12 @@ from pydantic import BaseModel
 class SellerAnalytics:
     """Module for processing and formatting seller analytics data into graph points."""
 
-    def __init__(self, consumer_id: int | None = None) -> None:
+    def __init__(self) -> None:
         """Initialize the analytics processor.
 
         Args:
             consumer_id: Optional ID of the consumer for personalized analytics.
         """
-        self.consumer_id = consumer_id
 
     class CategoryDistributionRow(BaseModel):
         """Schema for category distribution data."""
