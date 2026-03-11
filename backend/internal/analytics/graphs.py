@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 class SellerAnalytics:
     """Module for processing and formatting seller analytics data into graph points."""
+
     def __init__(self, consumer_id: int | None = None) -> None:
         """Initialize the analytics processor.
 
@@ -58,7 +59,8 @@ class SellerAnalytics:
         """
         requested_days = set(analysis_days)
         seller_rows = [
-            row for row in daily_rows
+            row
+            for row in daily_rows
             if row.seller_id == seller_id and row.day in requested_days
         ]
         rows_by_day = {row.day: row for row in seller_rows}
@@ -74,8 +76,7 @@ class SellerAnalytics:
 
     @staticmethod
     def graph_category_distribution(
-        bundles: list[SellerAnalytics.CategoryDistributionRow],
-        top_n: int = 5,
+        bundles: list[SellerAnalytics.CategoryDistributionRow], top_n: int = 5
     ) -> list[tuple[float, int]]:
         """Return points for category distribution.
 
@@ -97,15 +98,13 @@ class SellerAnalytics:
             )
 
         top_categories = sorted(
-            collected_by_category.items(),
-            key=lambda item: (-item[1], item[0]),
+            collected_by_category.items(), key=lambda item: (-item[1], item[0])
         )[:top_n]
         return [(collected_qty, category) for category, collected_qty in top_categories]
 
     @staticmethod
     def graph_time_window_distribution(
-        time_windows: list[SellerAnalytics.TimeWindowDistributionRow],
-        top_n: int = 5,
+        time_windows: list[SellerAnalytics.TimeWindowDistributionRow], top_n: int = 5
     ) -> list[tuple[float, str]]:
         """Return points for time-window distribution.
 
@@ -127,8 +126,8 @@ class SellerAnalytics:
             )
 
         top_windows = sorted(
-            collected_by_window.items(),
-            key=lambda item: (-item[1], item[0]),
+            collected_by_window.items(), key=lambda item: (-item[1], item[0])
         )[:top_n]
-        return [(collected_qty, time_window) for time_window, collected_qty in
-                top_windows]
+        return [
+            (collected_qty, time_window) for time_window, collected_qty in top_windows
+        ]
