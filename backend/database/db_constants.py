@@ -11,11 +11,4 @@ CATEGORIES = {
     8: "Snacks",
 }
 
-ALLERGENS = {
-    1: "Gluten",
-    2: "Dairy",
-    3: "Nuts",
-    4: "Soy",
-    5: "Eggs",
-    6: "Sesame",
-}
+ALLERGENS = {1: "Gluten", 2: "Dairy", 3: "Nuts", 4: "Soy", 5: "Eggs", 6: "Sesame"}

@@ -152,7 +152,7 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
                 cursor.execute(
                     "INSERT INTO category (category_id, category_name) "
                     "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    (cat_id, name)
+                    (cat_id, name),
                 )
 
             # Seed Allergens
@@ -160,7 +160,7 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
                 cursor.execute(
                     "INSERT INTO allergens (allergen_id, allergen_name)"
                     "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    (all_id, name)
+                    (all_id, name),
                 )
         conn.commit()
         logger.info("Successfully seeded categories and allergens.")
