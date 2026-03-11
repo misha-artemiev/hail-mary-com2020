@@ -1,37 +1,35 @@
-# ROUGH INTERFACE EXAMPLE
 from datetime import date
 
 from pydantic import BaseModel
 
-class SellerAnalytics():
+class SellerAnalytics:
+    def __init__(self, consumer_id: int | None = None) -> None:
+        self.consumer_id = consumer_id
 
-    def SellerAnalytics(self, consumer_id: int):
-        """Basic init information needed for all greaphs."""
-        self.consumer = consumer_id # if needed at all
-        ...
+    class CategoryDistributionRow(BaseModel):
+        category: int
+        collected: int
 
-    class GraphCategoryDistriutionBundlesModel(BaseModel):
-        category: int # or categories: [int]
-        reservations: int # number of reservations
-        collected: int # how many reservations were actually collected
-        ...
-
-    class DailySalesBundlesModel(BaseModel):
+    class DailySalesRow(BaseModel):
         seller_id: int
         day: date
         sold_qty: int
         posted_qty: int
 
-    class GraphTimeWindowDistributionBundlesModel(BaseModel):
+    class TimeWindowDistributionRow(BaseModel):
         time_window: str
-        reservations: int
         collected: int
+
+    # Backward-compatible aliases for older names.
+    GraphCategoryDistriutionBundlesModel = CategoryDistributionRow
+    DailySalesBundlesModel = DailySalesRow
+    GraphTimeWindowDistributionBundlesModel = TimeWindowDistributionRow
 
     def graph_weekly_sales_vs_posted(
         self,
         seller_id: int,
         analysis_days: list[date],
-        daily_rows: list["SellerAnalytics.DailySalesBundlesModel"],
+        daily_rows: list["SellerAnalytics.DailySalesRow"],
     ) -> list[tuple[float, float]]:
         """Return coordinates for the requested days for one seller.
 
@@ -57,15 +55,19 @@ class SellerAnalytics():
 
     def graph_category_distribution(
         self,
-        bundles: list["SellerAnalytics.GraphCategoryDistriutionBundlesModel"],
+        bundles: list["SellerAnalytics.CategoryDistributionRow"],
+        top_n: int = 5,
     ) -> list[tuple[float, int]]:
         """Return points for category distribution.
 
         x: number of collected bundles for the category
         y: corresponding category id
 
-        Returns only the top 5 categories by collected bundles.
+        Returns the biggest categories by collected bundles.
         """
+        if top_n <= 0:
+            return []
+
         collected_by_category: dict[int, float] = {}
         for bundle in bundles:
             collected_qty = float(max(bundle.collected, 0))
@@ -76,17 +78,12 @@ class SellerAnalytics():
         top_categories = sorted(
             collected_by_category.items(),
             key=lambda item: (-item[1], item[0]),
-        )[:5]
-
-        graph_points: list[tuple[float, int]] = []
-        for category, collected_qty in top_categories:
-            graph_points.append((collected_qty, category))
-
-        return graph_points
+        )[:top_n]
+        return [(collected_qty, category) for category, collected_qty in top_categories]
 
     def graph_time_window_distribution(
         self,
-        time_windows: list["SellerAnalytics.GraphTimeWindowDistributionBundlesModel"],
+        time_windows: list["SellerAnalytics.TimeWindowDistributionRow"],
         top_n: int = 5,
     ) -> list[tuple[float, str]]:
         """Return points for time-window distribution.
@@ -110,9 +107,4 @@ class SellerAnalytics():
             collected_by_window.items(),
             key=lambda item: (-item[1], item[0]),
         )[:top_n]
-
-        graph_points: list[tuple[float, str]] = []
-        for time_window, collected_qty in top_windows:
-            graph_points.append((collected_qty, time_window))
-
-        return graph_points
+        return [(collected_qty, time_window) for time_window, collected_qty in top_windows]
