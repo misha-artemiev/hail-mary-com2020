@@ -79,6 +79,8 @@ from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
+from aiostream import stream
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
@@ -286,3 +288,32 @@ async def get_consumer_badges(
             user_id=consumer.user_id
         )
     ]
+
+
+@router.get(
+    "/me/streaks",
+    status_code=200,
+    summary="Consumer streak",
+    description="Get consumer streak in number of weeks",
+    tags=["analytics"],
+)
+async def get_streaks(
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> int:
+    streak_count = 0
+    reservations = await stream.list(ReservationsQuerier(conn).get_consumers_reservations_full(
+        consumer_id=consumer.user_id
+    ))
+    if len(reservations) == 0:
+        return 0
+    reservations.sort(key=lambda reservation: reservation.window_end, reverse=True)
+    today = datetime.today()
+    monday = today - timedelta(days=today.weekday())
+    sunday = monday + timedelta(days=6)
+    for reservation in reservations:
+        if reservation.window_end < datetime.now(tz=timezone.utc):
+            continue
+        if reservation.collected_at is None:
+            break
+
