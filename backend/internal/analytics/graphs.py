@@ -1,132 +1,149 @@
 """Module for processing and formatting seller analytics data into graph points."""
 
-from datetime import date
-
+from datetime import date, time
+from typing import List
 from pydantic import BaseModel
 
+# --- INPUT MODELS ---
+
+class CategoryMetrics(BaseModel):
+    """Schema for category distribution data."""
+    category_id: int
+    collected_qty: int
+
+class DailySalesMetrics(BaseModel):
+    """Schema for daily sales and posting volume."""
+    day: date
+    sold_qty: int
+    posted_qty: int
+
+class TimeWindowMetrics(BaseModel):
+    """Schema for distribution across pickup windows."""
+    time_window: time  # Stored as a time object so 9:00 AM sorts before 10:00 AM
+    collected_qty: int
+
+# --- OUTPUT MODELS ---
+
+class SalesGraphPoint(BaseModel):
+    posted_qty: float
+    sold_qty: float
+
+class CategoryGraphPoint(BaseModel):
+    collected_qty: float
+    category_id: int
+
+class TimeWindowGraphPoint(BaseModel):
+    collected_qty: float
+    time_window: time
+
+class GaugeGraphPoint(BaseModel):
+    """Schema for a single percentage value (for a gauge/donut chart)."""
+    sell_through_percentage: float
+
+# --- THE ANALYTICS ENGINE ---
 
 class SellerAnalytics:
     """Module for processing and formatting seller analytics data into graph points."""
 
-    def __init__(self) -> None:
-        """Initialize the analytics processor.
-
-        Args:
-            consumer_id: Optional ID of the consumer for personalized analytics.
-        """
-
-    class CategoryDistributionRow(BaseModel):
-        """Schema for category distribution data."""
-
-        category: int
-        collected: int
-
-    class DailySalesRow(BaseModel):
-        """Schema for daily sales and posting volume."""
-
-        seller_id: int
-        day: date
-        sold_qty: int
-        posted_qty: int
-
-    class TimeWindowDistributionRow(BaseModel):
-        """Schema for distribution across pickup windows."""
-
-        time_window: str
-        collected: int
-
-    # Backward-compatible aliases for older names.
-    GraphCategoryDistriutionBundlesModel = CategoryDistributionRow
-    DailySalesBundlesModel = DailySalesRow
-    GraphTimeWindowDistributionBundlesModel = TimeWindowDistributionRow
-
     @staticmethod
     def graph_weekly_sales_vs_posted(
-        seller_id: int,
-        analysis_days: list[date],
-        daily_rows: list[SellerAnalytics.DailySalesRow],
-    ) -> list[tuple[float, float]]:
-        """Return coordinates for the requested days for one seller.
-
-        Args:
-            seller_id: The ID of the seller to analyze.
-            analysis_days: Dates to include in the graph.
-            daily_rows: Raw data rows from the database.
-
-        Returns:
-            List of tuples (posted_qty, sold_qty) as floats.
-        """
-        requested_days = set(analysis_days)
-        seller_rows = [
-            row
-            for row in daily_rows
-            if row.seller_id == seller_id and row.day in requested_days
+        daily_rows: List[DailySalesMetrics],
+    ) -> List[SalesGraphPoint]:
+        """Return coordinates for the provided days (Powers the Line Graph)."""
+        
+        # Sort the days chronologically so the line graph draws left-to-right correctly.
+        sorted_rows = sorted(daily_rows, key=lambda row: row.day)
+        
+        # Package the sorted data into our output format.
+        return [
+            SalesGraphPoint(
+                # max(value, 0) is a safety net: if a database error ever returns 
+                # a negative number (-5 items), we force it to be 0 so the graph doesn't break.
+                posted_qty=float(max(row.posted_qty, 0)),
+                sold_qty=float(max(row.sold_qty, 0))
+            )
+            for row in sorted_rows
         ]
-        rows_by_day = {row.day: row for row in seller_rows}
 
-        graph_points: list[tuple[float, float]] = []
-        for day in analysis_days:
-            row = rows_by_day.get(day)
-            posted_qty = 0.0 if row is None else float(max(row.posted_qty, 0))
-            sold_qty = 0.0 if row is None else float(max(row.sold_qty, 0))
-            graph_points.append((posted_qty, sold_qty))
+    @staticmethod
+    def graph_sell_through_rate(
+        daily_rows: List[DailySalesMetrics],
+    ) -> GaugeGraphPoint:
+        """Calculate the overall sell-through rate (Gauge/Donut Chart)."""
+        
+        # Add up all items posted and sold across the entire time period.
+        total_posted = sum(max(row.posted_qty, 0) for row in daily_rows)
+        total_sold = sum(max(row.sold_qty, 0) for row in daily_rows)
 
-        return graph_points
+        # Prevent a "Division by Zero" crash if the seller didn't post anything.
+        if total_posted == 0:
+            return GaugeGraphPoint(sell_through_percentage=0.0)
+
+        # Calculate the percentage.
+        # We use min(..., 100.0) to cap it at 100% just in case a data glitch 
+        # e.g., says they sold 10 items but only posted 8.
+        percentage = min((total_sold / total_posted) * 100.0, 100.0)
+        
+        # Round to 2 decimal places (e.g., 85.45) for frontend display.
+        return GaugeGraphPoint(sell_through_percentage=round(percentage, 2))
 
     @staticmethod
     def graph_category_distribution(
-        bundles: list[SellerAnalytics.CategoryDistributionRow], top_n: int = 5
-    ) -> list[tuple[float, int]]:
-        """Return points for category distribution.
-
-        Args:
-            bundles: Data rows for category analytics.
-            top_n: Number of top categories to return.
-
-        Returns:
-            List of tuples (collected_qty, category_id).
-        """
-        if top_n <= 0:
+        bundles: List[CategoryMetrics], top_n: int = 5
+    ) -> List[CategoryGraphPoint]:
+        """Return points for category distribution (Powers the Pie/Bar Chart)."""
+        
+        #if we don't want any results or have no data.
+        if top_n <= 0 or not bundles:
             return []
 
+        # Group all the raw rows together by their category ID.
         collected_by_category: dict[int, float] = {}
         for bundle in bundles:
-            collected_qty = float(max(bundle.collected, 0))
-            collected_by_category[bundle.category] = (
-                collected_by_category.get(bundle.category, 0.0) + collected_qty
-            )
+            qty = float(max(bundle.collected_qty, 0))
+            # If the category exists in the dictionary, add to it. Otherwise, start at 0.0 and add.
+            collected_by_category[bundle.category_id] = collected_by_category.get(bundle.category_id, 0.0) + qty
 
+        # Sort the categories to find the top performers.
+        # -item[1] means sort by the total quantity DESCENDING (biggest first).
+        # item[0] is the tie-breaker: sort by Category ID ASCENDING.
         top_categories = sorted(
-            collected_by_category.items(), key=lambda item: (-item[1], item[0])
-        )[:top_n]
-        return [(collected_qty, category) for category, collected_qty in top_categories]
+            collected_by_category.items(), 
+            key=lambda item: (-item[1], item[0])
+        )[:top_n]  # The [:top_n] chops off everything except the top winners
+        
+        # Package the winners into the output format.
+        return [
+            CategoryGraphPoint(collected_qty=qty, category_id=cat_id) 
+            for cat_id, qty in top_categories
+        ]
 
     @staticmethod
     def graph_time_window_distribution(
-        time_windows: list[SellerAnalytics.TimeWindowDistributionRow], top_n: int = 5
-    ) -> list[tuple[float, str]]:
-        """Return points for time-window distribution.
-
-        Args:
-            time_windows: Data rows for time window analytics.
-            top_n: Number of top windows to return.
-
-        Returns:
-            List of tuples (collected_qty, time_window).
-        """
-        if top_n <= 0:
+        time_windows: List[TimeWindowMetrics], top_n: int = 5
+    ) -> List[TimeWindowGraphPoint]:
+        """Return points for time-window distribution (Powers the Histogram/Bar Chart)."""
+        
+        #if we don't want any results or have no data.
+        if top_n <= 0 or not time_windows:
             return []
 
-        collected_by_window: dict[str, float] = {}
+        # Group the collections by their time window.
+        collected_by_window: dict[time, float] = {}
         for window in time_windows:
-            collected_qty = float(max(window.collected, 0))
-            collected_by_window[window.time_window] = (
-                collected_by_window.get(window.time_window, 0.0) + collected_qty
-            )
+            qty = float(max(window.collected_qty, 0))
+            collected_by_window[window.time_window] = collected_by_window.get(window.time_window, 0.0) + qty
 
+        # Sort by highest volume first. 
+        # Because we are using real 'time' objects, the tie-breaker (item[0]) 
+        # correctly understands that 9:00 AM comes before 10:00 AM.
         top_windows = sorted(
-            collected_by_window.items(), key=lambda item: (-item[1], item[0])
+            collected_by_window.items(), 
+            key=lambda item: (-item[1], item[0])
         )[:top_n]
+        
+        # Package into the output format.
         return [
-            (collected_qty, time_window) for time_window, collected_qty in top_windows
+            TimeWindowGraphPoint(collected_qty=qty, time_window=window) 
+            for window, qty in top_windows
         ]
