@@ -227,6 +227,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
                     "bundle_name": f"Surplus {fake.word().capitalize()} Bag",
+                    "carbon_dioxide": round(secure_rng.uniform(0.5, 8.0), 2),
                     "description": fake.sentence(nb_words=10),
                     "total_qty": secure_rng.randint(1, 4),
                     "price": round(secure_rng.uniform(3.00, 7.50), 2),
