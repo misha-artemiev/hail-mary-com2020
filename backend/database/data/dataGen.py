@@ -479,19 +479,24 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
                 # Pick the highest level the user achieved in this category
                 achieved_level = secure_rng.randint(1, max_level)
 
-                # Set a random start date for when they earned Level 1
-                current_date = START_DATE + timedelta(days=secure_rng.randint(1, 40))
+                # Calculate the total simulated time to reach this level
+                # Base 1-40 days for Level 1, plus 2-14 days for every level after that
+                progression_days = sum(
+                    secure_rng.randint(2, 14) for _ in range(1, achieved_level)
+                )
+                start_offset = secure_rng.randint(1, 40)
 
-                # Award badges chronologically from Level 1 up to their achieved_level
-                for lvl in range(1, achieved_level + 1):
-                    acquired.append({
-                        "user_id": userid,
-                        "badge_id": b_id,
-                        "level": lvl,
-                        "acquired_at": current_date,
-                    })
-                    # Add 2 to 14 days of simulated time before they earn the next level
-                    current_date += timedelta(days=secure_rng.randint(2, 14))
+                acquired_date = START_DATE + timedelta(
+                    days=start_offset + progression_days
+                )
+
+                # Append ONLY the highest achieved level
+                acquired.append({
+                    "user_id": userid,
+                    "badge_id": b_id,
+                    "level": achieved_level,
+                    "acquired_at": acquired_date,
+                })
 
     return pd.DataFrame(badge_data), pd.DataFrame(acquired)
 
