@@ -25,6 +25,7 @@ class TimeWindowMetrics(BaseModel):
 # --- OUTPUT MODELS ---
 
 class SalesGraphPoint(BaseModel):
+    day: date
     posted_qty: float
     sold_qty: float
 
@@ -59,6 +60,7 @@ class SellerAnalytics:
             SalesGraphPoint(
                 # max(value, 0) is a safety net: if a database error ever returns 
                 # a negative number (-5 items), we force it to be 0 so the graph doesn't break.
+                day=row.day,
                 posted_qty=float(max(row.posted_qty, 0)),
                 sold_qty=float(max(row.sold_qty, 0))
             )
