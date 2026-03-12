@@ -311,7 +311,6 @@ def generate_reservations(
             "consumer_id": secure_rng.choice(consumer_ids),
             "reserved_at": reserved_at,
             "claim_code": code,
-            "status": status,
             "collected_at": collected_at,
         })
 
