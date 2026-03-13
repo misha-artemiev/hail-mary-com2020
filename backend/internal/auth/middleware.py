@@ -17,6 +17,7 @@ from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.settings.env import auth_settings
 
+
 class BasicAuthResponse(BaseModel):
     """Response when user got authorised with email and password."""
 
@@ -139,9 +140,10 @@ def admin_auth(
         status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as admin"
     )
 
+
 def root_auth(
-    credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
-) -> bool:
+    credentials: HTTPBasicCredentials = Security(HTTPBasic()),
+) -> None:
     """Root user authentication.
 
     Args:
@@ -149,7 +151,9 @@ def root_auth(
 
     Returns:
         is root user
+
+    Raises:
+        HTTPException: if not root user
     """
-    if credentials.credentials == auth_settings.root_credentials:
-        return True
-    return False
+    if ("" in (auth_settings.root_username, auth_settings.root_password)) or not (credentials.username == auth_settings.root_username and credentials.password == auth_settings.root_password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authorised as root admin")

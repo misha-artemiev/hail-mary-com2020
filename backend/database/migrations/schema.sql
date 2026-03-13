@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS admins (
     user_id INT NOT NULL,
     fName VARCHAR(100) NOT NULL,
     lName VARCHAR(100) NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

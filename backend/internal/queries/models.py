@@ -76,6 +76,7 @@ class Admin(pydantic.BaseModel):
     user_id: int
     fname: str
     lname: str
+    active: Optional[bool]
 
 
 class AdminIssueReport(pydantic.BaseModel):

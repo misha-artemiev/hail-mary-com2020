@@ -1,4 +1,4 @@
-badgesRules:
+badges_rules:
   - badge_id: 0
     badge_name: 'Green Starter | Rescue 1 meal'
     rules:
