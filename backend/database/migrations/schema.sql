@@ -256,8 +256,8 @@ CREATE TABLE IF NOT EXISTS analytics_graphs_types (
     graph_type_id SERIAL PRIMARY KEY,
     chart_type chart_type NOT NULL,
     graph_summary VARCHAR(255) NOT NULL,
-    x_axis_label VARCHAR(255) NOT NULL,
-    y_axis_label VARCHAR(255) NOT NULL
+    x_axis_label VARCHAR(255),
+    y_axis_label VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS analytics_graphs (
@@ -272,8 +272,8 @@ CREATE TABLE IF NOT EXISTS analytics_graphs (
 CREATE TABLE IF NOT EXISTS analytics_series (
     series_id SERIAL PRIMARY KEY,
     graph_id INT NOT NULL,
-    sort_index INT NOT NULL,
     series_name VARCHAR(255) NOT NULL,
+    sort_index INT NOT NULL,
     FOREIGN KEY (graph_id) REFERENCES analytics_graphs(graph_id) ON DELETE CASCADE
 );
 
