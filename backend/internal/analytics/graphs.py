@@ -70,7 +70,7 @@ class SellerAnalytics:
     def graph_weekly_sales_vs_posted(
         daily_rows: list[DailySalesMetrics],
     ) -> list[SalesGraphPoint]:
-        """Return coordinates for the provided days (Line Graph)."""
+        """Return coordinates for the provided days (Multi Line Graph)."""
         # Sort the days chronologically so the line graph draws left-to-right correctly.
         sorted_rows = sorted(daily_rows, key=lambda row: row.day)
 
