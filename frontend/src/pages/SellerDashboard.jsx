@@ -3,15 +3,73 @@
  * @author Thomas Noakes
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
 import useSellerBundles from "../hooks/useSellerBundles";
+import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 
 import Card from "../components/Card";
 import Button from "../components/forms/Button";
+import Reservation from "../components/Reservation";
+
+function BundleRow({ bundle }) {
+    const [showReservations, setShowReservations] = useState(false);
+    const { sellerReservations } = useSellerBundleReservations(
+        bundle.bundle_id,
+    );
+
+    return (
+        <>
+            <tr
+                className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setShowReservations(!showReservations)}
+            >
+                <td className="py-3 px-4">{bundle.bundle_name}</td>
+                <td className="py-3 px-4">£{bundle.price}</td>
+                <td className="py-3 px-4">{bundle.total_qty}</td>
+                <td className="py-3 px-4">{bundle.discount_percentage}%</td>
+                <td className="py-3 px-4">
+                    {new Date(bundle.window_start).toLocaleString()}
+                </td>
+                <td className="py-3 px-4">
+                    {new Date(bundle.window_end).toLocaleString()}
+                </td>
+            </tr>
+            {showReservations && (
+                <tr key={`${bundle.bundle_id}-reservations`}>
+                    <td colSpan={6} className="py-4 px-4 bg-gray-50">
+                        <div className="ml-4">
+                            <h4 className="text-sm font-semibold text-gray-600 mb-2">
+                                Reservations ({sellerReservations.length})
+                            </h4>
+                            {sellerReservations.length === 0 ? (
+                                <p className="text-gray-500 text-sm">
+                                    No reservations yet.
+                                </p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {sellerReservations.map((reservation) => (
+                                        <Reservation
+                                            key={reservation.reservation_id}
+                                            id={reservation.reservation_id}
+                                            reserved_at={
+                                                reservation.reserved_at
+                                            }
+                                            claimCode={reservation.claim_code}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
+}
 
 export default function SellerDashboard() {
     const { userRole } = useAuth();
@@ -91,33 +149,10 @@ export default function SellerDashboard() {
                             </thead>
                             <tbody>
                                 {bundles.map((bundle) => (
-                                    <tr
+                                    <BundleRow
                                         key={bundle.bundle_id}
-                                        className="border-b border-gray-200 hover:bg-gray-50"
-                                    >
-                                        <td className="py-3 px-4">
-                                            {bundle.bundle_name}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            £{bundle.price}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {bundle.total_qty}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {bundle.discount_percentage}%
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {new Date(
-                                                bundle.window_start,
-                                            ).toLocaleString()}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {new Date(
-                                                bundle.window_end,
-                                            ).toLocaleString()}
-                                        </td>
-                                    </tr>
+                                        bundle={bundle}
+                                    />
                                 ))}
                             </tbody>
                         </table>
