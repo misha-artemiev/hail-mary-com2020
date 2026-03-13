@@ -60,15 +60,15 @@ badges_rules:
       - level: 1
         type: 'quantity'
         quantity: 5
-        category_id: <dessert_category_id>
+        category_id: 6
       - level: 2
         type: 'quantity'
         quantity: 10
-        category_id: <dessert_category_id>
+        category_id: 6
       - level: 3
         type: 'quantity'
         quantity: 20
-        category_id: <dessert_category_id>
+        category_id: 6
 
   - badge_id: 6
     badge_name: 'CO2 Cutter | Save CO2'

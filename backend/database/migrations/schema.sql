@@ -265,7 +265,7 @@ CREATE TABLE IF NOT EXISTS analytics_graphs (
     seller_id INT NOT NULL,
     graph_type INT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (seller_id) REFERENCES sellers(seller_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE,
     FOREIGN KEY (graph_type) REFERENCES analytics_graphs_types(graph_type_id) ON DELETE CASCADE
 );
 
