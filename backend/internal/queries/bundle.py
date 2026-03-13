@@ -14,8 +14,8 @@ from internal.queries import models
 
 
 CREATE_BUNDLE = """-- name: create_bundle \\:one
-INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
-VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8)
+INSERT INTO bundles (seller_id, bundle_name, description, total_qty, carbon_dioxide, price, discount_percentage, window_start, window_end)
+VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9)
 RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
@@ -25,6 +25,7 @@ class CreateBundleParams(pydantic.BaseModel):
     bundle_name: str
     description: str
     total_qty: int
+    carbon_dioxide: float
     price: decimal.Decimal
     discount_percentage: int
     window_start: datetime.datetime
@@ -111,10 +112,11 @@ class AsyncQuerier:
             "p2": arg.bundle_name,
             "p3": arg.description,
             "p4": arg.total_qty,
-            "p5": arg.price,
-            "p6": arg.discount_percentage,
-            "p7": arg.window_start,
-            "p8": arg.window_end,
+            "p5": arg.carbon_dioxide,
+            "p6": arg.price,
+            "p7": arg.discount_percentage,
+            "p8": arg.window_start,
+            "p9": arg.window_end,
         })).first()
         if row is None:
             return None

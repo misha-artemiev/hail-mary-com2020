@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS bundles (
     seller_id INT NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    carbon_dioxide FLOAT NOT NULL,
+    carbon_dioxide INT NOT NULL,
     total_qty INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     discount_percentage INT NOT NULL,

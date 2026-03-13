@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks
 from pydantic import BaseModel
 
 from internal.database.manager import database_manager
-from internal.queries.badge import AcquireBadgeParams, GetConsumerBadgesRow
+from internal.queries.badge import AcquireBadgeParams, GetConsumerBadgesRow, UpdateBadgeLevelParams
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
@@ -280,12 +280,22 @@ class BadgeEngine:
                         )
                 if not to_acquire:
                     continue
-                acquired_badge = await BadgeQuerier(conn).acquire_badge(
-                    AcquireBadgeParams(
-                        user_id=consumer_id,
-                        badge_id=acquire_badge.badge_id,
-                        level=acquire_badge.rule.level,
+                acquired_badge = None
+                if acquire_badge.rule.level == 1:
+                    acquired_badge = await BadgeQuerier(conn).acquire_badge(
+                        AcquireBadgeParams(
+                            user_id=consumer_id,
+                            badge_id=acquire_badge.badge_id,
+                            level=acquire_badge.rule.level,
+                        )
                     )
-                )
+                else:
+                    acquired_badge = await BadgeQuerier(conn).update_badge_level(
+                        UpdateBadgeLevelParams(
+                            user_id=consumer_id,
+                            badge_id=acquire_badge.badge_id,
+                            level=acquire_badge.rule.level,
+                        )
+                    )
                 if not acquired_badge:
                     raise ValueError("Failed to insert acquire badge record")

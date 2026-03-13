@@ -227,7 +227,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
                     "bundle_name": f"Surplus {fake.word().capitalize()} Bag",
-                    "carbon_dioxide": round(secure_rng.uniform(0.5, 8.0), 2),
+                    "carbon_dioxide": round(secure_rng.randint(500, 8000), 2),
                     "description": fake.sentence(nb_words=10),
                     "total_qty": secure_rng.randint(1, 4),
                     "price": round(secure_rng.uniform(3.00, 7.50), 2),
@@ -428,33 +428,33 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
     # base badge definitions
     badge_data = [
         {
-            "badge_id": 1,
+            "badge_id": 0,
             "name": "Green Starter",
             "description": "Rescue your first meal",
         },
         {
-            "badge_id": 2,
+            "badge_id": 1,
             "name": "Local Hero",
             "description": "Rescue from multiple different sellers",
         },
         {
-            "badge_id": 3,
+            "badge_id": 2,
             "name": "Variety explorer",
             "description": "Rescue food from multiple categories",
         },
         {
-            "badge_id": 4,
+            "badge_id": 3,
             "name": "Food Savior",
             "description": "Save food multiple days in a row",
         },
-        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
+        {"badge_id": 4, "name": "Sweet Tooth", "description": "Save multiple desserts"},
         {
-            "badge_id": 6,
+            "badge_id": 5,
             "name": "CO2 Cutter",
             "description": "Save significant amounts of CO2",
         },
         {
-            "badge_id": 7,
+            "badge_id": 6,
             "name": "Right On Time",
             "description": "Consistently save meals without no-shows",
         },
