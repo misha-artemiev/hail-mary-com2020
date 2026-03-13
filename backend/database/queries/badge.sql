@@ -18,3 +18,9 @@ FROM badges;
 INSERT INTO badges_acquired (user_id, badge_id, level)
 VALUES ($1, $2, $3)
 RETURNING *;
+
+-- name: UpdateBadgeLevel :one
+UPDATE badges_acquired
+SET level=$1
+WHERE user_id=$2 AND badge_id=$3
+RETURNING *;
