@@ -45,7 +45,7 @@ sequenceDiagram
     deactivate database.py
     database.py->>sessions.py: yield connection
     activate database.py
-    sessions.py->>token.py: create_token()
+    sessions.py->>token.py: await create_token()
     activate token.py
     token.py->>security.py: generate_token()
     activate security.py
@@ -110,7 +110,7 @@ sequenceDiagram
     deactivate database.py
     database.py->>sessions.py: yield connection
     activate database.py
-    sessions.py->>token.py: delete_token()
+    sessions.py->>token.py: await delete_token()
     activate token.py
     token.py->>tq: Querier.delete_token()
     activate tq
@@ -132,7 +132,7 @@ sequenceDiagram
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Response, Security
+from fastapi import APIRouter, Security, status
 from internal.auth.middleware import BasicAuthResponse, basic_auth, bearer_auth
 from internal.auth.token import create_token, delete_token
 from internal.database.dependency import database_dependency
@@ -151,8 +151,14 @@ class TokenResponseModel(BaseModel):
     role: UserRole
 
 
-@router.post("", response_model=TokenResponseModel, status_code=201)
-def create_session(
+@router.post(
+    "",
+    response_model=TokenResponseModel,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create session",
+    description="Authenticates a user and creates a new session token.",
+)
+async def create_session(
     conn: database_dependency, user: Annotated[BasicAuthResponse, Security(basic_auth)]
 ) -> TokenResponseModel:
     """Create session if user exists.
@@ -164,25 +170,26 @@ def create_session(
     Returns:
       user session information
     """
-    token = create_token(user.user_id, conn)
+    token = await create_token(user.user_id, conn)
     return TokenResponseModel(
         token=token.token, expires_at=token.expires_at, role=user.role
     )
 
 
-@router.delete("", status_code=200)
-def delete_session(
+@router.delete(
+    "",
+    status_code=status.HTTP_200_OK,
+    summary="Delete session",
+    description="Deletes the current authenticated session token.",
+)
+async def delete_session(
     conn: database_dependency,
     session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> Response:
+) -> None:
     """Delete session from database.
 
     Args:
       conn: database connection
       session: authorised users information
-
-    Returns:
-      when user session was deleted
     """
-    delete_token(session.token, conn)
-    return Response("Session was deleted", 200)
+    await delete_token(session.token, conn)

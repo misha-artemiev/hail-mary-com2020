@@ -2,9 +2,10 @@
 # versions:
 #   sqlc v1.30.0
 # source: category.sql
-from typing import Iterator
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
@@ -19,24 +20,43 @@ WHERE b.bundle_id=:p1
 
 
 GET_CATEGORIES = """-- name: get_categories \\:many
-SELECT category_id, category_name
+SELECT category_id, category_name, category_coefficient
 FROM category
 """
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+GET_CATEGORY = """-- name: get_category \\:one
+SELECT category_id, category_name, category_coefficient
+FROM category
+WHERE category_id=:p1
+LIMIT 1
+"""
+
+
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def get_bundle_categories(self, *, bundle_id: int) -> Iterator[int]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_CATEGORIES), {"p1": bundle_id})
-        for row in result:
+    async def get_bundle_categories(self, *, bundle_id: int) -> AsyncIterator[int]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLE_CATEGORIES), {"p1": bundle_id})
+        async for row in result:
             yield row[0]
 
-    def get_categories(self) -> Iterator[models.Category]:
-        result = self._conn.execute(sqlalchemy.text(GET_CATEGORIES))
-        for row in result:
+    async def get_categories(self) -> AsyncIterator[models.Category]:
+        result = await self._conn.stream(sqlalchemy.text(GET_CATEGORIES))
+        async for row in result:
             yield models.Category(
                 category_id=row[0],
                 category_name=row[1],
+                category_coefficient=row[2],
             )
+
+    async def get_category(self, *, category_id: int) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_CATEGORY), {"p1": category_id})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )

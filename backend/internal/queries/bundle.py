@@ -5,17 +5,18 @@
 import datetime
 import decimal
 import pydantic
-from typing import Iterator, Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
 
 
 CREATE_BUNDLE = """-- name: create_bundle \\:one
-INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
-VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8)
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+INSERT INTO bundles (seller_id, bundle_name, description, total_qty, carbon_dioxide, price, discount_percentage, window_start, window_end)
+VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9)
+RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -24,6 +25,7 @@ class CreateBundleParams(pydantic.BaseModel):
     bundle_name: str
     description: str
     total_qty: int
+    carbon_dioxide: float
     price: decimal.Decimal
     discount_percentage: int
     window_start: datetime.datetime
@@ -31,7 +33,7 @@ class CreateBundleParams(pydantic.BaseModel):
 
 
 GET_BUNDLE = """-- name: get_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 LIMIT 1
@@ -39,7 +41,7 @@ LIMIT 1
 
 
 GET_BUNDLE_LOCK = """-- name: get_bundle_lock \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE bundle_id=:p1
 FOR UPDATE
@@ -48,20 +50,20 @@ LIMIT 1
 
 
 GET_BUNDLES = """-- name: get_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 """
 
 
 GET_SELLERS_ACTIVE_BUNDLES = """-- name: get_sellers_active_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1 AND window_end >= NOW()
 """
 
 
 GET_SELLERS_BUNDLE = """-- name: get_sellers_bundle \\:one
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1 AND bundle_id=:p2
 LIMIT 1
@@ -74,7 +76,7 @@ class GetSellersBundleParams(pydantic.BaseModel):
 
 
 GET_SELLERS_BUNDLES = """-- name: get_sellers_bundles \\:many
-SELECT bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+SELECT bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 FROM bundles
 WHERE seller_id=:p1
 """
@@ -84,7 +86,7 @@ UPDATE_BUNDLE = """-- name: update_bundle \\:one
 UPDATE bundles
 SET bundle_name=:p3, description=:p4, total_qty=:p5, price=:p6, discount_percentage=:p7, window_start=:p8, window_end=:p9
 WHERE bundle_id=:p1 AND seller_id=:p2
-RETURNING bundle_id, seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end, created_at
+RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
 
 
@@ -100,21 +102,22 @@ class UpdateBundleParams(pydantic.BaseModel):
     window_end: datetime.datetime
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def create_bundle(self, arg: CreateBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(CREATE_BUNDLE), {
+    async def create_bundle(self, arg: CreateBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_BUNDLE), {
             "p1": arg.seller_id,
             "p2": arg.bundle_name,
             "p3": arg.description,
             "p4": arg.total_qty,
-            "p5": arg.price,
-            "p6": arg.discount_percentage,
-            "p7": arg.window_start,
-            "p8": arg.window_end,
-        }).first()
+            "p5": arg.carbon_dioxide,
+            "p6": arg.price,
+            "p7": arg.discount_percentage,
+            "p8": arg.window_start,
+            "p9": arg.window_end,
+        })).first()
         if row is None:
             return None
         return models.Bundle(
@@ -122,16 +125,17 @@ class Querier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
-    def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_BUNDLE), {"p1": bundle_id}).first()
+    async def get_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_BUNDLE), {"p1": bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -139,16 +143,17 @@ class Querier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
-    def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_BUNDLE_LOCK), {"p1": bundle_id}).first()
+    async def get_bundle_lock(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_BUNDLE_LOCK), {"p1": bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -156,48 +161,51 @@ class Querier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
-    def get_bundles(self) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLES))
-        for row in result:
+    async def get_bundles(self) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLES))
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
-    def get_sellers_active_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_ACTIVE_BUNDLES), {"p1": seller_id})
-        for row in result:
+    async def get_sellers_active_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLERS_ACTIVE_BUNDLES), {"p1": seller_id})
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
-    def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLE), {"p1": arg.seller_id, "p2": arg.bundle_id}).first()
+    async def get_sellers_bundle(self, arg: GetSellersBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLE), {"p1": arg.seller_id, "p2": arg.bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -205,32 +213,34 @@ class Querier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )
 
-    def get_sellers_bundles(self, *, seller_id: int) -> Iterator[models.Bundle]:
-        result = self._conn.execute(sqlalchemy.text(GET_SELLERS_BUNDLES), {"p1": seller_id})
-        for row in result:
+    async def get_sellers_bundles(self, *, seller_id: int) -> AsyncIterator[models.Bundle]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLERS_BUNDLES), {"p1": seller_id})
+        async for row in result:
             yield models.Bundle(
                 bundle_id=row[0],
                 seller_id=row[1],
                 bundle_name=row[2],
                 description=row[3],
-                total_qty=row[4],
-                price=row[5],
-                discount_percentage=row[6],
-                window_start=row[7],
-                window_end=row[8],
-                created_at=row[9],
+                carbon_dioxide=row[4],
+                total_qty=row[5],
+                price=row[6],
+                discount_percentage=row[7],
+                window_start=row[8],
+                window_end=row[9],
+                created_at=row[10],
             )
 
-    def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
-        row = self._conn.execute(sqlalchemy.text(UPDATE_BUNDLE), {
+    async def update_bundle(self, arg: UpdateBundleParams) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_BUNDLE), {
             "p1": arg.bundle_id,
             "p2": arg.seller_id,
             "p3": arg.bundle_name,
@@ -240,7 +250,7 @@ class Querier:
             "p7": arg.discount_percentage,
             "p8": arg.window_start,
             "p9": arg.window_end,
-        }).first()
+        })).first()
         if row is None:
             return None
         return models.Bundle(
@@ -248,10 +258,11 @@ class Querier:
             seller_id=row[1],
             bundle_name=row[2],
             description=row[3],
-            total_qty=row[4],
-            price=row[5],
-            discount_percentage=row[6],
-            window_start=row[7],
-            window_end=row[8],
-            created_at=row[9],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
         )

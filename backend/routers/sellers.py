@@ -28,7 +28,7 @@ sequenceDiagram
     activate sellers.py
     dd->>sellers.py: yield connection
     activate dd
-    sellers.py->>creation.py: create_seller()
+    sellers.py->>creation.py: await create_seller()
     activate creation.py
     creation.py->>creation.py: create_user()
     creation.py->>security.py: hash_password()
@@ -65,40 +65,117 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
+from internal.badges.engine import BadgeEngine
 from internal.database.dependency import database_dependency
+from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.bundle import (
     CreateBundleParams,
     GetSellersBundleParams,
     UpdateBundleParams,
 )
-from internal.queries.bundle import Querier as BundleQuerier
 from internal.queries.models import Bundle, Reservation
+from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
-from internal.queries.reservations import Querier as ReservationsQuerier
+from internal.queries.seller import AsyncQuerier as SellerQuerier
+from internal.queries.seller import GetSellerRow, GetSellersRow
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
 
-@router.post("", status_code=201)
-async def register_seller(
-    form: CreateSellerForm, conn: database_dependency
-) -> Response:
+@router.get(
+    "",
+    status_code=status.HTTP_200_OK,
+    summary="Get all sellers",
+    description="Retrieves a list of all registered sellers.",
+)
+async def get_sellers(conn: database_dependency) -> list[GetSellersRow]:
+    """Get all sellers.
+
+    Args:
+      conn: database connection
+
+    Returns:
+      list of all sellers
+    """
+    return [seller async for seller in SellerQuerier(conn).get_sellers()]
+
+
+@router.get(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Get authenticated seller",
+    description="Retrieves the profile of the authenticated seller.",
+)
+async def get_seller_me(
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> GetSellerRow:
+    """Get authenticated seller profile.
+
+    Args:
+      conn: database connection
+      seller: sellers session
+
+    Returns:
+      seller profile
+
+    Raises:
+      HTTPException: if seller not found
+    """
+    seller_profile = await SellerQuerier(conn).get_seller(user_id=seller.user_id)
+    if not seller_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seller profile not found"
+        )
+    return seller_profile
+
+
+@router.get(
+    "/{seller_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get seller by ID",
+    description="Retrieves the profile of a seller by their unique ID.",
+)
+async def get_seller_by_id(seller_id: int, conn: database_dependency) -> GetSellerRow:
+    """Get seller profile by ID.
+
+    Args:
+      seller_id: unique identifier of the seller
+      conn: database connection
+
+    Returns:
+      seller profile
+
+    Raises:
+      HTTPException: if seller not found
+    """
+    seller_profile = await SellerQuerier(conn).get_seller(user_id=seller_id)
+    if not seller_profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Seller not found"
+        )
+    return seller_profile
+
+
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register seller",
+    description="Creates a new seller and their corresponding user entity.",
+)
+async def register_seller(form: CreateSellerForm, conn: database_dependency) -> None:
     """Creates seller and coressponding user.
 
     Args:
       form: signup form from user
       conn: database connection
-
-    Returns:
-      if seller was registered
     """
-    _ = create_seller(form, conn)
-    return Response("Seller was registered", 201)
+    _ = await create_seller(form, conn)
 
 
 class BundleForm(BaseModel):
@@ -109,11 +186,18 @@ class BundleForm(BaseModel):
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
     discount_percentage: int = Field(lt=100, gt=0)
+    carbon_dioxide: float  # TEMPORARY INSTEAD OF WEIGHT
     window_start: datetime
     window_end: datetime
 
 
-@router.post("/me/bundles", tags=["bundles"])
+@router.post(
+    "/me/bundles",
+    tags=["bundles"],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create bundle",
+    description="Creates a new bundle for the authenticated seller.",
+)
 async def create_bundle(
     form: BundleForm,
     conn: database_dependency,
@@ -132,24 +216,34 @@ async def create_bundle(
     Raises:
       HTTPException: if failed to create bundle
     """
-    bundle = BundleQuerier(conn).create_bundle(
+    bundle = await BundleQuerier(conn).create_bundle(
         CreateBundleParams(
             seller_id=seller.user_id,
             bundle_name=form.bundle_name,
             description=form.description,
             total_qty=form.total_qty,
             price=form.price,
+            carbon_dioxide=form.carbon_dioxide,
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
         )
     )
     if not bundle:
-        raise HTTPException(500, "failed to crete bundle")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create bundle",
+        )
     return bundle
 
 
-@router.patch("/me/bundles/{bundle_id}", tags=["bundles"])
+@router.patch(
+    "/me/bundles/{bundle_id}",
+    tags=["bundles"],
+    status_code=status.HTTP_200_OK,
+    summary="Update bundle",
+    description="Updates an existing bundle for the authenticated seller.",
+)
 async def update_bundle(
     bundle_id: str,
     form: BundleForm,
@@ -170,7 +264,7 @@ async def update_bundle(
     Raises:
       HTTPException: if failed to update bundle
     """
-    bundle = BundleQuerier(conn).update_bundle(
+    bundle = await BundleQuerier(conn).update_bundle(
         UpdateBundleParams(
             bundle_id=int(bundle_id),
             seller_id=seller.user_id,
@@ -184,11 +278,19 @@ async def update_bundle(
         )
     )
     if not bundle:
-        raise HTTPException(406, "failed to update bundle")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bundle not found or not owned by seller",
+        )
     return bundle
 
 
-@router.get("/me/bundles")
+@router.get(
+    "/me/bundles",
+    status_code=status.HTTP_200_OK,
+    summary="Get seller bundles",
+    description="Retrieves all bundles created by the authenticated seller.",
+)
 async def get_bundles(
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
@@ -205,13 +307,30 @@ async def get_bundles(
     Raises:
       HTTPException: if failed to get bundles
     """
-    bundles = BundleQuerier(conn).get_sellers_bundles(seller_id=seller.user_id)
-    if not bundles:
-        raise HTTPException(500, "failed to get bundles")
+    bundles = [
+        item
+        async for item in BundleQuerier(conn).get_sellers_bundles(
+            seller_id=seller.user_id
+        )
+    ]
+    if bundles is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get bundles",
+        )
     return list(bundles)
 
 
-@router.get("/me/bundles/{bundle_id}/reservations", tags=["reservations"])
+@router.get(
+    "/me/bundles/{bundle_id}/reservations",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle reservations",
+    description=(
+        "Retrieves all reservations for a specific bundle owned "
+        "by the authenticated seller."
+    ),
+)
 async def get_reservations(
     bundle_id: str,
     conn: database_dependency,
@@ -230,25 +349,40 @@ async def get_reservations(
     Raises:
         HTTPException: if failed to get reservations
     """
-    bundle = BundleQuerier(conn).get_sellers_bundle(
+    bundle = await BundleQuerier(conn).get_sellers_bundle(
         GetSellersBundleParams(bundle_id=int(bundle_id), seller_id=seller.user_id)
     )
     if not bundle:
-        raise HTTPException(500, "failed to find bundle")
-    reservations = ReservationsQuerier(conn).get_bundle_reservations(
-        bundle_id=bundle.bundle_id
-    )
-    if not reservations:
-        raise HTTPException(500, "failed to find bundle reservations")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
+    reservations = [
+        item
+        async for item in ReservationsQuerier(conn).get_bundle_reservations(
+            bundle_id=bundle.bundle_id
+        )
+    ]
+    if reservations is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to find bundle reservations",
+        )
     return list(reservations)
 
 
-@router.patch("/me/bundles/{bundle_id}/reservations/collect", tags=["reservations"])
+@router.patch(
+    "/me/bundles/{bundle_id}/reservations/collect",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Collect reservation",
+    description="Confirms the collection of a reservation using a claim code.",
+)
 async def reservation_collection(
     bundle_id: str,
     claim_code: str,
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    badge_engine: Annotated[BadgeEngine, Depends(BadgeEngine)],
 ) -> Reservation:
     """Confirm reservation collection.
 
@@ -257,6 +391,7 @@ async def reservation_collection(
         claim_code: claim code
         conn: database connection
         seller: sellers session
+        badge_engine: badge acquiry engine
 
     Returns:
       confirmed claimed reservation
@@ -265,17 +400,26 @@ async def reservation_collection(
       HTTPException: if failed to collect reservation
     """
     reservation_querier = ReservationsQuerier(conn)
-    reservation = reservation_querier.get_reservation_collection(
+    reservation = await reservation_querier.get_reservation_collection(
         GetReservationCollectionParams(bundle_id=int(bundle_id), claim_code=claim_code)
     )
     if not reservation:
-        raise HTTPException(500, "failed to find reservation")
-    bundle = BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Reservation not found"
+        )
+    bundle = await BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
     if not bundle or bundle.seller_id != seller.user_id:
-        raise HTTPException(500, "failed to find bundle")
-    claimed_reservation = reservation_querier.collect_reservation(
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
+    claimed_reservation = await reservation_querier.collect_reservation(
         reservation_id=reservation.reservation_id
     )
     if not claimed_reservation:
-        raise HTTPException(500, "failed to update reservation status")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update reservation status",
+        )
+    await conn.commit()
+    badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation
