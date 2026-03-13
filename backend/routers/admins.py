@@ -36,7 +36,8 @@ async def register_admin(
     "/{admin_id}",
     status_code=status.HTTP_200_OK,
     summary="Deactivate admin",
-    description="Deactivate admin by root user"
+    description="Deactivate admin by root user",
+    tags=["root admin"],
 )
 async def deactivate_admin(admin_id: int, conn: database_dependency, _: Annotated[None, Security(root_auth)]) -> Admin:
     """Deactivate admin.
