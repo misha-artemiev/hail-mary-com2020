@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-"""@private"""
+SETTINGS_BASE_DIR = Path(__file__).parent
 
 
 class HostSettings(BaseSettings):
@@ -62,7 +62,7 @@ class AuthSettings(BaseSettings):
 class BadgesSettings(BaseSettings):
     """Settings for badges."""
 
-    rules_path: Path = Path("./internal/settings/badges_rules.yaml")
+    rules_path: Path = Path(__file__).parent / "badges_rules.yaml"
 
     model_config = SettingsConfigDict(
         env_prefix="BADGES",
