@@ -150,7 +150,8 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
         logger.info("inserting categories")
         for category in CATEGORIES:
             conn.execute(
-                "INSERT INTO category (category_id, category_name, category_coefficient) "
+                "INSERT INTO category "
+                "(category_id, category_name, category_coefficient)"
                 "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 (category["cat_id"], category["name"], category["coefficient"]),
             )
