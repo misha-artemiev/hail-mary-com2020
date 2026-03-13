@@ -171,7 +171,7 @@ class BundleCategory(pydantic.BaseModel):
 class Category(pydantic.BaseModel):
     category_id: int
     category_name: str
-    category_coeficiente: float
+    category_coefficient: float
 
 
 class Consumer(pydantic.BaseModel):

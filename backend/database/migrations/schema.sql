@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS bundle_allergens (
 CREATE TABLE IF NOT EXISTS category (
     category_id SERIAL PRIMARY KEY,
     category_name VARCHAR(100) NOT NULL UNIQUE,
-    category_coeficiente FLOAT NOT NULL
+    category_coefficient FLOAT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bundle_category (

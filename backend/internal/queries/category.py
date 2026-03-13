@@ -20,13 +20,13 @@ WHERE b.bundle_id=:p1
 
 
 GET_CATEGORIES = """-- name: get_categories \\:many
-SELECT category_id, category_name, category_coeficiente
+SELECT category_id, category_name, category_coefficient
 FROM category
 """
 
 
 GET_CATEGORY = """-- name: get_category \\:one
-SELECT category_id, category_name, category_coeficiente
+SELECT category_id, category_name, category_coefficient
 FROM category
 WHERE category_id=:p1
 LIMIT 1
@@ -48,7 +48,7 @@ class AsyncQuerier:
             yield models.Category(
                 category_id=row[0],
                 category_name=row[1],
-                category_coeficiente=row[2],
+                category_coefficient=row[2],
             )
 
     async def get_category(self, *, category_id: int) -> Optional[models.Category]:
@@ -58,5 +58,5 @@ class AsyncQuerier:
         return models.Category(
             category_id=row[0],
             category_name=row[1],
-            category_coeficiente=row[2],
+            category_coefficient=row[2],
         )
