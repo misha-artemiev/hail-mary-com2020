@@ -39,7 +39,7 @@ export default function User() {
     // Display a temporary loading indicator
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <Card>Loading user...</Card>
             </div>
         );
@@ -49,7 +49,7 @@ export default function User() {
     if (!user) {
         return (
             // TODO: better error page
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <Card>User {username} not found!</Card>
             </div>
         );
@@ -84,7 +84,7 @@ export default function User() {
         ));
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto p-4 md:p-6">
             {/* User info container */}
             <Card>
                 <div className="text-center mb-6">
