@@ -61,6 +61,7 @@ sequenceDiagram
 ```
 """
 
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Security, status
@@ -77,6 +78,7 @@ from internal.queries.consumer import (
 )
 from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
+from internal.queries.reservations import GetConsumersReservationsFullRow
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
@@ -286,3 +288,57 @@ async def get_consumer_badges(
             user_id=consumer.user_id
         )
     ]
+
+
+@router.get(
+    "/me/streaks",
+    status_code=200,
+    summary="Consumer streak",
+    description="Get consumer streak in number of weeks",
+    tags=["analytics"],
+)
+async def get_streaks(
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> int:
+    """Get consumer collection streak in number of weeks.
+
+    Args:
+        conn: database connection
+        consumer: consumer session
+
+    Returns:
+        number of weeks
+    """
+    reservations: list[GetConsumersReservationsFullRow] = [
+        reservation
+        async for reservation in ReservationsQuerier(
+            conn
+        ).get_consumers_reservations_full(consumer_id=consumer.user_id)
+    ]
+    if len(reservations) == 0:
+        return 0
+    reservations.sort(key=lambda reservation: reservation.window_end, reverse=True)
+    streak_count = 0
+    last_counted_week = None
+    today = datetime.now(tz=UTC)
+    last_week = (today - timedelta(weeks=1)).isocalendar()[:2]
+    anchor_date = today
+    for reservation in reservations:
+        if reservation.window_end > today:
+            continue
+        if reservation.collected_at is None:
+            break
+        check_week = reservation.window_start.date().isocalendar()[:2]
+        if check_week == last_counted_week:
+            continue
+        if last_counted_week is None and check_week == last_week:
+            anchor_date = today - timedelta(weeks=1)
+        expected_week = (anchor_date - timedelta(weeks=streak_count)).isocalendar()[:2]
+        if check_week == expected_week:
+            streak_count += 1
+            last_counted_week = check_week
+        else:
+            break
+
+    return streak_count

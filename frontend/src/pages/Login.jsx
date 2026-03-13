@@ -100,7 +100,7 @@ export default function Login() {
         ));
 
     return (
-        <div className="max-w-xl mx-auto p-6">
+        <div className="max-w-xl mx-auto p-4 md:p-6">
             {/* Login container */}
             <Card>
                 {/* Warning, if from 'protected' page */}

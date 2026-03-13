@@ -2,7 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: category.sql
-from typing import AsyncIterator
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
@@ -20,8 +20,16 @@ WHERE b.bundle_id=:p1
 
 
 GET_CATEGORIES = """-- name: get_categories \\:many
-SELECT category_id, category_name
+SELECT category_id, category_name, category_coefficient
 FROM category
+"""
+
+
+GET_CATEGORY = """-- name: get_category \\:one
+SELECT category_id, category_name, category_coefficient
+FROM category
+WHERE category_id=:p1
+LIMIT 1
 """
 
 
@@ -40,4 +48,15 @@ class AsyncQuerier:
             yield models.Category(
                 category_id=row[0],
                 category_name=row[1],
+                category_coefficient=row[2],
             )
+
+    async def get_category(self, *, category_id: int) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_CATEGORY), {"p1": category_id})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )

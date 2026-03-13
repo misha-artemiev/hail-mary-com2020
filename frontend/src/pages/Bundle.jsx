@@ -54,7 +54,7 @@ export default function Bundle() {
 
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <Card>Loading bundle...</Card>
             </div>
         );
@@ -64,7 +64,7 @@ export default function Bundle() {
     if (error) {
         return (
             // TODO: better error page
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <Card>Bundle not found!</Card>
             </div>
         );
@@ -74,7 +74,7 @@ export default function Bundle() {
     if (!bundle) {
         return (
             // TODO: better error page
-            <div className="max-w-4xl mx-auto p-6">
+            <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <Card>Bundle not found!</Card>
             </div>
         );
@@ -123,7 +123,7 @@ export default function Bundle() {
         ));
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto p-4 md:p-6">
             <Card className="overflow-hidden">
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Image */}
