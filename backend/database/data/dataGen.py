@@ -18,7 +18,7 @@ from secrets import SystemRandom
 from typing import Any
 
 import pandas as pd
-from database.db_constants import ALLERGENS, CATEGORIES, BADGES
+from database.db_constants import ALLERGENS, BADGES, CATEGORIES
 from faker import Faker
 from internal.auth.security import generate_claim_code, generate_token
 

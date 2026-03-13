@@ -14,11 +14,7 @@ CATEGORIES = {
 ALLERGENS = {1: "Gluten", 2: "Dairy", 3: "Nuts", 4: "Soy", 5: "Eggs", 6: "Sesame"}
 
 BADGES = [
-    {
-        "badge_id": 1,
-        "name": "Green Starter",
-        "description": "Rescue your first meal",
-    },
+    {"badge_id": 1, "name": "Green Starter", "description": "Rescue your first meal"},
     {
         "badge_id": 2,
         "name": "Local Hero",
