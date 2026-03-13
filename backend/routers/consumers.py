@@ -301,19 +301,32 @@ async def get_streaks(
     conn: database_dependency,
     consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
 ) -> int:
-    streak_count = 0
     reservations = await stream.list(ReservationsQuerier(conn).get_consumers_reservations_full(
         consumer_id=consumer.user_id
     ))
     if len(reservations) == 0:
         return 0
     reservations.sort(key=lambda reservation: reservation.window_end, reverse=True)
-    today = datetime.today()
-    monday = today - timedelta(days=today.weekday())
-    sunday = monday + timedelta(days=6)
+    streak_count = 0
+    last_counted_week = None
+    today = datetime.now(tz=timezone.utc)
+    last_week = (today - timedelta(weeks=1)).isocalendar()[:2]
+    anchor_date = today
     for reservation in reservations:
-        if reservation.window_end < datetime.now(tz=timezone.utc):
+        if reservation.window_end > today:
             continue
         if reservation.collected_at is None:
             break
+        check_week = reservation.window_start.date().isocalendar()[:2]
+        if check_week == last_counted_week:
+            continue
+        if last_counted_week is None and check_week == last_week:
+            anchor_date = today - timedelta(weeks=1)
+        expected_week = (anchor_date - timedelta(weeks=streak_count)).isocalendar()[:2]
+        if check_week == expected_week:
+            streak_count += 1
+            last_counted_week = check_week
+        else:
+            break
 
+    return streak_count
