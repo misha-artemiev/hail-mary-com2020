@@ -52,7 +52,7 @@ init-db:
 init-db-noninteractive:
 	@printf "1\ny\n" | python -m database.init_db
 
-UPLOAD_FILES = users admins sellers consumers bundles bundle_category bundle_allergens reservations seller_issue_reports admin_issue_reports inbox badges badges_acquired token
+UPLOAD_FILES = users admins sellers consumers bundles bundle_category bundle_allergens reservations seller_issue_reports admin_issue_reports inbox badges_acquired token
 upload-db:
 	@python -m database.data.dataGen
 	@for file in $(UPLOAD_FILES); do \
