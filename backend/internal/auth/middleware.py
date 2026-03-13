@@ -15,7 +15,7 @@ from internal.queries.models import UserRole
 from internal.queries.token import AsyncQuerier as TokenQuerier
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import AsyncQuerier as UserQuerier
-
+from internal.settings.env import auth_settings
 
 class BasicAuthResponse(BaseModel):
     """Response when user got authorised with email and password."""
@@ -138,3 +138,18 @@ def admin_auth(
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as admin"
     )
+
+def root_auth(
+    credentials: HTTPAuthorizationCredentials = Security(HTTPBearer()),
+) -> bool:
+    """Root user authentication.
+
+    Args:
+        credentials: root user credentials
+
+    Returns:
+        is root user
+    """
+    if credentials.credentials == auth_settings.root_credentials:
+        return True
+    return False
