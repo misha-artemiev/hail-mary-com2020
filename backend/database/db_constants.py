@@ -6,7 +6,7 @@ CATEGORIES = {
     3: "Deli",
     4: "Prepared Meals",
     5: "Dairy",
-    6: "Drinks",
+    6: "Desserts",
     7: "Pantry",
     8: "Snacks",
 }
