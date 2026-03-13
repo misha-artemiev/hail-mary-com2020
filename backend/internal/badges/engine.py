@@ -4,10 +4,16 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import BackgroundTasks
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncConnection
 
 from internal.database.manager import database_manager
-from internal.queries.badge import AcquireBadgeParams, GetConsumerBadgesRow, UpdateBadgeLevelParams
+from internal.queries.badge import (
+    AcquireBadgeParams,
+    GetConsumerBadgesRow,
+    UpdateBadgeLevelParams,
+)
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
+from internal.queries.models import BadgesAcquired
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
 from internal.settings.config import BadgesConfig, badges_config
@@ -234,6 +240,29 @@ class BadgeEngine:
         return True
 
     @staticmethod
+    async def update_badge(
+        conn: AsyncConnection, consumer_id: int, badge_id: int, level: int
+    ) -> BadgesAcquired | None:
+        """Inserts or updates acquired badge record.
+
+        Args:
+            conn: database connection
+            consumer_id: consumer id
+            badge_id: badge id
+            level: badge level
+
+        Returns:
+            acquired badge
+        """
+        if level == 1:
+            return await BadgeQuerier(conn).acquire_badge(
+                AcquireBadgeParams(user_id=consumer_id, badge_id=badge_id, level=level)
+            )
+        return await BadgeQuerier(conn).update_badge_level(
+            UpdateBadgeLevelParams(user_id=consumer_id, badge_id=badge_id, level=level)
+        )
+
+    @staticmethod
     async def process_badges(
         consumer_id: int,
         badges_rules: list[BadgesConfig.BadgeRules],
@@ -280,22 +309,8 @@ class BadgeEngine:
                         )
                 if not to_acquire:
                     continue
-                acquired_badge = None
-                if acquire_badge.rule.level == 1:
-                    acquired_badge = await BadgeQuerier(conn).acquire_badge(
-                        AcquireBadgeParams(
-                            user_id=consumer_id,
-                            badge_id=acquire_badge.badge_id,
-                            level=acquire_badge.rule.level,
-                        )
-                    )
-                else:
-                    acquired_badge = await BadgeQuerier(conn).update_badge_level(
-                        UpdateBadgeLevelParams(
-                            user_id=consumer_id,
-                            badge_id=acquire_badge.badge_id,
-                            level=acquire_badge.rule.level,
-                        )
-                    )
+                acquired_badge = BadgeEngine.update_badge(
+                    conn, consumer_id, acquire_badge.badge_id, acquire_badge.rule.level
+                )
                 if not acquired_badge:
                     raise ValueError("Failed to insert acquire badge record")
