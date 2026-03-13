@@ -141,19 +141,19 @@ def admin_auth(
     )
 
 
-def root_auth(
-    credentials: HTTPBasicCredentials = Security(HTTPBasic()),
-) -> None:
+def root_auth(credentials: HTTPBasicCredentials = Security(HTTPBasic())) -> None:
     """Root user authentication.
 
     Args:
         credentials: root user credentials
 
-    Returns:
-        is root user
-
     Raises:
         HTTPException: if not root user
     """
-    if ("" in (auth_settings.root_username, auth_settings.root_password)) or not (credentials.username == auth_settings.root_username and credentials.password == auth_settings.root_password):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authorised as root admin")
+    if ("" in {auth_settings.root_username, auth_settings.root_password}) or not (
+        credentials.username == auth_settings.root_username
+        and credentials.password == auth_settings.root_password
+    ):
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "Not authorised as root admin"
+        )
