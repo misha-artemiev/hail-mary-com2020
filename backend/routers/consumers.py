@@ -61,6 +61,7 @@ sequenceDiagram
 ```
 """
 
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Security, status
@@ -77,10 +78,9 @@ from internal.queries.consumer import (
 )
 from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
+from internal.queries.reservations import GetConsumersReservationsFullRow
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
-from aiostream import stream
-from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
 
@@ -301,15 +301,27 @@ async def get_streaks(
     conn: database_dependency,
     consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
 ) -> int:
-    reservations = await stream.list(ReservationsQuerier(conn).get_consumers_reservations_full(
-        consumer_id=consumer.user_id
-    ))
+    """Get consumer collection streak in number of weeks.
+
+    Args:
+        conn: database connection
+        consumer: consumer session
+
+    Returns:
+        number of weeks
+    """
+    reservations: list[GetConsumersReservationsFullRow] = [
+        reservation
+        async for reservation in ReservationsQuerier(
+            conn
+        ).get_consumers_reservations_full(consumer_id=consumer.user_id)
+    ]
     if len(reservations) == 0:
         return 0
     reservations.sort(key=lambda reservation: reservation.window_end, reverse=True)
     streak_count = 0
     last_counted_week = None
-    today = datetime.now(tz=timezone.utc)
+    today = datetime.now(tz=UTC)
     last_week = (today - timedelta(weeks=1)).isocalendar()[:2]
     anchor_date = today
     for reservation in reservations:
