@@ -62,7 +62,7 @@ class GetConsumersReservationsFullRow(pydantic.BaseModel):
     reserved_at: datetime.datetime
     collected_at: Optional[datetime.datetime]
     seller_id: int
-    carbon_dioxide: float
+    carbon_dioxide: int
     window_start: datetime.datetime
     window_end: datetime.datetime
     category_id: Optional[int]

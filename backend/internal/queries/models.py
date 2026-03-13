@@ -113,8 +113,8 @@ class AnalyticsGraphsType(pydantic.BaseModel):
     graph_type_id: int
     chart_type: ChartType
     graph_summary: str
-    x_axis_label: str
-    y_axis_label: str
+    x_axis_label: Optional[str]
+    y_axis_label: Optional[str]
 
 
 class AnalyticsPoint(pydantic.BaseModel):
@@ -128,8 +128,8 @@ class AnalyticsPoint(pydantic.BaseModel):
 class AnalyticsSeries(pydantic.BaseModel):
     series_id: int
     graph_id: int
-    sort_index: int
     series_name: str
+    sort_index: int
 
 
 class Badge(pydantic.BaseModel):
@@ -150,7 +150,7 @@ class Bundle(pydantic.BaseModel):
     seller_id: int
     bundle_name: str
     description: str
-    carbon_dioxide: float
+    carbon_dioxide: int
     total_qty: int
     price: decimal.Decimal
     discount_percentage: int

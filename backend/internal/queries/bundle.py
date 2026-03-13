@@ -25,7 +25,7 @@ class CreateBundleParams(pydantic.BaseModel):
     bundle_name: str
     description: str
     total_qty: int
-    carbon_dioxide: float
+    carbon_dioxide: int
     price: decimal.Decimal
     discount_percentage: int
     window_start: datetime.datetime

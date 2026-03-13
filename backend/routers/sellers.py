@@ -83,6 +83,7 @@ from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
+from internal.analytics.processing import AnalyticsProcesser
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
 
@@ -186,7 +187,7 @@ class BundleForm(BaseModel):
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
     discount_percentage: int = Field(lt=100, gt=0)
-    carbon_dioxide: float  # TEMPORARY INSTEAD OF WEIGHT
+    carbon_dioxide: int # TEMPORARY INSTEAD OF WEIGHT
     window_start: datetime
     window_end: datetime
 
@@ -423,3 +424,7 @@ async def reservation_collection(
     await conn.commit()
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation
+
+@router.post("/me/analytics", tags=["analytics"])
+async def refresh_analytics(seller: Annotated[GetSessionByTokenRow, Security(seller_auth)], analytics_processer: Annotated[AnalyticsProcesser, Depends(AnalyticsProcesser)]):
+    analytics_processer.run(seller.user_id)
