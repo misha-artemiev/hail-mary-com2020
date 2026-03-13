@@ -18,7 +18,7 @@ from secrets import SystemRandom
 from typing import Any
 
 import pandas as pd
-from database.db_constants import ALLERGENS, CATEGORIES
+from database.db_constants import ALLERGENS, CATEGORIES, BADGES
 from faker import Faker
 from internal.auth.security import generate_claim_code, generate_token
 
@@ -415,51 +415,15 @@ def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(messages)
 
 
-def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def generate_badges(consumers_df: pd.DataFrame) -> pd.DataFrame:
     """Creates base badge definitions and assigns tiered levels to consumers.
 
     Args:
       consumers_df: dataframe of consumers
 
     Returns:
-      tuple of badges dataframe and joining user-badge dataframe
+      joining user-badge dataframe
     """
-    # base badge definitions from massimo
-    # base badge definitions
-    badge_data = [
-        {
-            "badge_id": 0,
-            "name": "Green Starter",
-            "description": "Rescue your first meal",
-        },
-        {
-            "badge_id": 1,
-            "name": "Local Hero",
-            "description": "Rescue from multiple different sellers",
-        },
-        {
-            "badge_id": 2,
-            "name": "Variety explorer",
-            "description": "Rescue food from multiple categories",
-        },
-        {
-            "badge_id": 3,
-            "name": "Food Savior",
-            "description": "Save food multiple days in a row",
-        },
-        {"badge_id": 4, "name": "Sweet Tooth", "description": "Save multiple desserts"},
-        {
-            "badge_id": 5,
-            "name": "CO2 Cutter",
-            "description": "Save significant amounts of CO2",
-        },
-        {
-            "badge_id": 6,
-            "name": "Right On Time",
-            "description": "Consistently save meals without no-shows",
-        },
-    ]
-
     # mapping badge id to max level
     badge_max_levels = {1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3}
 
@@ -470,7 +434,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
         if secure_rng.random() < BADGE_PROBABILITY:
             # Picks 1 to 2 random base badges per user
             num_categories = secure_rng.randint(1, 2)
-            chosen_badges = random.sample(badge_data, num_categories)
+            chosen_badges = random.sample(BADGES, num_categories)
 
             for badge in chosen_badges:
                 b_id = int(str(badge["badge_id"]))
@@ -498,7 +462,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
                     "acquired_at": acquired_date,
                 })
 
-    return pd.DataFrame(badge_data), pd.DataFrame(acquired)
+    return pd.DataFrame(acquired)
 
 
 def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
@@ -602,7 +566,7 @@ if __name__ == "__main__":
         df_reservations, df_users
     )
     df_inbox = generate_inbox(df_users)
-    df_badges, df_badges_acquired = generate_badges(df_consumers)
+    df_badges_acquired = generate_badges(df_consumers)
     df_tokens = generate_tokens(df_users)
 
     # saving
@@ -618,7 +582,6 @@ if __name__ == "__main__":
         "seller_issue_reports": df_seller_reports,
         "admin_issue_reports": df_admin_reports,
         "inbox": df_inbox,
-        "badges": df_badges,
         "badges_acquired": df_badges_acquired,
         "token": df_tokens,
     }
