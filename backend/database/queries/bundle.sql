@@ -1,6 +1,6 @@
 -- name: CreateBundle :one
-INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO bundles (seller_id, bundle_name, description, total_qty, carbon_dioxide, price, discount_percentage, window_start, window_end)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetBundle :one

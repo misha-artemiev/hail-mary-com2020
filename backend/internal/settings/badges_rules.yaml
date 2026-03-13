@@ -1,7 +1,100 @@
 badges_rules:
-  - badge_id: 0
+  - badge_id: 1
     badge_name: 'Green Starter | Rescue 1 meal'
     rules:
       - level: 1
         type: 'quantity'
         quantity: 1
+
+  - badge_id: 2
+    badge_name: 'Local Hero | Rescue from different sellers'
+    rules:
+      - level: 1
+        type: 'diversity'
+        dif_sellers: 5
+        dif_categories: 0
+      - level: 2
+        type: 'diversity'
+        dif_sellers: 10
+        dif_categories: 0
+      - level: 3
+        type: 'diversity'
+        dif_sellers: 20
+        dif_categories: 0
+
+  - badge_id: 3
+    badge_name: 'Variety Explorer | Rescue from different categories'
+    rules:
+      - level: 1
+        type: 'diversity'
+        dif_sellers: 0
+        dif_categories: 5
+      - level: 2
+        type: 'diversity'
+        dif_sellers: 0
+        dif_categories: 10
+      - level: 3
+        type: 'diversity'
+        dif_sellers: 0
+        dif_categories: 20
+
+  - badge_id: 4
+    badge_name: 'Food Savior | Save food multiple days in a row'
+    rules:
+      - level: 1
+        type: 'streak'
+        streak_days: 3
+        streak_quantity: 0
+      - level: 2
+        type: 'streak'
+        streak_days: 7
+        streak_quantity: 0
+      - level: 3
+        type: 'streak'
+        streak_days: 15
+        streak_quantity: 0
+
+  - badge_id: 5
+    badge_name: 'Sweet Tooth | Save desserts'
+    rules:
+      - level: 1
+        type: 'quantity'
+        quantity: 5
+        category_id: <dessert_category_id>
+      - level: 2
+        type: 'quantity'
+        quantity: 10
+        category_id: <dessert_category_id>
+      - level: 3
+        type: 'quantity'
+        quantity: 20
+        category_id: <dessert_category_id>
+
+  - badge_id: 6
+    badge_name: 'CO2 Cutter | Save CO2'
+    rules:
+      - level: 1
+        type: 'co2'
+        carbon_dioxide: 10000  # 10kg
+      - level: 2
+        type: 'co2'
+        carbon_dioxide: 25000  # 25kg
+      - level: 3
+        type: 'co2'
+        carbon_dioxide: 50000  # 50kg
+
+  - badge_id: 7
+    badge_name: 'Right On Time | Save meals in a row without no-show'
+    rules:
+      - level: 1
+        type: 'streak'
+        streak_quantity: 10
+        streak_days: 0
+      - level: 2
+        type: 'streak'
+        streak_quantity: 25
+        streak_days: 0
+      - level: 3
+        type: 'streak'
+        streak_quantity: 50
+        streak_days: 0

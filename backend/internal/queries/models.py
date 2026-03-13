@@ -21,6 +21,15 @@ class AdminIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
+class ChartType(str, enum.Enum):
+    LINE = "line"
+    MULTI_LINE = "multi_line"
+    BAR = "bar"
+    STACKED_BAR = "stacked_bar"
+    PIE = "pie"
+    AREA = "area"
+
+
 class DayOfWeek(str, enum.Enum):
     MONDAY = "Monday"
     TUESDAY = "Tuesday"
@@ -93,6 +102,36 @@ class Allergen(pydantic.BaseModel):
     allergen_name: str
 
 
+class AnalyticsGraph(pydantic.BaseModel):
+    graph_id: int
+    seller_id: int
+    graph_type: int
+    created_at: datetime.datetime
+
+
+class AnalyticsGraphsType(pydantic.BaseModel):
+    graph_type_id: int
+    chart_type: ChartType
+    graph_summary: str
+    x_axis_label: str
+    y_axis_label: str
+
+
+class AnalyticsPoint(pydantic.BaseModel):
+    series_id: int
+    sort_order: int
+    x_coordinate: str
+    y_coordinate: decimal.Decimal
+    sort_index: int
+
+
+class AnalyticsSeries(pydantic.BaseModel):
+    series_id: int
+    graph_id: int
+    sort_index: int
+    series_name: str
+
+
 class Badge(pydantic.BaseModel):
     badge_id: int
     name: str
@@ -133,6 +172,7 @@ class BundleCategory(pydantic.BaseModel):
 class Category(pydantic.BaseModel):
     category_id: int
     category_name: str
+    category_coefficient: float
 
 
 class Consumer(pydantic.BaseModel):
