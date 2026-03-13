@@ -18,7 +18,7 @@ from .security import hash_password
 def create_user(
     email: EmailStr, password: SecretStr, role: UserRole, conn: Connection
 ) -> CreateUserRow:
-    """Create and insert base user entiry.
+    """Create and insert base user entry.
 
     Args:
       email: users email
@@ -51,7 +51,7 @@ class CreateConsumerForm(BaseModel):
 
 
 def create_consumer(form: CreateConsumerForm, conn: Connection) -> Consumer:
-    """Create and insert consumer and user entiry.
+    """Create and insert consumer and user entry.
 
     Args:
       form: form with consumers information
@@ -89,7 +89,7 @@ class CreateSellerForm(BaseModel):
 
 
 def create_seller(form: CreateSellerForm, conn: Connection) -> Seller:
-    """Creates and inserts seller and user entiry.
+    """Creates and inserts seller and user entry.
 
     Args:
       form: form with information for seller creation
