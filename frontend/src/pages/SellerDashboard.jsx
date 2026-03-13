@@ -17,9 +17,11 @@ import Reservation from "../components/Reservation";
 
 function BundleRow({ bundle }) {
     const [showReservations, setShowReservations] = useState(false);
-    const { sellerReservations } = useSellerBundleReservations(
-        bundle.bundle_id,
-    );
+    const { reservations } = useSellerBundleReservations(bundle.bundle_id);
+
+    const reservedCount = reservations.filter(
+        (r) => r.status === "reserved",
+    ).length;
 
     return (
         <>
@@ -32,7 +34,7 @@ function BundleRow({ bundle }) {
                 <td className="py-3 px-4">{bundle.total_qty}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
-                    {sellerReservations.length} / {bundle.total_qty}
+                    {reservedCount} / {bundle.total_qty}
                 </td>
                 <td className="py-3 px-4">
                     {new Date(bundle.window_start).toLocaleString()}
@@ -46,15 +48,15 @@ function BundleRow({ bundle }) {
                     <td colSpan={7} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
-                                Reservations ({sellerReservations.length})
+                                Reservations ({reservations.length})
                             </h4>
-                            {sellerReservations.length === 0 ? (
+                            {reservations.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
                                     No reservations yet.
                                 </p>
                             ) : (
                                 <div className="space-y-2">
-                                    {sellerReservations.map((reservation) => (
+                                    {reservations.map((reservation) => (
                                         <Reservation
                                             key={reservation.reservation_id}
                                             id={reservation.reservation_id}
@@ -62,6 +64,7 @@ function BundleRow({ bundle }) {
                                                 reservation.reserved_at
                                             }
                                             claimCode={reservation.claim_code}
+                                            status={reservation.status}
                                         />
                                     ))}
                                 </div>
