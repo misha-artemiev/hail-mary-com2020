@@ -8,3 +8,9 @@ WHERE b.bundle_id=$1;
 -- name: GetCategories :many
 SELECT *
 FROM category;
+
+-- name: GetCategory :one
+SELECT *
+FROM category
+WHERE category_id=$1
+LIMIT 1;

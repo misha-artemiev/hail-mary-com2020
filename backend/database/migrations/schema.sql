@@ -62,6 +62,15 @@ CREATE TYPE weather_flag AS ENUM (
     'windy'
 );
 
+CREATE TYPE chart_type AS ENUM (
+    'line',
+    'multi_line',
+    'bar',
+    'stacked_bar',
+    'pie',
+    'area'
+);
+
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -135,7 +144,8 @@ CREATE TABLE IF NOT EXISTS bundle_allergens (
 
 CREATE TABLE IF NOT EXISTS category (
     category_id SERIAL PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL UNIQUE
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+    category_coefficient FLOAT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bundle_category (
@@ -239,4 +249,39 @@ CREATE TABLE IF NOT EXISTS forecast_output (
     rationale VARCHAR(500),
     generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_graphs_types (
+    graph_type_id SERIAL PRIMARY KEY,
+    chart_type chart_type NOT NULL,
+    graph_summary VARCHAR(255) NOT NULL,
+    x_axis_label VARCHAR(255) NOT NULL,
+    y_axis_label VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS analytics_graphs (
+    graph_id SERIAL PRIMARY KEY,
+    seller_id INT NOT NULL,
+    graph_type INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (seller_id) REFERENCES sellers(seller_id) ON DELETE CASCADE,
+    FOREIGN KEY (graph_type) REFERENCES analytics_graphs_types(graph_type_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_series (
+    series_id SERIAL PRIMARY KEY,
+    graph_id INT NOT NULL,
+    sort_index INT NOT NULL,
+    series_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (graph_id) REFERENCES analytics_graphs(graph_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_points (
+    series_id INT NOT NULL,
+    sort_order INT NOT NULL,
+    x_coordinate VARCHAR(255) NOT NULL,
+    y_coordinate DECIMAL(18,4) NOT NULL,
+    sort_index INT NOT NULL,
+    PRIMARY KEY (series_id, sort_order),
+    FOREIGN KEY (series_id) REFERENCES analytics_series(series_id) ON DELETE CASCADE
 );
