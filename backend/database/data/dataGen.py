@@ -475,7 +475,7 @@ def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
         Dataframe representing the junction table.
     """
     bundle_ids = bundles_df["bundle_id"].tolist()
-    category_ids = list(CATEGORIES.keys())
+    category_ids = list(category["cat_id"] for category in CATEGORIES)
     links = []
 
     for bundle_id in bundle_ids:

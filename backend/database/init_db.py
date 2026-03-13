@@ -148,11 +148,11 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
     try:
         # Seed Categories
         logger.info("inserting categories")
-        for cat_id, name in CATEGORIES.items():
+        for category in CATEGORIES:
             conn.execute(
-                "INSERT INTO category (category_id, category_name) "
-                "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                (cat_id, name),
+                "INSERT INTO category (category_id, category_name, category_coefficient) "
+                "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                (category["cat_id"], category["name"], category["coefficient"]),
             )
 
         # Seed Allergens
