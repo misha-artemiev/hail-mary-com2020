@@ -261,11 +261,7 @@ async def activate_admin(
     return admin_activation_result
 
 
-@router.get(
-    "/database/users",
-    status_code=status.HTTP_200_OK,
-    summary="Get all users",
-)
+@router.get("/database/users", status_code=status.HTTP_200_OK, summary="Get all users")
 async def get_all_users(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
 ) -> list[GetUsersRow]:
@@ -358,9 +354,7 @@ async def update_user_password(
 
 
 @router.delete(
-    "/database/users/{user_id}",
-    status_code=status.HTTP_200_OK,
-    summary="Delete user",
+    "/database/users/{user_id}", status_code=status.HTTP_200_OK, summary="Delete user"
 )
 async def delete_user(
     user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -384,9 +378,7 @@ async def delete_user(
 
 
 @router.get(
-    "/database/sellers",
-    status_code=status.HTTP_200_OK,
-    summary="Get all sellers",
+    "/database/sellers", status_code=status.HTTP_200_OK, summary="Get all sellers"
 )
 async def get_all_sellers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -544,9 +536,7 @@ async def update_seller_profile(
 
 
 @router.get(
-    "/database/consumers",
-    status_code=status.HTTP_200_OK,
-    summary="Get all consumers",
+    "/database/consumers", status_code=status.HTTP_200_OK, summary="Get all consumers"
 )
 async def get_all_consumers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -607,9 +597,7 @@ async def update_consumer_profile(
 
 
 @router.get(
-    "/database/bundles",
-    status_code=status.HTTP_200_OK,
-    summary="Get all bundles",
+    "/database/bundles", status_code=status.HTTP_200_OK, summary="Get all bundles"
 )
 async def get_all_bundles(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -704,9 +692,7 @@ async def delete_reservation(
 
 
 @router.get(
-    "/database/allergens",
-    status_code=status.HTTP_200_OK,
-    summary="Get all allergens",
+    "/database/allergens", status_code=status.HTTP_200_OK, summary="Get all allergens"
 )
 async def get_all_allergens(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -834,9 +820,7 @@ async def delete_allergen(
 
 
 @router.get(
-    "/database/categories",
-    status_code=status.HTTP_200_OK,
-    summary="Get all categories",
+    "/database/categories", status_code=status.HTTP_200_OK, summary="Get all categories"
 )
 async def get_all_categories(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -964,9 +948,7 @@ async def delete_category(
 
 
 @router.get(
-    "/database/badges",
-    status_code=status.HTTP_200_OK,
-    summary="Get all badges",
+    "/database/badges", status_code=status.HTTP_200_OK, summary="Get all badges"
 )
 async def get_all_badges(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
