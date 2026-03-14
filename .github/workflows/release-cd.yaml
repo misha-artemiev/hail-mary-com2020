@@ -12,11 +12,11 @@ jobs:
     outputs:
       release_tag: ${{ steps.tagger.outputs.release_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: setup nodejs
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 25
       - name: Generate Tag
@@ -44,10 +44,9 @@ jobs:
             context: .
             file: ./deployment/backend.dockerfile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: setup docker buildx
         uses: docker/setup-buildx-action@v3
-
       - name: login to github
         uses: docker/login-action@v3
         with:
