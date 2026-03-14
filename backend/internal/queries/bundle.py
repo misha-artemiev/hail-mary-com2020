@@ -25,11 +25,18 @@ class CreateBundleParams(pydantic.BaseModel):
     bundle_name: str
     description: str
     total_qty: int
-    carbon_dioxide: float
+    carbon_dioxide: int
     price: decimal.Decimal
     discount_percentage: int
     window_start: datetime.datetime
     window_end: datetime.datetime
+
+
+DELETE_BUNDLE = """-- name: delete_bundle \\:one
+DELETE FROM bundles
+WHERE bundle_id = :p1
+RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
+"""
 
 
 GET_BUNDLE = """-- name: get_bundle \\:one
@@ -84,7 +91,7 @@ WHERE seller_id=:p1
 
 UPDATE_BUNDLE = """-- name: update_bundle \\:one
 UPDATE bundles
-SET bundle_name=:p3, description=:p4, total_qty=:p5, price=:p6, discount_percentage=:p7, window_start=:p8, window_end=:p9
+SET bundle_name=:p3, description=:p4, total_qty=:p5, price=:p6, discount_percentage=:p7, window_start=:p8, window_end=:p9, carbon_dioxide=:p10
 WHERE bundle_id=:p1 AND seller_id=:p2
 RETURNING bundle_id, seller_id, bundle_name, description, carbon_dioxide, total_qty, price, discount_percentage, window_start, window_end, created_at
 """
@@ -100,6 +107,7 @@ class UpdateBundleParams(pydantic.BaseModel):
     discount_percentage: int
     window_start: datetime.datetime
     window_end: datetime.datetime
+    carbon_dioxide: int
 
 
 class AsyncQuerier:
@@ -118,6 +126,24 @@ class AsyncQuerier:
             "p8": arg.window_start,
             "p9": arg.window_end,
         })).first()
+        if row is None:
+            return None
+        return models.Bundle(
+            bundle_id=row[0],
+            seller_id=row[1],
+            bundle_name=row[2],
+            description=row[3],
+            carbon_dioxide=row[4],
+            total_qty=row[5],
+            price=row[6],
+            discount_percentage=row[7],
+            window_start=row[8],
+            window_end=row[9],
+            created_at=row[10],
+        )
+
+    async def delete_bundle(self, *, bundle_id: int) -> Optional[models.Bundle]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_BUNDLE), {"p1": bundle_id})).first()
         if row is None:
             return None
         return models.Bundle(
@@ -250,6 +276,7 @@ class AsyncQuerier:
             "p7": arg.discount_percentage,
             "p8": arg.window_start,
             "p9": arg.window_end,
+            "p10": arg.carbon_dioxide,
         })).first()
         if row is None:
             return None
