@@ -6,7 +6,9 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.middleware import bearer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
-from internal.queries.admin_issue_reports import AsyncQuerier as AdminIssueReportsQuerier
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+)
 from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.models import AdminIssueReport, AdminIssueType
 from internal.queries.token import GetSessionByTokenRow

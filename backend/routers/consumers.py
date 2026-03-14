@@ -79,7 +79,9 @@ from internal.queries.consumer import (
 from internal.queries.models import Reservation, SellerIssueReport, SellerIssueType
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
-from internal.queries.seller_issue_reports import AsyncQuerier as SellerIssueReportsQuerier
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+)
 from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel

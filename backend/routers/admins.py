@@ -7,51 +7,28 @@ from internal.auth.creation import CreateAdminForm, create_admin
 from internal.auth.middleware import admin_auth, root_auth
 from internal.auth.security import hash_password
 from internal.database.dependency import database_dependency
-from internal.queries.admin_issue_reports import (
-    AsyncQuerier as AdminIssueReportsQuerier,
-    UpdateAdminIssueReportStatusParams,
-)
-from internal.queries.allergens import (
-    AsyncQuerier as AllergensQuerier,
-    UpdateAllergenParams,
-)
-from internal.queries.badge import (
-    AsyncQuerier as BadgeQuerier,
-    UpdateBadgeParams,
-)
-from internal.queries.bundle import AsyncQuerier as BundleQuerier
-from internal.queries.category import (
-    AsyncQuerier as CategoryQuerier,
-    CreateCategoryParams,
-    UpdateCategoryParams,
-)
-from internal.queries.consumer import (
-    AsyncQuerier as ConsumerQuerier,
-    GetConsumersRow,
-    UpdateConsumerParams,
-)
-from internal.queries.inbox import (
-    AsyncQuerier as InboxQuerier,
-    CreateInboxMessageParams,
-)
-from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
-from internal.queries.seller import (
-    AsyncQuerier as SellerQuerier,
-    GetSellersRow,
-    UpdateSellerParams,
-    VerifySellerParams,
-)
-from internal.queries.seller_issue_reports import (
-    AsyncQuerier as SellerIssueReportsQuerier,
-    UpdateSellerIssueReportStatusParams,
-)
+from internal.queries.admin import AsyncQuerier as AdminQuerier
 from internal.queries.admin import (
-    AsyncQuerier as AdminQuerier,
     GetAdminRow,
     GetAdminsRow,
     SetIsAdminActiveParams,
     UpdateAdminParams,
 )
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+)
+from internal.queries.admin_issue_reports import UpdateAdminIssueReportStatusParams
+from internal.queries.allergens import AsyncQuerier as AllergensQuerier
+from internal.queries.allergens import UpdateAllergenParams
+from internal.queries.badge import AsyncQuerier as BadgeQuerier
+from internal.queries.badge import UpdateBadgeParams
+from internal.queries.bundle import AsyncQuerier as BundleQuerier
+from internal.queries.category import AsyncQuerier as CategoryQuerier
+from internal.queries.category import CreateCategoryParams, UpdateCategoryParams
+from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
+from internal.queries.consumer import GetConsumersRow, UpdateConsumerParams
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import (
     Admin,
     AdminIssueReport,
@@ -66,9 +43,20 @@ from internal.queries.models import (
     Seller,
     SellerIssueReport,
 )
+from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
+from internal.queries.seller import AsyncQuerier as SellerQuerier
+from internal.queries.seller import (
+    GetSellersRow,
+    UpdateSellerParams,
+    VerifySellerParams,
+)
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+)
+from internal.queries.seller_issue_reports import UpdateSellerIssueReportStatusParams
 from internal.queries.token import GetSessionByTokenRow
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import (
-    AsyncQuerier as UserQuerier,
     DeleteUserRow,
     GetUsersRow,
     UpdateUserEmailParams,
@@ -152,9 +140,7 @@ async def get_admin_me(
     Raises:
         HTTPException: if admin not found
     """
-    admin_profile = await AdminQuerier(conn).get_admin(
-        user_id=admin_session.user_id
-    )
+    admin_profile = await AdminQuerier(conn).get_admin(user_id=admin_session.user_id)
     if not admin_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Admin profile not found"
@@ -410,7 +396,7 @@ async def delete_user(
 )
 async def get_all_sellers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
-) -> list[seller.GetSellersRow]:
+) -> list[GetSellersRow]:
     """Get all sellers.
 
     Args:
@@ -568,7 +554,7 @@ async def update_seller_profile(
 )
 async def get_all_consumers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
-) -> list[consumer.GetConsumersRow]:
+) -> list[GetConsumersRow]:
     """Get all consumers.
 
     Args:
@@ -578,8 +564,7 @@ async def get_all_consumers(
         list of all consumers
     """
     return [
-        consumer_row
-        async for consumer_row in ConsumerQuerier(conn).get_consumers()
+        consumer_row async for consumer_row in ConsumerQuerier(conn).get_consumers()
     ]
 
 
@@ -734,8 +719,7 @@ async def get_all_allergens(
         list of all allergens
     """
     return [
-        allergen_row
-        async for allergen_row in AllergensQuerier(conn).get_allergens()
+        allergen_row async for allergen_row in AllergensQuerier(conn).get_allergens()
     ]
 
 
@@ -808,9 +792,7 @@ async def update_allergen(
         HTTPException: if allergen not found
     """
     updated_allergen = await AllergensQuerier(conn).update_allergen(
-        UpdateAllergenParams(
-            allergen_id=allergen_id, allergen_name=form.allergen_name
-        )
+        UpdateAllergenParams(allergen_id=allergen_id, allergen_name=form.allergen_name)
     )
     if not updated_allergen:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Allergen not found")
@@ -862,8 +844,7 @@ async def get_all_categories(
         list of all categories
     """
     return [
-        category_row
-        async for category_row in CategoryQuerier(conn).get_categories()
+        category_row async for category_row in CategoryQuerier(conn).get_categories()
     ]
 
 
@@ -1051,9 +1032,7 @@ async def get_admin_reports(
     """
     return [
         report_row
-        async for report_row in AdminIssueReportsQuerier(
-            conn
-        ).get_admin_issue_reports()
+        async for report_row in AdminIssueReportsQuerier(conn).get_admin_issue_reports()
     ]
 
 
@@ -1090,9 +1069,7 @@ async def update_admin_report_status(
     updated_report = await AdminIssueReportsQuerier(
         conn
     ).update_admin_issue_report_status(
-        UpdateAdminIssueReportStatusParams(
-            report_id=report_id, status=form.status
-        )
+        UpdateAdminIssueReportStatusParams(report_id=report_id, status=form.status)
     )
     if not updated_report:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
@@ -1150,9 +1127,7 @@ async def update_seller_report_status(
     updated_report = await SellerIssueReportsQuerier(
         conn
     ).update_seller_issue_report_status(
-        UpdateSellerIssueReportStatusParams(
-            report_id=report_id, status=form.status
-        )
+        UpdateSellerIssueReportStatusParams(report_id=report_id, status=form.status)
     )
     if not updated_report:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
