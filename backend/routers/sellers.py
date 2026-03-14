@@ -276,6 +276,7 @@ async def update_bundle(
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
+            carbon_dioxide=form.carbon_dioxide
         )
     )
     if not bundle:
