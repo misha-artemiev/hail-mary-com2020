@@ -31,3 +31,7 @@ UPDATE users
 SET pw_hash=$2
 WHERE user_id=$1
 RETURNING user_id, username, email, role, created_at;
+
+-- name: GetUsers :many
+SELECT user_id, username, email, role, created_at, last_login
+FROM users;

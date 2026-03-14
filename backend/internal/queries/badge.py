@@ -55,6 +55,20 @@ class GetConsumerBadgesRow(pydantic.BaseModel):
     acquired_at: datetime.datetime
 
 
+UPDATE_BADGE = """-- name: update_badge \\:one
+UPDATE badges
+SET name = :p2, description = :p3
+WHERE badge_id = :p1
+RETURNING badge_id, name, description
+"""
+
+
+class UpdateBadgeParams(pydantic.BaseModel):
+    badge_id: int
+    name: str
+    description: str
+
+
 UPDATE_BADGE_LEVEL = """-- name: update_badge_level \\:one
 UPDATE badges_acquired
 SET level=:p1
@@ -113,6 +127,16 @@ class AsyncQuerier:
                 level=row[3],
                 acquired_at=row[4],
             )
+
+    async def update_badge(self, arg: UpdateBadgeParams) -> Optional[models.Badge]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_BADGE), {"p1": arg.badge_id, "p2": arg.name, "p3": arg.description})).first()
+        if row is None:
+            return None
+        return models.Badge(
+            badge_id=row[0],
+            name=row[1],
+            description=row[2],
+        )
 
     async def update_badge_level(self, arg: UpdateBadgeLevelParams) -> Optional[models.BadgesAcquired]:
         row = (await self._conn.execute(sqlalchemy.text(UPDATE_BADGE_LEVEL), {"p1": arg.level, "p2": arg.user_id, "p3": arg.badge_id})).first()

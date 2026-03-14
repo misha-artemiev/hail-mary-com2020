@@ -150,7 +150,7 @@ class Bundle(pydantic.BaseModel):
     seller_id: int
     bundle_name: str
     description: str
-    carbon_dioxide: float
+    carbon_dioxide: int
     total_qty: int
     price: decimal.Decimal
     discount_percentage: int
@@ -235,8 +235,8 @@ class Seller(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 class SellerIssueReport(pydantic.BaseModel):
