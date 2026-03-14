@@ -178,7 +178,13 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
                 "INSERT INTO analytics_graphs_types "
                 "(graph_type_id, chart_type, graph_summary, x_axis_label, y_axis_label)"
                 "VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
-                (graphs_types["graph_type_id"], graphs_types["chart_type"], graphs_types["graph_summary"], graphs_types["x_axis_label"], graphs_types["y_axis_label"]),
+                (
+                    graphs_types["graph_type_id"],
+                    graphs_types["chart_type"],
+                    graphs_types["graph_summary"],
+                    graphs_types["x_axis_label"],
+                    graphs_types["y_axis_label"],
+                ),
             )
         conn.commit()
         logger.info("finished inserting data")

@@ -1,7 +1,10 @@
+"""Graph refreshing background processing."""
+
 from fastapi import BackgroundTasks
-from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
-from internal.queries.analytics import GetGraphParams, CreateGraphParams
 from internal.database.manager import database_manager
+from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
+from internal.queries.analytics import CreateGraphParams, GetGraphParams
+
 
 class AnalyticsProcesser:
     """Analytics processing."""
@@ -9,7 +12,7 @@ class AnalyticsProcesser:
     background_tasks: BackgroundTasks
 
     def __init__(self, background_tasks: BackgroundTasks) -> None:
-        """Init processing for seller"""
+        """Init processing for seller."""
         self.background_tasks = background_tasks
 
     def run(self, seller_id: int) -> None:
@@ -21,12 +24,37 @@ class AnalyticsProcesser:
         self.background_tasks.add_task(self.process_analytics, seller_id)
 
     @staticmethod
-    async def process_analytics(seller_id: int):
+    async def process_analytics(seller_id: int) -> None:
+        """Background graph processing.
+
+        Args:
+            seller_id: seller_id
+
+        Raises:
+            ValueError: failed to process graphs
+        """
         async for conn in database_manager.get_connection():
             analytics_querier = AnalyticsQuerier(conn)
             graph_types = analytics_querier.get_graphs_types()
             async for graph_type in graph_types:
-                if (graph := await analytics_querier.get_graph(GetGraphParams(seller_id=seller_id, graph_type=graph_type.graph_type_id))) is not None:
-                     analytics_querier.delete_graph_series(graph_id=graph.graph_id)
-                if await analytics_querier.create_graph(CreateGraphParams(seller_id=seller_id, graph_type=graph_type.graph_type_id)) == None:
+                if (
+                    graph := await analytics_querier.get_graph(
+                        GetGraphParams(
+                            seller_id=seller_id, graph_type=graph_type.graph_type_id
+                        )
+                    )
+                ) is not None:
+                    analytics_querier.delete_graph_series(graph_id=graph.graph_id)
+                if (
+                    await analytics_querier.create_graph(
+                        CreateGraphParams(
+                            seller_id=seller_id, graph_type=graph_type.graph_type_id
+                        )
+                    )
+                    is None
+                ):
                     raise ValueError("Failed to create analytics graph")
+            # weekly sales posted
+            # sell through rate
+            # category distribution
+            # time window distribution

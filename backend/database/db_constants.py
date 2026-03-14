@@ -46,8 +46,32 @@ BADGES = [
 ]
 
 ANALYTICS_GRAPHS_TYPES = [
-        {"graph_type_id": 1, "chart_type": ChartType.MULTI_LINE, "graph_summary": "Weekly Sales vs Posted", "x_axis_label": "Timeline", "y_axis_label": "Reservations"},
-        {"graph_type_id": 2, "chart_type": ChartType.PIE, "graph_summary": "Sell Through Rate", "x_axis_label": None, "y_axis_label": None},
-        {"graph_type_id": 3, "chart_type": ChartType.BAR, "graph_summary": "Category Distribution", "x_axis_label": None, "y_axis_label": "Reservations"},
-        {"graph_type_id": 4, "chart_type": ChartType.BAR, "graph_summary": "Time Window Distribution", "x_axis_label": None, "y_axis_label": "Reservations"}
+    {
+        "graph_type_id": 1,
+        "chart_type": ChartType.MULTI_LINE,
+        "graph_summary": "Weekly Sales vs Posted",
+        "x_axis_label": "Timeline",
+        "y_axis_label": "Reservations",
+    },
+    {
+        "graph_type_id": 2,
+        "chart_type": ChartType.PIE,
+        "graph_summary": "Sell Through Rate",
+        "x_axis_label": None,
+        "y_axis_label": None,
+    },
+    {
+        "graph_type_id": 3,
+        "chart_type": ChartType.BAR,
+        "graph_summary": "Category Distribution",
+        "x_axis_label": None,
+        "y_axis_label": "Reservations",
+    },
+    {
+        "graph_type_id": 4,
+        "chart_type": ChartType.BAR,
+        "graph_summary": "Time Window Distribution",
+        "x_axis_label": None,
+        "y_axis_label": "Reservations",
+    },
 ]
