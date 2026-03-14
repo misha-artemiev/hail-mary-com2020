@@ -4,7 +4,7 @@
 # source: user.sql
 import datetime
 import pydantic
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
@@ -79,6 +79,21 @@ class GetUserLoginRow(pydantic.BaseModel):
     email: str
     pw_hash: str
     role: models.UserRole
+
+
+GET_USERS = """-- name: get_users \\:many
+SELECT user_id, username, email, role, created_at, last_login
+FROM users
+"""
+
+
+class GetUsersRow(pydantic.BaseModel):
+    user_id: int
+    username: str
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+    last_login: datetime.datetime
 
 
 UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
@@ -179,6 +194,18 @@ class AsyncQuerier:
             pw_hash=row[3],
             role=row[4],
         )
+
+    async def get_users(self) -> AsyncIterator[GetUsersRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_USERS))
+        async for row in result:
+            yield GetUsersRow(
+                user_id=row[0],
+                username=row[1],
+                email=row[2],
+                role=row[3],
+                created_at=row[4],
+                last_login=row[5],
+            )
 
     async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
         row = (await self._conn.execute(sqlalchemy.text(UPDATE_USER_EMAIL), {"p1": arg.user_id, "p2": arg.email})).first()

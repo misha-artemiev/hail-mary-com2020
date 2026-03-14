@@ -20,3 +20,21 @@ SELECT u.user_id, u.username, u.email, s.seller_name, s.address_line1, s.address
 FROM sellers s
 INNER JOIN users u ON s.user_id=u.user_id
 WHERE s.latitude < sqlc.arg(lat_max) AND s.latitude > sqlc.arg(lat_min) AND s.longitude < sqlc.arg(lon_max) AND s.longitude > sqlc.arg(lon_min);
+
+-- name: VerifySeller :one
+UPDATE sellers
+SET verified_by = $2, verification_date = NOW()
+WHERE user_id = $1
+RETURNING *;
+
+-- name: UnverifySeller :one
+UPDATE sellers
+SET verified_by = NULL, verification_date = NULL
+WHERE user_id = $1
+RETURNING *;
+
+-- name: UpdateSeller :one
+UPDATE sellers
+SET seller_name = $2, address_line1 = $3, address_line2 = $4, city = $5, post_code = $6, region = $7, country = $8, latitude = $9, longitude = $10
+WHERE user_id = $1
+RETURNING *;

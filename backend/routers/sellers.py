@@ -186,7 +186,7 @@ class BundleForm(BaseModel):
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
     discount_percentage: int = Field(lt=100, gt=0)
-    carbon_dioxide: float  # TEMPORARY INSTEAD OF WEIGHT
+    carbon_dioxide: int  # TEMPORARY INSTEAD OF WEIGHT
     window_start: datetime
     window_end: datetime
 
@@ -275,6 +275,7 @@ async def update_bundle(
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
+            carbon_dioxide=form.carbon_dioxide,
         )
     )
     if not bundle:
