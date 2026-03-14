@@ -15,6 +15,7 @@ from internal.queries import (
     bundle,
     category,
     consumer,
+    inbox,
     reservations,
     seller,
     seller_issue_reports,
@@ -34,6 +35,7 @@ from internal.queries.models import (
     Bundle,
     Category,
     Consumer,
+    Inbox,
     IssueStatus,
     Reservation,
     Seller,
@@ -1129,3 +1131,123 @@ async def update_seller_report_status(
     if not updated_report:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
     return updated_report
+
+
+@router.get(
+    "/database/inbox",
+    status_code=status.HTTP_200_OK,
+    summary="Get all inbox messages",
+    tags=["database admin"],
+)
+async def get_all_inboxes(
+    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+) -> list[Inbox]:
+    """Get all inbox messages.
+
+    Args:
+        conn: database connection
+
+    Returns:
+        list of all inbox messages
+    """
+    return [inbox_row async for inbox_row in inbox.AsyncQuerier(conn).get_inboxes()]
+
+
+@router.get(
+    "/database/inbox/user/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Get user inbox",
+    tags=["database admin"],
+)
+async def get_user_inbox(
+    user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+) -> list[Inbox]:
+    """Get all inbox messages for a specific user.
+
+    Args:
+        user_id: user id
+        conn: database connection
+
+    Returns:
+        list of all inbox messages for the user
+    """
+    return [
+        inbox_row
+        async for inbox_row in inbox.AsyncQuerier(conn).get_user_inbox(user_id=user_id)
+    ]
+
+
+class CreateInboxMessageForm(BaseModel):
+    """Inbox message creation form."""
+
+    user_id: int
+    sender_id: int
+    message_subject: str
+    message_text: str
+
+
+@router.post(
+    "/database/inbox",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create inbox message",
+    tags=["database admin"],
+)
+async def create_inbox_message(
+    form: CreateInboxMessageForm,
+    conn: database_dependency,
+    _: Annotated[None, Security(admin_auth)],
+) -> Inbox:
+    """Create an inbox message.
+
+    Args:
+        form: form with the message details
+        conn: database connection
+
+    Returns:
+        created inbox message
+
+    Raises:
+        HTTPException: if failed to create message
+    """
+    created_message = await inbox.AsyncQuerier(conn).create_inbox_message(
+        inbox.CreateInboxMessageParams(
+            user_id=form.user_id,
+            sender_id=form.sender_id,
+            message_subject=form.message_subject,
+            message_text=form.message_text,
+        )
+    )
+    if not created_message:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to create message"
+        )
+    return created_message
+
+
+@router.delete(
+    "/database/inbox/{message_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete inbox message",
+    tags=["database admin"],
+)
+async def delete_inbox_message(
+    message_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+) -> Inbox:
+    """Delete an inbox message.
+
+    Args:
+        message_id: message id
+        conn: database connection
+
+    Returns:
+        deleted message
+
+    Raises:
+        HTTPException: if message not found
+    """
+    deleted_message = await inbox.AsyncQuerier(conn).delete_inbox_message(
+        message_id=message_id
+    )
+    if not deleted_message:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
+    return deleted_message
