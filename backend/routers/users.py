@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.middleware import bearer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
-from internal.queries import admin_issue_reports
+from internal.queries.admin_issue_reports import AsyncQuerier as AdminIssueReportsQuerier
 from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.models import AdminIssueReport, AdminIssueType
 from internal.queries.token import GetSessionByTokenRow
@@ -29,6 +29,7 @@ class CreateAdminIssueReportForm(BaseModel):
     status_code=status.HTTP_201_CREATED,
     summary="Create admin issue report",
     description="Creates a new admin issue report for the authenticated user.",
+    tags=["reports"],
 )
 async def create_admin_issue_report(
     form: CreateAdminIssueReportForm,
@@ -48,7 +49,7 @@ async def create_admin_issue_report(
     Raises:
         HTTPException: if failed to create admin issue report
     """
-    report = await admin_issue_reports.AsyncQuerier(conn).create_admin_issue_report(
+    report = await AdminIssueReportsQuerier(conn).create_admin_issue_report(
         CreateAdminIssueReportParams(
             user_id=session.user_id,
             issue_type=form.issue_type,

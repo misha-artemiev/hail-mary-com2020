@@ -68,7 +68,6 @@ from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import consumer_auth
 from internal.database.dependency import database_dependency
-from internal.queries import seller_issue_reports
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
 from internal.queries.badge import GetConsumerBadgesRow
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
@@ -80,6 +79,7 @@ from internal.queries.consumer import (
 from internal.queries.models import Reservation, SellerIssueReport, SellerIssueType
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
+from internal.queries.seller_issue_reports import AsyncQuerier as SellerIssueReportsQuerier
 from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
@@ -349,18 +349,19 @@ async def get_streaks(
 class CreateSellerIssueReportForm(BaseModel):
     """Seller issue report creation form."""
 
-    reservation_id: int
     issue_type: SellerIssueType
     description: str
 
 
 @router.post(
-    "/me/reports/seller",
+    "/me/reservations/{reservation_id}/report",
     status_code=status.HTTP_201_CREATED,
     summary="Create seller issue report",
     description="Creates a new seller issue report for a specific reservation.",
+    tags=["reports"],
 )
 async def create_seller_issue_report(
+    reservation_id: int,
     form: CreateSellerIssueReportForm,
     conn: database_dependency,
     consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
@@ -368,6 +369,7 @@ async def create_seller_issue_report(
     """Create seller issue report.
 
     Args:
+        reservation_id: reservation id from path
         form: seller issue report creation form
         conn: database connection
         consumer: consumer session
@@ -379,7 +381,7 @@ async def create_seller_issue_report(
         HTTPException: if failed to create report or reservation not owned by consumer
     """
     reservation = await ReservationsQuerier(conn).get_reservation(
-        reservation_id=form.reservation_id
+        reservation_id=reservation_id
     )
     if not reservation or reservation.consumer_id != consumer.user_id:
         raise HTTPException(
@@ -387,9 +389,9 @@ async def create_seller_issue_report(
             detail="Reservation not found or not owned by consumer",
         )
 
-    report = await seller_issue_reports.AsyncQuerier(conn).create_seller_issue_report(
+    report = await SellerIssueReportsQuerier(conn).create_seller_issue_report(
         CreateSellerIssueReportParams(
-            reservation_id=form.reservation_id,
+            reservation_id=reservation_id,
             issue_type=form.issue_type,
             description=form.description,
         )

@@ -7,21 +7,46 @@ from internal.auth.creation import CreateAdminForm, create_admin
 from internal.auth.middleware import admin_auth, root_auth
 from internal.auth.security import hash_password
 from internal.database.dependency import database_dependency
-from internal.queries import (
-    admin,
-    admin_issue_reports,
-    allergens,
-    badge,
-    bundle,
-    category,
-    consumer,
-    inbox,
-    reservations,
-    seller,
-    seller_issue_reports,
-    user,
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+    UpdateAdminIssueReportStatusParams,
+)
+from internal.queries.allergens import (
+    AsyncQuerier as AllergensQuerier,
+    UpdateAllergenParams,
+)
+from internal.queries.badge import (
+    AsyncQuerier as BadgeQuerier,
+    UpdateBadgeParams,
+)
+from internal.queries.bundle import AsyncQuerier as BundleQuerier
+from internal.queries.category import (
+    AsyncQuerier as CategoryQuerier,
+    CreateCategoryParams,
+    UpdateCategoryParams,
+)
+from internal.queries.consumer import (
+    AsyncQuerier as ConsumerQuerier,
+    GetConsumersRow,
+    UpdateConsumerParams,
+)
+from internal.queries.inbox import (
+    AsyncQuerier as InboxQuerier,
+    CreateInboxMessageParams,
+)
+from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
+from internal.queries.seller import (
+    AsyncQuerier as SellerQuerier,
+    GetSellersRow,
+    UpdateSellerParams,
+    VerifySellerParams,
+)
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+    UpdateSellerIssueReportStatusParams,
 )
 from internal.queries.admin import (
+    AsyncQuerier as AdminQuerier,
     GetAdminRow,
     GetAdminsRow,
     SetIsAdminActiveParams,
@@ -43,6 +68,7 @@ from internal.queries.models import (
 )
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import (
+    AsyncQuerier as UserQuerier,
     DeleteUserRow,
     GetUsersRow,
     UpdateUserEmailParams,
@@ -101,7 +127,7 @@ async def get_admins(
     Returns:
         list of all admins
     """
-    return [admin_row async for admin_row in admin.AsyncQuerier(conn).get_admins()]
+    return [admin_row async for admin_row in AdminQuerier(conn).get_admins()]
 
 
 @router.get(
@@ -126,7 +152,7 @@ async def get_admin_me(
     Raises:
         HTTPException: if admin not found
     """
-    admin_profile = await admin.AsyncQuerier(conn).get_admin(
+    admin_profile = await AdminQuerier(conn).get_admin(
         user_id=admin_session.user_id
     )
     if not admin_profile:
@@ -158,7 +184,7 @@ async def get_admin_by_id(
     Raises:
         HTTPException: if admin not found
     """
-    admin_profile = await admin.AsyncQuerier(conn).get_admin(user_id=admin_id)
+    admin_profile = await AdminQuerier(conn).get_admin(user_id=admin_id)
     if not admin_profile:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Admin not found"
@@ -192,7 +218,7 @@ async def update_admin(
     Raises:
         HTTPException: if failed to update admin
     """
-    updated_admin_profile = await admin.AsyncQuerier(conn).update_admin(
+    updated_admin_profile = await AdminQuerier(conn).update_admin(
         UpdateAdminParams(user_id=admin_id, fname=form.first_name, lname=form.last_name)
     )
     if not updated_admin_profile:
@@ -225,7 +251,7 @@ async def deactivate_admin(
     Raises:
         HTTPException: if failed to find admin
     """
-    admin_deactivation_result = await admin.AsyncQuerier(conn).set_is_admin_active(
+    admin_deactivation_result = await AdminQuerier(conn).set_is_admin_active(
         SetIsAdminActiveParams(user_id=admin_id, active=False)
     )
     if not admin_deactivation_result:
@@ -255,7 +281,7 @@ async def activate_admin(
     Raises:
         HTTPException: if failed to find admin
     """
-    admin_activation_result = await admin.AsyncQuerier(conn).set_is_admin_active(
+    admin_activation_result = await AdminQuerier(conn).set_is_admin_active(
         SetIsAdminActiveParams(user_id=admin_id, active=True)
     )
     if not admin_activation_result:
@@ -275,7 +301,7 @@ async def get_all_users(
     Returns:
         list of all users
     """
-    return [user_row async for user_row in user.AsyncQuerier(conn).get_users()]
+    return [user_row async for user_row in UserQuerier(conn).get_users()]
 
 
 class UpdateUserEmailForm(BaseModel):
@@ -308,7 +334,7 @@ async def update_user_email(
     Raises:
         HTTPException: if failed to update email
     """
-    updated_user_email = await user.AsyncQuerier(conn).update_user_email(
+    updated_user_email = await UserQuerier(conn).update_user_email(
         UpdateUserEmailParams(user_id=user_id, email=form.email)
     )
     if not updated_user_email:
@@ -347,7 +373,7 @@ async def update_user_password(
         HTTPException: if failed to update password
     """
     hashed_pw = hash_password(form.password.get_secret_value())
-    updated_user_password = await user.AsyncQuerier(conn).update_user_password(
+    updated_user_password = await UserQuerier(conn).update_user_password(
         UpdateUserPasswordParams(user_id=user_id, pw_hash=hashed_pw)
     )
     if not updated_user_password:
@@ -373,7 +399,7 @@ async def delete_user(
     Raises:
         HTTPException: if user not found
     """
-    deleted_user = await user.AsyncQuerier(conn).delete_user(user_id=user_id)
+    deleted_user = await UserQuerier(conn).delete_user(user_id=user_id)
     if not deleted_user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
     return deleted_user
@@ -393,7 +419,7 @@ async def get_all_sellers(
     Returns:
         list of all sellers
     """
-    return [seller_row async for seller_row in seller.AsyncQuerier(conn).get_sellers()]
+    return [seller_row async for seller_row in SellerQuerier(conn).get_sellers()]
 
 
 @router.patch(
@@ -419,7 +445,7 @@ async def verify_seller(
     Raises:
         HTTPException: if seller not found or coordinates missing
     """
-    seller_querier = seller.AsyncQuerier(conn)
+    seller_querier = SellerQuerier(conn)
     seller_profile = await seller_querier.get_seller(user_id=seller_id)
     if not seller_profile:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Seller not found")
@@ -431,7 +457,7 @@ async def verify_seller(
         )
 
     verified_seller_profile = await seller_querier.verify_seller(
-        seller.VerifySellerParams(user_id=seller_id, verified_by=admin_session.user_id)
+        VerifySellerParams(user_id=seller_id, verified_by=admin_session.user_id)
     )
     if not verified_seller_profile:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Seller not found")
@@ -458,7 +484,7 @@ async def unverify_seller(
     Raises:
         HTTPException: if seller not found
     """
-    unverified_seller_profile = await seller.AsyncQuerier(conn).unverify_seller(
+    unverified_seller_profile = await SellerQuerier(conn).unverify_seller(
         user_id=seller_id
     )
     if not unverified_seller_profile:
@@ -504,7 +530,7 @@ async def update_seller_profile(
     Raises:
         HTTPException: if seller not found or invalid coordinate update
     """
-    seller_querier = seller.AsyncQuerier(conn)
+    seller_querier = SellerQuerier(conn)
     current_seller = await seller_querier.get_seller(user_id=seller_id)
     if not current_seller:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Seller not found")
@@ -519,7 +545,7 @@ async def update_seller_profile(
         )
 
     updated_seller_profile = await seller_querier.update_seller(
-        seller.UpdateSellerParams(
+        UpdateSellerParams(
             user_id=seller_id,
             seller_name=form.seller_name,
             address_line1=form.address_line1,
@@ -553,7 +579,7 @@ async def get_all_consumers(
     """
     return [
         consumer_row
-        async for consumer_row in consumer.AsyncQuerier(conn).get_consumers()
+        async for consumer_row in ConsumerQuerier(conn).get_consumers()
     ]
 
 
@@ -588,8 +614,8 @@ async def update_consumer_profile(
     Raises:
         HTTPException: if consumer not found
     """
-    updated_consumer_profile = await consumer.AsyncQuerier(conn).update_consumer(
-        consumer.UpdateConsumerParams(
+    updated_consumer_profile = await ConsumerQuerier(conn).update_consumer(
+        UpdateConsumerParams(
             user_id=consumer_id, fname=form.first_name, lname=form.last_name
         )
     )
@@ -612,7 +638,7 @@ async def get_all_bundles(
     Returns:
         list of all bundles
     """
-    return [bundle_row async for bundle_row in bundle.AsyncQuerier(conn).get_bundles()]
+    return [bundle_row async for bundle_row in BundleQuerier(conn).get_bundles()]
 
 
 @router.delete(
@@ -635,7 +661,7 @@ async def delete_bundle(
     Raises:
         HTTPException: if bundle not found
     """
-    deleted_bundle = await bundle.AsyncQuerier(conn).delete_bundle(bundle_id=bundle_id)
+    deleted_bundle = await BundleQuerier(conn).delete_bundle(bundle_id=bundle_id)
     if not deleted_bundle:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bundle not found")
     return deleted_bundle
@@ -659,7 +685,7 @@ async def get_all_reservations(
     """
     return [
         reservation_row
-        async for reservation_row in reservations.AsyncQuerier(conn).get_reservations()
+        async for reservation_row in ReservationsQuerier(conn).get_reservations()
     ]
 
 
@@ -685,7 +711,7 @@ async def delete_reservation(
     Raises:
         HTTPException: if reservation not found
     """
-    deleted_reservation = await reservations.AsyncQuerier(conn).delete_reservation(
+    deleted_reservation = await ReservationsQuerier(conn).delete_reservation(
         reservation_id=reservation_id
     )
     if not deleted_reservation:
@@ -709,7 +735,7 @@ async def get_all_allergens(
     """
     return [
         allergen_row
-        async for allergen_row in allergens.AsyncQuerier(conn).get_allergens()
+        async for allergen_row in AllergensQuerier(conn).get_allergens()
     ]
 
 
@@ -741,7 +767,7 @@ async def create_allergen(
     Raises:
         HTTPException: if failed to create allergen
     """
-    created_allergen = await allergens.AsyncQuerier(conn).create_allergen(
+    created_allergen = await AllergensQuerier(conn).create_allergen(
         allergen_name=form.allergen_name
     )
     if not created_allergen:
@@ -781,8 +807,8 @@ async def update_allergen(
     Raises:
         HTTPException: if allergen not found
     """
-    updated_allergen = await allergens.AsyncQuerier(conn).update_allergen(
-        allergens.UpdateAllergenParams(
+    updated_allergen = await AllergensQuerier(conn).update_allergen(
+        UpdateAllergenParams(
             allergen_id=allergen_id, allergen_name=form.allergen_name
         )
     )
@@ -813,7 +839,7 @@ async def delete_allergen(
     Raises:
         HTTPException: if allergen not found
     """
-    deleted_allergen = await allergens.AsyncQuerier(conn).delete_allergen(
+    deleted_allergen = await AllergensQuerier(conn).delete_allergen(
         allergen_id=allergen_id
     )
     if not deleted_allergen:
@@ -837,7 +863,7 @@ async def get_all_categories(
     """
     return [
         category_row
-        async for category_row in category.AsyncQuerier(conn).get_categories()
+        async for category_row in CategoryQuerier(conn).get_categories()
     ]
 
 
@@ -870,8 +896,8 @@ async def create_category(
     Raises:
         HTTPException: if failed to create category
     """
-    created_category = await category.AsyncQuerier(conn).create_category(
-        category.CreateCategoryParams(
+    created_category = await CategoryQuerier(conn).create_category(
+        CreateCategoryParams(
             category_name=form.category_name,
             category_coefficient=form.category_coefficient,
         )
@@ -907,8 +933,8 @@ async def update_category(
     Raises:
         HTTPException: if category not found
     """
-    updated_category = await category.AsyncQuerier(conn).update_category(
-        category.UpdateCategoryParams(
+    updated_category = await CategoryQuerier(conn).update_category(
+        UpdateCategoryParams(
             category_id=category_id,
             category_name=form.category_name,
             category_coefficient=form.category_coefficient,
@@ -941,7 +967,7 @@ async def delete_category(
     Raises:
         HTTPException: if category not found
     """
-    deleted_category = await category.AsyncQuerier(conn).delete_category(
+    deleted_category = await CategoryQuerier(conn).delete_category(
         category_id=category_id
     )
     if not deleted_category:
@@ -963,7 +989,7 @@ async def get_all_badges(
     Returns:
         list of all badges
     """
-    return [badge_row async for badge_row in badge.AsyncQuerier(conn).get_badges()]
+    return [badge_row async for badge_row in BadgeQuerier(conn).get_badges()]
 
 
 class UpdateBadgeForm(BaseModel):
@@ -997,8 +1023,8 @@ async def update_badge(
     Raises:
         HTTPException: if badge not found
     """
-    updated_badge = await badge.AsyncQuerier(conn).update_badge(
-        badge.UpdateBadgeParams(
+    updated_badge = await BadgeQuerier(conn).update_badge(
+        UpdateBadgeParams(
             badge_id=badge_id, name=form.name, description=form.description
         )
     )
@@ -1025,7 +1051,7 @@ async def get_admin_reports(
     """
     return [
         report_row
-        async for report_row in admin_issue_reports.AsyncQuerier(
+        async for report_row in AdminIssueReportsQuerier(
             conn
         ).get_admin_issue_reports()
     ]
@@ -1061,10 +1087,10 @@ async def update_admin_report_status(
     Raises:
         HTTPException: if report not found
     """
-    updated_report = await admin_issue_reports.AsyncQuerier(
+    updated_report = await AdminIssueReportsQuerier(
         conn
     ).update_admin_issue_report_status(
-        admin_issue_reports.UpdateAdminIssueReportStatusParams(
+        UpdateAdminIssueReportStatusParams(
             report_id=report_id, status=form.status
         )
     )
@@ -1091,7 +1117,7 @@ async def get_seller_reports(
     """
     return [
         report_row
-        async for report_row in seller_issue_reports.AsyncQuerier(
+        async for report_row in SellerIssueReportsQuerier(
             conn
         ).get_seller_issue_reports()
     ]
@@ -1121,10 +1147,10 @@ async def update_seller_report_status(
     Raises:
         HTTPException: if report not found
     """
-    updated_report = await seller_issue_reports.AsyncQuerier(
+    updated_report = await SellerIssueReportsQuerier(
         conn
     ).update_seller_issue_report_status(
-        seller_issue_reports.UpdateSellerIssueReportStatusParams(
+        UpdateSellerIssueReportStatusParams(
             report_id=report_id, status=form.status
         )
     )
@@ -1134,10 +1160,7 @@ async def update_seller_report_status(
 
 
 @router.get(
-    "/database/inbox",
-    status_code=status.HTTP_200_OK,
-    summary="Get all inbox messages",
-    tags=["database admin"],
+    "/database/inbox", status_code=status.HTTP_200_OK, summary="Get all inbox messages"
 )
 async def get_all_inboxes(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1150,14 +1173,13 @@ async def get_all_inboxes(
     Returns:
         list of all inbox messages
     """
-    return [inbox_row async for inbox_row in inbox.AsyncQuerier(conn).get_inboxes()]
+    return [inbox_row async for inbox_row in InboxQuerier(conn).get_inboxes()]
 
 
 @router.get(
     "/database/inbox/user/{user_id}",
     status_code=status.HTTP_200_OK,
     summary="Get user inbox",
-    tags=["database admin"],
 )
 async def get_user_inbox(
     user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1173,7 +1195,7 @@ async def get_user_inbox(
     """
     return [
         inbox_row
-        async for inbox_row in inbox.AsyncQuerier(conn).get_user_inbox(user_id=user_id)
+        async for inbox_row in InboxQuerier(conn).get_user_inbox(user_id=user_id)
     ]
 
 
@@ -1190,7 +1212,6 @@ class CreateInboxMessageForm(BaseModel):
     "/database/inbox",
     status_code=status.HTTP_201_CREATED,
     summary="Create inbox message",
-    tags=["database admin"],
 )
 async def create_inbox_message(
     form: CreateInboxMessageForm,
@@ -1209,8 +1230,8 @@ async def create_inbox_message(
     Raises:
         HTTPException: if failed to create message
     """
-    created_message = await inbox.AsyncQuerier(conn).create_inbox_message(
-        inbox.CreateInboxMessageParams(
+    created_message = await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
             user_id=form.user_id,
             sender_id=form.sender_id,
             message_subject=form.message_subject,
@@ -1228,7 +1249,6 @@ async def create_inbox_message(
     "/database/inbox/{message_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete inbox message",
-    tags=["database admin"],
 )
 async def delete_inbox_message(
     message_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1245,7 +1265,7 @@ async def delete_inbox_message(
     Raises:
         HTTPException: if message not found
     """
-    deleted_message = await inbox.AsyncQuerier(conn).delete_inbox_message(
+    deleted_message = await InboxQuerier(conn).delete_inbox_message(
         message_id=message_id
     )
     if not deleted_message:
