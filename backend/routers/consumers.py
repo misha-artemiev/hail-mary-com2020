@@ -76,9 +76,13 @@ from internal.queries.consumer import (
     GetConsumersRow,
     UpdateConsumerParams,
 )
-from internal.queries.models import Reservation
+from internal.queries.models import Reservation, SellerIssueReport, SellerIssueType
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+)
+from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
@@ -342,3 +346,61 @@ async def get_streaks(
             break
 
     return streak_count
+
+
+class CreateSellerIssueReportForm(BaseModel):
+    """Seller issue report creation form."""
+
+    issue_type: SellerIssueType
+    description: str
+
+
+@router.post(
+    "/me/reservations/{reservation_id}/report",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create seller issue report",
+    description="Creates a new seller issue report for a specific reservation.",
+    tags=["reports"],
+)
+async def create_seller_issue_report(
+    reservation_id: int,
+    form: CreateSellerIssueReportForm,
+    conn: database_dependency,
+    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+) -> SellerIssueReport:
+    """Create seller issue report.
+
+    Args:
+        reservation_id: reservation id from path
+        form: seller issue report creation form
+        conn: database connection
+        consumer: consumer session
+
+    Returns:
+        created seller issue report
+
+    Raises:
+        HTTPException: if failed to create report or reservation not owned by consumer
+    """
+    reservation = await ReservationsQuerier(conn).get_reservation(
+        reservation_id=reservation_id
+    )
+    if not reservation or reservation.consumer_id != consumer.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reservation not found or not owned by consumer",
+        )
+
+    report = await SellerIssueReportsQuerier(conn).create_seller_issue_report(
+        CreateSellerIssueReportParams(
+            reservation_id=reservation_id,
+            issue_type=form.issue_type,
+            description=form.description,
+        )
+    )
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create seller issue report",
+        )
+    return report

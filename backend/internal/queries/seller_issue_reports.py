@@ -11,6 +11,19 @@ import sqlalchemy.ext.asyncio
 from internal.queries import models
 
 
+CREATE_SELLER_ISSUE_REPORT = """-- name: create_seller_issue_report \\:one
+INSERT INTO seller_issue_reports (reservation_id, issue_type, description)
+VALUES (:p1, :p2, :p3)
+RETURNING report_id, reservation_id, issue_type, description, created_at, status
+"""
+
+
+class CreateSellerIssueReportParams(pydantic.BaseModel):
+    reservation_id: int
+    issue_type: Optional[models.SellerIssueType]
+    description: str
+
+
 DELETE_SELLER_ISSUE_REPORT = """-- name: delete_seller_issue_report \\:one
 DELETE FROM seller_issue_reports
 WHERE report_id = :p1
@@ -39,6 +52,19 @@ class UpdateSellerIssueReportStatusParams(pydantic.BaseModel):
 class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
+
+    async def create_seller_issue_report(self, arg: CreateSellerIssueReportParams) -> Optional[models.SellerIssueReport]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_SELLER_ISSUE_REPORT), {"p1": arg.reservation_id, "p2": arg.issue_type, "p3": arg.description})).first()
+        if row is None:
+            return None
+        return models.SellerIssueReport(
+            report_id=row[0],
+            reservation_id=row[1],
+            issue_type=row[2],
+            description=row[3],
+            created_at=row[4],
+            status=row[5],
+        )
 
     async def delete_seller_issue_report(self, *, report_id: int) -> Optional[models.SellerIssueReport]:
         row = (await self._conn.execute(sqlalchemy.text(DELETE_SELLER_ISSUE_REPORT), {"p1": report_id})).first()

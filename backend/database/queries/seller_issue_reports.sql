@@ -1,3 +1,8 @@
+-- name: CreateSellerIssueReport :one
+INSERT INTO seller_issue_reports (reservation_id, issue_type, description)
+VALUES ($1, $2, $3)
+RETURNING *;
+
 -- name: GetSellerIssueReports :many
 SELECT * FROM seller_issue_reports;
 
