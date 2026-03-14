@@ -14,7 +14,7 @@ from internal.queries import models
 
 COLLECT_RESERVATION = """-- name: collect_reservation \\:one
 UPDATE reservations
-SET status='collected', collected_at=NOW()
+SET collected_at=NOW()
 WHERE reservation_id=:p1
 RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 """
@@ -51,7 +51,7 @@ GET_CONSUMERS_RESERVATIONS_FULL = """-- name: get_consumers_reservations_full \\
 SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
-INNER JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
 WHERE consumer_id=:p1
 """
 
@@ -65,7 +65,7 @@ class GetConsumersReservationsFullRow(pydantic.BaseModel):
     carbon_dioxide: float
     window_start: datetime.datetime
     window_end: datetime.datetime
-    category_id: int
+    category_id: Optional[int]
 
 
 GET_RESERVATION = """-- name: get_reservation \\:one
@@ -78,7 +78,7 @@ WHERE reservation_id=:p1
 GET_RESERVATION_COLLECTION = """-- name: get_reservation_collection \\:one
 SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
-WHERE bundle_id=:p1 AND claim_code=:p2 AND status='reserved'
+WHERE bundle_id=:p1 AND claim_code=:p2 AND collected_at IS NULL
 LIMIT 1
 """
 
