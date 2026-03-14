@@ -1,3 +1,8 @@
+-- name: CreateAdminIssueReport :one
+INSERT INTO admin_issue_reports (user_id, issue_type, description)
+VALUES ($1, $2, $3)
+RETURNING *;
+
 -- name: GetAdminIssueReports :many
 SELECT * FROM admin_issue_reports;
 

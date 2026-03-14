@@ -11,6 +11,19 @@ import sqlalchemy.ext.asyncio
 from internal.queries import models
 
 
+CREATE_ADMIN_ISSUE_REPORT = """-- name: create_admin_issue_report \\:one
+INSERT INTO admin_issue_reports (user_id, issue_type, description)
+VALUES (:p1, :p2, :p3)
+RETURNING report_id, user_id, issue_type, description, created_at, status
+"""
+
+
+class CreateAdminIssueReportParams(pydantic.BaseModel):
+    user_id: int
+    issue_type: models.AdminIssueType
+    description: str
+
+
 DELETE_ADMIN_ISSUE_REPORT = """-- name: delete_admin_issue_report \\:one
 DELETE FROM admin_issue_reports
 WHERE report_id = :p1
@@ -39,6 +52,19 @@ class UpdateAdminIssueReportStatusParams(pydantic.BaseModel):
 class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
+
+    async def create_admin_issue_report(self, arg: CreateAdminIssueReportParams) -> Optional[models.AdminIssueReport]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_ADMIN_ISSUE_REPORT), {"p1": arg.user_id, "p2": arg.issue_type, "p3": arg.description})).first()
+        if row is None:
+            return None
+        return models.AdminIssueReport(
+            report_id=row[0],
+            user_id=row[1],
+            issue_type=row[2],
+            description=row[3],
+            created_at=row[4],
+            status=row[5],
+        )
 
     async def delete_admin_issue_report(self, *, report_id: int) -> Optional[models.AdminIssueReport]:
         row = (await self._conn.execute(sqlalchemy.text(DELETE_ADMIN_ISSUE_REPORT), {"p1": report_id})).first()
