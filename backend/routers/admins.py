@@ -265,7 +265,6 @@ async def activate_admin(
     "/database/users",
     status_code=status.HTTP_200_OK,
     summary="Get all users",
-    tags=["database admin"],
 )
 async def get_all_users(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -291,7 +290,6 @@ class UpdateUserEmailForm(BaseModel):
     "/database/users/{user_id}/email",
     status_code=status.HTTP_200_OK,
     summary="Update user email",
-    tags=["database admin"],
 )
 async def update_user_email(
     user_id: int,
@@ -330,7 +328,6 @@ class UpdateUserPasswordForm(BaseModel):
     "/database/users/{user_id}/password",
     status_code=status.HTTP_200_OK,
     summary="Update user password",
-    tags=["database admin"],
 )
 async def update_user_password(
     user_id: int,
@@ -364,7 +361,6 @@ async def update_user_password(
     "/database/users/{user_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete user",
-    tags=["database admin"],
 )
 async def delete_user(
     user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -391,7 +387,6 @@ async def delete_user(
     "/database/sellers",
     status_code=status.HTTP_200_OK,
     summary="Get all sellers",
-    tags=["database admin"],
 )
 async def get_all_sellers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -411,7 +406,6 @@ async def get_all_sellers(
     "/database/sellers/{seller_id}/verify",
     status_code=status.HTTP_200_OK,
     summary="Verify seller",
-    tags=["database admin"],
 )
 async def verify_seller(
     seller_id: int,
@@ -454,7 +448,6 @@ async def verify_seller(
     "/database/sellers/{seller_id}/unverify",
     status_code=status.HTTP_200_OK,
     summary="Unverify seller",
-    tags=["database admin"],
 )
 async def unverify_seller(
     seller_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -497,7 +490,6 @@ class UpdateSellerForm(BaseModel):
     "/database/sellers/{seller_id}",
     status_code=status.HTTP_200_OK,
     summary="Update seller profile",
-    tags=["database admin"],
 )
 async def update_seller_profile(
     seller_id: int,
@@ -555,7 +547,6 @@ async def update_seller_profile(
     "/database/consumers",
     status_code=status.HTTP_200_OK,
     summary="Get all consumers",
-    tags=["database admin"],
 )
 async def get_all_consumers(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -585,7 +576,6 @@ class UpdateConsumerForm(BaseModel):
     "/database/consumers/{consumer_id}",
     status_code=status.HTTP_200_OK,
     summary="Update consumer profile",
-    tags=["database admin"],
 )
 async def update_consumer_profile(
     consumer_id: int,
@@ -620,7 +610,6 @@ async def update_consumer_profile(
     "/database/bundles",
     status_code=status.HTTP_200_OK,
     summary="Get all bundles",
-    tags=["database admin"],
 )
 async def get_all_bundles(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -640,7 +629,6 @@ async def get_all_bundles(
     "/database/bundles/{bundle_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete bundle",
-    tags=["database admin"],
 )
 async def delete_bundle(
     bundle_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -667,7 +655,6 @@ async def delete_bundle(
     "/database/reservations",
     status_code=status.HTTP_200_OK,
     summary="Get all reservations",
-    tags=["database admin"],
 )
 async def get_all_reservations(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -690,7 +677,6 @@ async def get_all_reservations(
     "/database/reservations/{reservation_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete reservation",
-    tags=["database admin"],
 )
 async def delete_reservation(
     reservation_id: int,
@@ -721,7 +707,6 @@ async def delete_reservation(
     "/database/allergens",
     status_code=status.HTTP_200_OK,
     summary="Get all allergens",
-    tags=["database admin"],
 )
 async def get_all_allergens(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -750,7 +735,6 @@ class CreateAllergenForm(BaseModel):
     "/database/allergens",
     status_code=status.HTTP_201_CREATED,
     summary="Create allergen",
-    tags=["database admin"],
 )
 async def create_allergen(
     form: CreateAllergenForm,
@@ -789,7 +773,6 @@ class UpdateAllergenForm(BaseModel):
     "/database/allergens/{allergen_id}",
     status_code=status.HTTP_200_OK,
     summary="Update allergen",
-    tags=["database admin"],
 )
 async def update_allergen(
     allergen_id: int,
@@ -824,7 +807,6 @@ async def update_allergen(
     "/database/allergens/{allergen_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete allergen",
-    tags=["database admin"],
 )
 async def delete_allergen(
     allergen_id: int,
@@ -855,7 +837,6 @@ async def delete_allergen(
     "/database/categories",
     status_code=status.HTTP_200_OK,
     summary="Get all categories",
-    tags=["database admin"],
 )
 async def get_all_categories(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -885,7 +866,6 @@ class CreateCategoryForm(BaseModel):
     "/database/categories",
     status_code=status.HTTP_201_CREATED,
     summary="Create category",
-    tags=["database admin"],
 )
 async def create_category(
     form: CreateCategoryForm,
@@ -921,7 +901,6 @@ async def create_category(
     "/database/categories/{category_id}",
     status_code=status.HTTP_200_OK,
     summary="Update category",
-    tags=["database admin"],
 )
 async def update_category(
     category_id: int,
@@ -958,7 +937,6 @@ async def update_category(
     "/database/categories/{category_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete category",
-    tags=["database admin"],
 )
 async def delete_category(
     category_id: int,
@@ -989,7 +967,6 @@ async def delete_category(
     "/database/badges",
     status_code=status.HTTP_200_OK,
     summary="Get all badges",
-    tags=["database admin"],
 )
 async def get_all_badges(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1016,7 +993,6 @@ class UpdateBadgeForm(BaseModel):
     "/database/badges/{badge_id}",
     status_code=status.HTTP_200_OK,
     summary="Update badge",
-    tags=["database admin"],
 )
 async def update_badge(
     badge_id: int,
@@ -1051,7 +1027,6 @@ async def update_badge(
     "/database/reports/admin",
     status_code=status.HTTP_200_OK,
     summary="Get all admin issue reports",
-    tags=["database admin"],
 )
 async def get_admin_reports(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1082,7 +1057,6 @@ class UpdateReportStatusForm(BaseModel):
     "/database/reports/admin/{report_id}/status",
     status_code=status.HTTP_200_OK,
     summary="Update admin issue report status",
-    tags=["database admin"],
 )
 async def update_admin_report_status(
     report_id: int,
@@ -1119,7 +1093,6 @@ async def update_admin_report_status(
     "/database/reports/seller",
     status_code=status.HTTP_200_OK,
     summary="Get all seller issue reports",
-    tags=["database admin"],
 )
 async def get_seller_reports(
     conn: database_dependency, _: Annotated[None, Security(admin_auth)]
@@ -1144,7 +1117,6 @@ async def get_seller_reports(
     "/database/reports/seller/{report_id}/status",
     status_code=status.HTTP_200_OK,
     summary="Update seller issue report status",
-    tags=["database admin"],
 )
 async def update_seller_report_status(
     report_id: int,
