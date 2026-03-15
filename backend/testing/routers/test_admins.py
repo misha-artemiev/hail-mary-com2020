@@ -48,10 +48,10 @@ def get_mock_admin() -> MagicMock:
     """
     admin = MagicMock()
     admin.user_id = TEST_ADMIN_ID
-    admin.username = "admin_user"
-    admin.email = "admin@test.com"
+    admin.username = "admin_"
+    admin.email = "admin@testlock.com"
     admin.fname = "Admin"
-    admin.lname = "User"
+    admin.lname = "Baskan"
     return admin
 
 
@@ -63,7 +63,7 @@ def get_mock_seller() -> MagicMock:
     """
     seller = MagicMock()
     seller.user_id = TEST_SELLER_ID
-    seller.username = "seller_user"
+    seller.username = "satilmis"
     seller.email = "seller@test.com"
     seller.seller_name = "Mock Seller"
     seller.address_line1 = "123 Mock St"
@@ -86,7 +86,7 @@ def get_mock_category() -> MagicMock:
     """
     category = MagicMock()
     category.category_id = TEST_CATEGORY_ID
-    category.category_name = "Test Category"
+    category.category_name = "Pizza"
     category.category_coefficient = 1.5
     return category
 
@@ -100,7 +100,7 @@ def get_mock_inbox() -> MagicMock:
     inbox = MagicMock()
     inbox.message_id = TEST_MESSAGE_ID
     inbox.message_subject = "Hello"
-    inbox.message_text = "World"
+    inbox.message_text = "What's up!"
     return inbox
 
 
@@ -117,8 +117,6 @@ class TestAdmins(TestCase):
         del self.client
         cleanup_database()
 
-    # --- ROOT AUTH ENDPOINTS ---
-
     @patch("routers.admins.create_admin")
     def test_register_admin(self, mock_create: MagicMock) -> None:
         """Test root user registering a new admin."""
@@ -127,11 +125,11 @@ class TestAdmins(TestCase):
         mock_create.side_effect = AsyncMock(return_value=None)
 
         payload = {
-            "username": "new_admin",
-            "email": "admin@test.com",
+            "username": "gladio",
+            "email": "capsizabidin@kv.com",
             "password": "securepass",
             "first_name": "New",
-            "last_name": "Admin",
+            "last_name": "Abidin",
         }
 
         response = self.client.post("/admins", json=payload)
@@ -163,8 +161,6 @@ class TestAdmins(TestCase):
 
         del app.dependency_overrides[root_auth]
 
-    # --- ADMIN AUTH ENDPOINTS ---
-
     @patch("routers.admins.AdminQuerier")
     def test_get_admin_me(self, mock_querier: MagicMock) -> None:
         """Test getting authenticated admin profile."""
@@ -187,12 +183,11 @@ class TestAdmins(TestCase):
 
         mock_instance = mock_querier.return_value
 
-        # Add required Pydantic fields to the deleted user mock
         mock_user = MagicMock()
         mock_user.user_id = TEST_USER_ID
         mock_user.username = "deleted_user"
         mock_user.email = "deleted@test.com"
-        mock_user.role = "consumer"  # Must explicitly match the Enum strings
+        mock_user.role = "consumer"
 
         mock_instance.delete_user = AsyncMock(return_value=mock_user)
 
@@ -201,8 +196,6 @@ class TestAdmins(TestCase):
         assert response.status_code == status.HTTP_200_OK
 
         del app.dependency_overrides[admin_auth]
-
-    # --- SELLER VERIFICATION BUSINESS LOGIC ---
 
     @patch("routers.admins.SellerQuerier")
     def test_verify_seller_success(self, mock_querier: MagicMock) -> None:
@@ -228,7 +221,6 @@ class TestAdmins(TestCase):
 
         mock_instance = mock_querier.return_value
 
-        # Seller missing coordinates
         mock_seller = get_mock_seller()
         mock_seller.latitude = None
         mock_seller.longitude = None
@@ -243,8 +235,6 @@ class TestAdmins(TestCase):
 
         del app.dependency_overrides[admin_auth]
 
-    # --- CATEGORY CRUD ---
-
     @patch("routers.admins.CategoryQuerier")
     def test_create_category(self, mock_querier: MagicMock) -> None:
         """Test admin creating a new category."""
@@ -254,18 +244,16 @@ class TestAdmins(TestCase):
         mock_instance.create_category = AsyncMock(return_value=get_mock_category())
 
         payload = {
-            "category_name": "Test Category",
+            "category_name": "Pizza",
             "category_coefficient": 1.5,
         }
 
         response = self.client.post("/admins/database/categories", json=payload)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["category_name"] == "Test Category"
+        assert response.json()["category_name"] == "Pizza"
 
         del app.dependency_overrides[admin_auth]
-
-    # --- INBOX MESSAGES ---
 
     @patch("routers.admins.InboxQuerier")
     def test_create_inbox_message(self, mock_querier: MagicMock) -> None:
@@ -279,7 +267,7 @@ class TestAdmins(TestCase):
             "user_id": TEST_USER_ID,
             "sender_id": TEST_ADMIN_ID,
             "message_subject": "Hello",
-            "message_text": "World",
+            "message_text": "What's up!",
         }
 
         response = self.client.post("/admins/database/inbox", json=payload)
