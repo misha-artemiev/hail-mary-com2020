@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS admin_issue_reports (
 CREATE TABLE IF NOT EXISTS seller_issue_reports (
     report_id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL,
-    issue_type seller_issue_type,
+    issue_type seller_issue_type NOT NULL,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status issue_status NOT NULL DEFAULT 'open',

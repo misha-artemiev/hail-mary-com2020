@@ -15,6 +15,7 @@ from routers.badges import router as badges_router
 from routers.bundles import router as bundle_router
 from routers.categories import router as categories_router
 from routers.consumers import router as consumers_router
+from routers.reports import router as reports_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
 from routers.users import router as users_router
@@ -55,6 +56,7 @@ def register_routers(app: FastAPI) -> None:
         categories_router,
         badges_router,
         admin_router,
+        reports_router,
     ]
     for router in routers:
         app.include_router(router)
