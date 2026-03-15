@@ -141,39 +141,3 @@ async def send_message(
             detail="Failed to send message",
         )
     return message
-
-
-@router.delete(
-    "/me/inbox/{message_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete an inbox message",
-    description="Deletes a message from the inbox.",
-)
-async def delete_message(
-    message_id: int,
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> None:
-    """Delete a message.
-
-    Args:
-      message_id: ID of the message to delete
-      conn: database connection
-      session: users session
-
-    Raises:
-      HTTPException: if the message is not found or not owned by user
-    """
-    user_messages = [
-        msg async for msg in InboxQuerier(conn).get_user_inbox(user_id=session.user_id)
-    ]
-    if not any(msg.message_id == message_id for msg in user_messages):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
-
-    deleted = await InboxQuerier(conn).delete_inbox_message(message_id=message_id)
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Message not found"
-        )
