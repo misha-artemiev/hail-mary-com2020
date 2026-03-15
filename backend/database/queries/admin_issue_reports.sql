@@ -6,6 +6,10 @@ RETURNING *;
 -- name: GetAdminIssueReports :many
 SELECT * FROM admin_issue_reports;
 
+-- name: GetAdminIssueReportsByUser :many
+SELECT * FROM admin_issue_reports
+WHERE user_id = $1;
+
 -- name: UpdateAdminIssueReportStatus :one
 UPDATE admin_issue_reports
 SET status = $2

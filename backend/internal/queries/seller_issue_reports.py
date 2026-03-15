@@ -20,7 +20,7 @@ RETURNING report_id, reservation_id, issue_type, description, created_at, status
 
 class CreateSellerIssueReportParams(pydantic.BaseModel):
     reservation_id: int
-    issue_type: Optional[models.SellerIssueType]
+    issue_type: models.SellerIssueType
     description: str
 
 
@@ -33,6 +33,13 @@ RETURNING report_id, reservation_id, issue_type, description, created_at, status
 
 GET_SELLER_ISSUE_REPORTS = """-- name: get_seller_issue_reports \\:many
 SELECT report_id, reservation_id, issue_type, description, created_at, status FROM seller_issue_reports
+"""
+
+
+GET_SELLER_ISSUE_REPORTS_BY_USER = """-- name: get_seller_issue_reports_by_user \\:many
+SELECT r.report_id, r.reservation_id, r.issue_type, r.description, r.created_at, r.status FROM seller_issue_reports r
+JOIN reservations res ON r.reservation_id = res.reservation_id
+WHERE res.consumer_id = :p1
 """
 
 
@@ -81,6 +88,18 @@ class AsyncQuerier:
 
     async def get_seller_issue_reports(self) -> AsyncIterator[models.SellerIssueReport]:
         result = await self._conn.stream(sqlalchemy.text(GET_SELLER_ISSUE_REPORTS))
+        async for row in result:
+            yield models.SellerIssueReport(
+                report_id=row[0],
+                reservation_id=row[1],
+                issue_type=row[2],
+                description=row[3],
+                created_at=row[4],
+                status=row[5],
+            )
+
+    async def get_seller_issue_reports_by_user(self, *, consumer_id: int) -> AsyncIterator[models.SellerIssueReport]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLER_ISSUE_REPORTS_BY_USER), {"p1": consumer_id})
         async for row in result:
             yield models.SellerIssueReport(
                 report_id=row[0],

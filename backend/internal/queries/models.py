@@ -242,7 +242,7 @@ class Seller(pydantic.BaseModel):
 class SellerIssueReport(pydantic.BaseModel):
     report_id: int
     reservation_id: int
-    issue_type: Optional[SellerIssueType]
+    issue_type: SellerIssueType
     description: str
     created_at: datetime.datetime
     status: IssueStatus
