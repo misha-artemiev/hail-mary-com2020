@@ -36,6 +36,12 @@ SELECT report_id, user_id, issue_type, description, created_at, status FROM admi
 """
 
 
+GET_ADMIN_ISSUE_REPORTS_BY_USER = """-- name: get_admin_issue_reports_by_user \\:many
+SELECT report_id, user_id, issue_type, description, created_at, status FROM admin_issue_reports
+WHERE user_id = :p1
+"""
+
+
 UPDATE_ADMIN_ISSUE_REPORT_STATUS = """-- name: update_admin_issue_report_status \\:one
 UPDATE admin_issue_reports
 SET status = :p2
@@ -81,6 +87,18 @@ class AsyncQuerier:
 
     async def get_admin_issue_reports(self) -> AsyncIterator[models.AdminIssueReport]:
         result = await self._conn.stream(sqlalchemy.text(GET_ADMIN_ISSUE_REPORTS))
+        async for row in result:
+            yield models.AdminIssueReport(
+                report_id=row[0],
+                user_id=row[1],
+                issue_type=row[2],
+                description=row[3],
+                created_at=row[4],
+                status=row[5],
+            )
+
+    async def get_admin_issue_reports_by_user(self, *, user_id: int) -> AsyncIterator[models.AdminIssueReport]:
+        result = await self._conn.stream(sqlalchemy.text(GET_ADMIN_ISSUE_REPORTS_BY_USER), {"p1": user_id})
         async for row in result:
             yield models.AdminIssueReport(
                 report_id=row[0],
