@@ -37,7 +37,7 @@ SELECT user_id, username, email, role, created_at, last_login
 FROM users;
 
 -- name: GetUserId :one
-SELECT user_id::numeric
+SELECT user_id, role
 FROM users
 WHERE username=$1
 LIMIT 1;

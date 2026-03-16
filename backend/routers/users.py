@@ -8,7 +8,7 @@ from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
 from internal.queries.inbox import AsyncQuerier as InboxQuerier
 from internal.queries.inbox import CreateInboxMessageParams
-from internal.queries.models import Inbox
+from internal.queries.models import Inbox, UserRole
 from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserEmailParams
@@ -144,7 +144,7 @@ async def send_message(
 
 
 @router.get(path="/id/{username}")
-async def get_user_id(username: str, conn: database_dependency) -> int:
+async def get_user_id(username: str, conn: database_dependency) -> tuple[int, UserRole]:
     """Get user id from username.
 
     Args:
@@ -157,6 +157,6 @@ async def get_user_id(username: str, conn: database_dependency) -> int:
     Raises:
         HTTPException: if failed to find user
     """
-    if (user_id := await UserQuerier(conn).get_user_id(username=username)) is None:
+    if (user := await UserQuerier(conn).get_user_id(username=username)) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "failed to find user")
-    return user_id
+    return (user.user_id, user.role)
