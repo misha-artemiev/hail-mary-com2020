@@ -3,8 +3,21 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
+} from "recharts";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -17,6 +30,55 @@ import Button from "../components/forms/Button";
 import FormInput from "../components/forms/FormInput";
 import SubmitButton from "../components/forms/SubmitButton";
 import Reservation from "../components/Reservation";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
+function useAllSellerReservations(bundles) {
+    const [allReservations, setAllReservations] = useState([]);
+
+    useEffect(() => {
+        async function fetchAllReservations() {
+            if (!bundles || bundles.length === 0) {
+                return;
+            }
+
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+                return;
+            }
+
+            const allRes = [];
+            try {
+                for (const bundle of bundles) {
+                    const response = await fetch(
+                        `${API_BASE_URL}/sellers/me/bundles/${bundle.bundle_id}/reservations`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        },
+                    );
+                    if (response.ok) {
+                        const data = await response.json();
+                        allRes.push(
+                            ...data.map((r) => ({
+                                ...r,
+                                bundle_name: bundle.bundle_name,
+                            })),
+                        );
+                    }
+                }
+                setAllReservations(allRes);
+            } catch (err) {
+                console.error(err.message);
+            }
+        }
+
+        fetchAllReservations();
+    }, [bundles]);
+
+    return allReservations;
+}
 
 function CollectModal({ bundles, onClose }) {
     const [selectedBundleId, setSelectedBundleId] = useState("");
@@ -113,6 +175,114 @@ function CollectModal({ bundles, onClose }) {
     );
 }
 
+const COLORS = ["#22c55e", "#eab308", "#ef4444"];
+
+function StatsSection({ bundles, reservations }) {
+    const statsByBundle = bundles.map((bundle) => {
+        const bundleRes = reservations.filter(
+            (r) => r.bundle_name === bundle.bundle_name,
+        );
+        const total = bundleRes.length;
+        const collected = bundleRes.filter(
+            (r) => r.status === "collected",
+        ).length;
+        const reserved = bundleRes.filter(
+            (r) => r.status === "reserved",
+        ).length;
+        const noShow = bundleRes.filter((r) => r.status === "no_show").length;
+        return {
+            name: bundle.bundle_name.slice(0, 15),
+            total,
+            collected,
+            reserved,
+            noShow,
+        };
+    });
+
+    const statusData = [
+        {
+            name: "Collected",
+            value: reservations.filter((r) => r.status === "collected").length,
+        },
+        {
+            name: "Reserved",
+            value: reservations.filter((r) => r.status === "reserved").length,
+        },
+        {
+            name: "No Show",
+            value: reservations.filter((r) => r.status === "no_show").length,
+        },
+    ];
+
+    return (
+        <Card className="mb-6">
+            <h2 className="text-2xl font-bold text-green-700 mb-4">
+                Statistics
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Reservations by Bundle
+                    </h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={statsByBundle}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip />
+                            <Bar
+                                dataKey="collected"
+                                stackId="a"
+                                fill="#22c55e"
+                                name="Collected"
+                            />
+                            <Bar
+                                dataKey="reserved"
+                                stackId="a"
+                                fill="#eab308"
+                                name="Reserved"
+                            />
+                            <Bar
+                                dataKey="noShow"
+                                stackId="a"
+                                fill="#ef4444"
+                                name="No Show"
+                            />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Reservation Status
+                    </h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                        <PieChart>
+                            <Pie
+                                data={statusData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={80}
+                                paddingAngle={5}
+                                dataKey="value"
+                                label={({ name, value }) => `${name}: ${value}`}
+                            >
+                                {statusData.map((_, index) => (
+                                    <Cell
+                                        key={`cell-${index}`}
+                                        fill={COLORS[index % COLORS.length]}
+                                    />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </Card>
+    );
+}
+
 function BundleRow({ bundle }) {
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
@@ -180,6 +350,7 @@ export default function SellerDashboard() {
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
     const [showCollectModal, setShowCollectModal] = useState(false);
+    const allReservations = useAllSellerReservations(bundles);
 
     if (userRole !== "seller") {
         return (
@@ -220,6 +391,13 @@ export default function SellerDashboard() {
                 <CollectModal
                     bundles={bundles}
                     onClose={() => setShowCollectModal(false)}
+                />
+            )}
+
+            {!loading && bundles && bundles.length > 0 && (
+                <StatsSection
+                    bundles={bundles}
+                    reservations={allReservations}
                 />
             )}
 
