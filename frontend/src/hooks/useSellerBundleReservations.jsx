@@ -62,6 +62,6 @@ export function useSellerBundleReservations(bundleId) {
         (res) => res.status === "reserved",
     );
 
-    // Exit with a list of active reservations
-    return { sellerReservations };
+    // Exit with all reservations and filtered active reservations
+    return { reservations, sellerReservations };
 }
