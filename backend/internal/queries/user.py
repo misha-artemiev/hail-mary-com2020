@@ -65,6 +65,14 @@ class GetUserRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
+GET_USER_ID = """-- name: get_user_id \\:one
+SELECT user_id
+FROM users
+WHERE username=:p1
+LIMIT 1
+"""
+
+
 GET_USER_LOGIN = """-- name: get_user_login \\:one
 SELECT user_id, username, email, pw_hash, role
 FROM users
@@ -182,6 +190,12 @@ class AsyncQuerier:
             role=row[3],
             created_at=row[4],
         )
+
+    async def get_user_id(self, *, username: str) -> Optional[int]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_USER_ID), {"p1": username})).first()
+        if row is None:
+            return None
+        return row[0]
 
     async def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
         row = (await self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email})).first()

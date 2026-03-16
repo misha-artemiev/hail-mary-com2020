@@ -141,3 +141,22 @@ async def send_message(
             detail="Failed to send message",
         )
     return message
+
+
+@router.get(path="/id/{username}")
+async def get_user_id(username: str, conn: database_dependency) -> int:
+    """Get user id from username.
+
+    Args:
+        username: username
+        conn: database connection
+
+    Returns:
+        user id
+
+    Raises:
+        HTTPException: if failed to find user
+    """
+    if (user_id := await UserQuerier(conn).get_user_id(username=username)) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "failed to find user")
+    return user_id
