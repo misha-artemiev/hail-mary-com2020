@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
+
 class FoodCategory(StrEnum):
     """Food categories used for CO2e emission factors (Poore & Nemecek 2018)."""
 
@@ -17,6 +18,7 @@ class FoodCategory(StrEnum):
     PASTRIES_AND_ENRICHED_BAKERY = "pastries_and_enriched_bakery"
     PREPARED_MEALS = "prepared_meals"
     FRUIT_VEG_AND_SALADS = "fruit_veg_and_salads"
+
 
 EMISSION_FACTORS: dict[FoodCategory, float] = {
     FoodCategory.BEEF_AND_LAMB: 60.0,
