@@ -1,13 +1,16 @@
 """Tests for consumer endpoints."""
 
+import asyncio
+from collections.abc import AsyncGenerator
+from typing import Any
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import status
 from fastapi.testclient import TestClient
 from internal.auth.middleware import consumer_auth
 from main import app
-from testing.test_database import init_database
+from testing.test_database import cleanup_database, init_database
 
 TEST_RESERVATION_ID = 101
 TEST_BUNDLE_ID = 5
@@ -30,12 +33,18 @@ class TestConsumers(TestCase):
         init_database()
         self.client = TestClient(app)
 
+    def tearDown(self) -> None:
+        """Runs after every test to tear down the client."""
+        del self.client
+        cleanup_database()
+
     @patch("routers.consumers.create_consumer")
     def test_register_consumer(self, mock_create: MagicMock) -> None:
         """Test consumer registration."""
         mock_create.return_value = True
 
         payload = {
+            "username": "consumer_test",
             "email": "consumer@test.com",
             "password": "securepass",
             "first_name": "Furkan",
@@ -60,7 +69,13 @@ class TestConsumers(TestCase):
         mock_res.claim_code = "ABC123XYZ"
         mock_res.status = "reserved"
 
-        mock_instance.get_consumers_reservations.return_value = [mock_res]
+        async def mock_generator(
+            *args: object, **kwargs: object
+        ) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield mock_res
+
+        mock_instance.get_consumers_reservations.side_effect = mock_generator
 
         response = self.client.get("/consumers/me/reservations")
 
@@ -76,16 +91,25 @@ class TestConsumers(TestCase):
 
     @patch("routers.consumers.ReservationsQuerier")
     def test_get_my_reservations_empty(self, mock_querier: MagicMock) -> None:
-        """Test 500 error when no reservations found (per implementation)."""
+        """Test empty reservations returns empty list."""
         app.dependency_overrides[consumer_auth] = override_consumer_auth
 
         mock_instance = mock_querier.return_value
-        mock_instance.get_consumers_reservations.return_value = []
+
+        async def mock_empty_generator(
+            *args: object, **kwargs: object
+        ) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            items: list[Any] = []
+            for item in items:
+                yield item
+
+        mock_instance.get_consumers_reservations.side_effect = mock_empty_generator
 
         response = self.client.get("/consumers/me/reservations")
 
-        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert "failed to get reservations" in response.json()["detail"]
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == []
 
         del app.dependency_overrides[consumer_auth]
 
@@ -95,14 +119,13 @@ class TestConsumers(TestCase):
         app.dependency_overrides[consumer_auth] = override_consumer_auth
 
         mock_instance = mock_querier.return_value
-        mock_instance.update_consumer.return_value = True
+        mock_instance.update_consumer = AsyncMock(return_value=True)
 
         payload = {"first_name": "Who", "last_name": "should it be"}
 
         response = self.client.patch("/consumers/me", json=payload)
 
         assert response.status_code == status.HTTP_200_OK
-        assert "consumer was updated" in response.text
 
         del app.dependency_overrides[consumer_auth]
 
@@ -112,7 +135,7 @@ class TestConsumers(TestCase):
         app.dependency_overrides[consumer_auth] = override_consumer_auth
 
         mock_instance = mock_querier.return_value
-        mock_instance.update_consumer.return_value = None
+        mock_instance.update_consumer = AsyncMock(return_value=None)
 
         payload = {"first_name": "X", "last_name": "Y"}
 

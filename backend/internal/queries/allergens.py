@@ -2,11 +2,27 @@
 # versions:
 #   sqlc v1.30.0
 # source: allergens.sql
-from typing import Iterator
+import pydantic
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
+import sqlalchemy.ext.asyncio
 
 from internal.queries import models
+
+
+CREATE_ALLERGEN = """-- name: create_allergen \\:one
+INSERT INTO allergens (allergen_name)
+VALUES (:p1)
+RETURNING allergen_id, allergen_name
+"""
+
+
+DELETE_ALLERGEN = """-- name: delete_allergen \\:one
+DELETE FROM allergens
+WHERE allergen_id = :p1
+RETURNING allergen_id, allergen_name
+"""
 
 
 GET_ALLERGENS = """-- name: get_allergens \\:many
@@ -24,19 +40,59 @@ WHERE b.bundle_id=:p1
 """
 
 
-class Querier:
-    def __init__(self, conn: sqlalchemy.engine.Connection):
+UPDATE_ALLERGEN = """-- name: update_allergen \\:one
+UPDATE allergens
+SET allergen_name = :p2
+WHERE allergen_id = :p1
+RETURNING allergen_id, allergen_name
+"""
+
+
+class UpdateAllergenParams(pydantic.BaseModel):
+    allergen_id: int
+    allergen_name: str
+
+
+class AsyncQuerier:
+    def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    def get_allergens(self) -> Iterator[models.Allergen]:
-        result = self._conn.execute(sqlalchemy.text(GET_ALLERGENS))
-        for row in result:
+    async def create_allergen(self, *, allergen_name: str) -> Optional[models.Allergen]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_ALLERGEN), {"p1": allergen_name})).first()
+        if row is None:
+            return None
+        return models.Allergen(
+            allergen_id=row[0],
+            allergen_name=row[1],
+        )
+
+    async def delete_allergen(self, *, allergen_id: int) -> Optional[models.Allergen]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_ALLERGEN), {"p1": allergen_id})).first()
+        if row is None:
+            return None
+        return models.Allergen(
+            allergen_id=row[0],
+            allergen_name=row[1],
+        )
+
+    async def get_allergens(self) -> AsyncIterator[models.Allergen]:
+        result = await self._conn.stream(sqlalchemy.text(GET_ALLERGENS))
+        async for row in result:
             yield models.Allergen(
                 allergen_id=row[0],
                 allergen_name=row[1],
             )
 
-    def get_bundle_allergens(self, *, bundle_id: int) -> Iterator[int]:
-        result = self._conn.execute(sqlalchemy.text(GET_BUNDLE_ALLERGENS), {"p1": bundle_id})
-        for row in result:
+    async def get_bundle_allergens(self, *, bundle_id: int) -> AsyncIterator[int]:
+        result = await self._conn.stream(sqlalchemy.text(GET_BUNDLE_ALLERGENS), {"p1": bundle_id})
+        async for row in result:
             yield row[0]
+
+    async def update_allergen(self, arg: UpdateAllergenParams) -> Optional[models.Allergen]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_ALLERGEN), {"p1": arg.allergen_id, "p2": arg.allergen_name})).first()
+        if row is None:
+            return None
+        return models.Allergen(
+            allergen_id=row[0],
+            allergen_name=row[1],
+        )

@@ -8,3 +8,25 @@ WHERE b.bundle_id=$1;
 -- name: GetCategories :many
 SELECT *
 FROM category;
+
+-- name: GetCategory :one
+SELECT *
+FROM category
+WHERE category_id=$1
+LIMIT 1;
+
+-- name: CreateCategory :one
+INSERT INTO category (category_name, category_coefficient)
+VALUES ($1, $2)
+RETURNING *;
+
+-- name: UpdateCategory :one
+UPDATE category
+SET category_name = $2, category_coefficient = $3
+WHERE category_id = $1
+RETURNING *;
+
+-- name: DeleteCategory :one
+DELETE FROM category
+WHERE category_id = $1
+RETURNING *;

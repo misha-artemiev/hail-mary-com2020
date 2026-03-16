@@ -8,6 +8,7 @@ import React from "react";
 // Routes (individual pages)
 import Home from "../pages/Home";
 import AboutUs from "../pages/AboutUs";
+import OurTeam from "../pages/OurTeam";
 import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
@@ -39,6 +40,10 @@ export const ROUTES = [
     {
         path: "/aboutus",
         element: <AboutUs />,
+    },
+    {
+        path: "/our-team",
+        element: <OurTeam />,
     },
     {
         path: "/analytics",
