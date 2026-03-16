@@ -152,7 +152,7 @@ async def get_user_id(username: str, conn: database_dependency) -> tuple[int, Us
         conn: database connection
 
     Returns:
-        user id
+        user id and role
 
     Raises:
         HTTPException: if failed to find user
