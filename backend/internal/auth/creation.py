@@ -11,7 +11,7 @@ from internal.queries.consumer import CreateConsumerParams
 from internal.queries.models import Admin, Consumer, Seller, UserRole
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import CreateSellerParams
-from internal.queries.user import AsyncQuerier as UserQuery
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import CreateUserParams, CreateUserRow
 
 from .security import hash_password
@@ -40,7 +40,7 @@ async def create_user(
       ValueError: if database failed to create user
     """
     pw_hash = hash_password(password.get_secret_value())
-    user = await UserQuery(conn).create_user(
+    user = await UserQuerier(conn).create_user(
         CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:

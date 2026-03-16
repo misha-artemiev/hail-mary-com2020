@@ -28,8 +28,8 @@ class CreateSellerParams(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 GET_SELLER = """-- name: get_seller \\:one
@@ -56,8 +56,8 @@ class GetSellerRow(pydantic.BaseModel):
     verification_date: Optional[datetime.datetime]
     last_login: datetime.datetime
     created_at: datetime.datetime
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 GET_SELLER_BY_LOCATION = """-- name: get_seller_by_location \\:many
@@ -69,10 +69,10 @@ WHERE s.latitude < :p1 AND s.latitude > :p2 AND s.longitude < :p3 AND s.longitud
 
 
 class GetSellerByLocationParams(pydantic.BaseModel):
-    lat_max: float
-    lat_min: float
-    lon_max: float
-    lon_min: float
+    lat_max: Optional[float]
+    lat_min: Optional[float]
+    lon_max: Optional[float]
+    lon_min: Optional[float]
 
 
 class GetSellerByLocationRow(pydantic.BaseModel):
@@ -90,8 +90,8 @@ class GetSellerByLocationRow(pydantic.BaseModel):
     verification_date: Optional[datetime.datetime]
     last_login: datetime.datetime
     created_at: datetime.datetime
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 GET_SELLERS = """-- name: get_sellers \\:many
@@ -116,8 +116,50 @@ class GetSellersRow(pydantic.BaseModel):
     verification_date: Optional[datetime.datetime]
     last_login: datetime.datetime
     created_at: datetime.datetime
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
+
+
+UNVERIFY_SELLER = """-- name: unverify_seller \\:one
+UPDATE sellers
+SET verified_by = NULL, verification_date = NULL
+WHERE user_id = :p1
+RETURNING user_id, seller_name, verified_by, verification_date, address_line1, address_line2, city, post_code, region, country, latitude, longitude
+"""
+
+
+UPDATE_SELLER = """-- name: update_seller \\:one
+UPDATE sellers
+SET seller_name = :p2, address_line1 = :p3, address_line2 = :p4, city = :p5, post_code = :p6, region = :p7, country = :p8, latitude = :p9, longitude = :p10
+WHERE user_id = :p1
+RETURNING user_id, seller_name, verified_by, verification_date, address_line1, address_line2, city, post_code, region, country, latitude, longitude
+"""
+
+
+class UpdateSellerParams(pydantic.BaseModel):
+    user_id: int
+    seller_name: str
+    address_line1: str
+    address_line2: Optional[str]
+    city: str
+    post_code: str
+    region: Optional[str]
+    country: str
+    latitude: Optional[float]
+    longitude: Optional[float]
+
+
+VERIFY_SELLER = """-- name: verify_seller \\:one
+UPDATE sellers
+SET verified_by = :p2, verification_date = NOW()
+WHERE user_id = :p1
+RETURNING user_id, seller_name, verified_by, verification_date, address_line1, address_line2, city, post_code, region, country, latitude, longitude
+"""
+
+
+class VerifySellerParams(pydantic.BaseModel):
+    user_id: int
+    verified_by: Optional[int]
 
 
 class AsyncQuerier:
@@ -225,3 +267,71 @@ class AsyncQuerier:
                 latitude=row[14],
                 longitude=row[15],
             )
+
+    async def unverify_seller(self, *, user_id: int) -> Optional[models.Seller]:
+        row = (await self._conn.execute(sqlalchemy.text(UNVERIFY_SELLER), {"p1": user_id})).first()
+        if row is None:
+            return None
+        return models.Seller(
+            user_id=row[0],
+            seller_name=row[1],
+            verified_by=row[2],
+            verification_date=row[3],
+            address_line1=row[4],
+            address_line2=row[5],
+            city=row[6],
+            post_code=row[7],
+            region=row[8],
+            country=row[9],
+            latitude=row[10],
+            longitude=row[11],
+        )
+
+    async def update_seller(self, arg: UpdateSellerParams) -> Optional[models.Seller]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_SELLER), {
+            "p1": arg.user_id,
+            "p2": arg.seller_name,
+            "p3": arg.address_line1,
+            "p4": arg.address_line2,
+            "p5": arg.city,
+            "p6": arg.post_code,
+            "p7": arg.region,
+            "p8": arg.country,
+            "p9": arg.latitude,
+            "p10": arg.longitude,
+        })).first()
+        if row is None:
+            return None
+        return models.Seller(
+            user_id=row[0],
+            seller_name=row[1],
+            verified_by=row[2],
+            verification_date=row[3],
+            address_line1=row[4],
+            address_line2=row[5],
+            city=row[6],
+            post_code=row[7],
+            region=row[8],
+            country=row[9],
+            latitude=row[10],
+            longitude=row[11],
+        )
+
+    async def verify_seller(self, arg: VerifySellerParams) -> Optional[models.Seller]:
+        row = (await self._conn.execute(sqlalchemy.text(VERIFY_SELLER), {"p1": arg.user_id, "p2": arg.verified_by})).first()
+        if row is None:
+            return None
+        return models.Seller(
+            user_id=row[0],
+            seller_name=row[1],
+            verified_by=row[2],
+            verification_date=row[3],
+            address_line1=row[4],
+            address_line2=row[5],
+            city=row[6],
+            post_code=row[7],
+            region=row[8],
+            country=row[9],
+            latitude=row[10],
+            longitude=row[11],
+        )

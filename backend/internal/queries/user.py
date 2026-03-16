@@ -3,8 +3,9 @@
 #   sqlc v1.30.0
 # source: user.sql
 import datetime
+import decimal
 import pydantic
-from typing import Optional
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
@@ -79,6 +80,52 @@ class GetUserLoginRow(pydantic.BaseModel):
     email: str
     pw_hash: str
     role: models.UserRole
+
+
+GET_USERS = """-- name: get_users \\:many
+SELECT user_id, username, email, role, created_at, last_login
+FROM users
+"""
+
+
+class GetUsersRow(pydantic.BaseModel):
+    user_id: int
+    username: str
+    email: str
+    role: models.UserRole
+    created_at: datetime.datetime
+    last_login: datetime.datetime
+
+
+LEADERBOARD_CARBON_DIOXIDE = """-- name: leaderboard_carbon_dioxide \\:many
+SELECT u.username, COALESCE(SUM(b.carbon_dioxide), 0)\\:\\:numeric AS total_carbon_dioxide
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_carbon_dioxide DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardCarbonDioxideRow(pydantic.BaseModel):
+    username: str
+    total_carbon_dioxide: decimal.Decimal
+
+
+LEADERBOARD_RESERVATIONS = """-- name: leaderboard_reservations \\:many
+SELECT u.username, COUNT(r.reservation_id) AS reservation_count
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+GROUP BY u.user_id, u.username
+ORDER BY reservation_count DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardReservationsRow(pydantic.BaseModel):
+    username: str
+    reservation_count: int
 
 
 UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
@@ -179,6 +226,34 @@ class AsyncQuerier:
             pw_hash=row[3],
             role=row[4],
         )
+
+    async def get_users(self) -> AsyncIterator[GetUsersRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_USERS))
+        async for row in result:
+            yield GetUsersRow(
+                user_id=row[0],
+                username=row[1],
+                email=row[2],
+                role=row[3],
+                created_at=row[4],
+                last_login=row[5],
+            )
+
+    async def leaderboard_carbon_dioxide(self, *, limit: int) -> AsyncIterator[LeaderboardCarbonDioxideRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_CARBON_DIOXIDE), {"p1": limit})
+        async for row in result:
+            yield LeaderboardCarbonDioxideRow(
+                username=row[0],
+                total_carbon_dioxide=row[1],
+            )
+
+    async def leaderboard_reservations(self, *, limit: int) -> AsyncIterator[LeaderboardReservationsRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_RESERVATIONS), {"p1": limit})
+        async for row in result:
+            yield LeaderboardReservationsRow(
+                username=row[0],
+                reservation_count=row[1],
+            )
 
     async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
         row = (await self._conn.execute(sqlalchemy.text(UPDATE_USER_EMAIL), {"p1": arg.user_id, "p2": arg.email})).first()

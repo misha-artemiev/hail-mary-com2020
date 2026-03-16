@@ -13,15 +13,13 @@ def get_location(address: str) -> LocationModel:
       address: real address
 
     Returns:
-      coordinates of the address
-
-    Raises:
-      ValueError: if failed to get location
+      coordinates of the address (None, None if failed)
     """
-    nom = Nominatim(user_agent="hail mary", timeout=10)
-    loc = nom.geocode(address)
-    if not loc:
-        raise ValueError("failed to get location, None")
-    if type(loc) is not Location:
-        raise ValueError("failed to get location, Not Location")
-    return LocationModel(lat=loc.latitude, lon=loc.longitude)
+    try:
+        nom = Nominatim(user_agent="hail mary", timeout=10)
+        loc = nom.geocode(address)
+        if not loc or type(loc) is not Location:
+            return LocationModel(lat=None, lon=None)
+        return LocationModel(lat=loc.latitude, lon=loc.longitude)
+    except Exception:  # noqa: BLE001
+        return LocationModel(lat=None, lon=None)

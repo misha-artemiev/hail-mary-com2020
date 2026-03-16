@@ -24,3 +24,9 @@ UPDATE badges_acquired
 SET level=$1
 WHERE user_id=$2 AND badge_id=$3
 RETURNING *;
+
+-- name: UpdateBadge :one
+UPDATE badges
+SET name = $2, description = $3
+WHERE badge_id = $1
+RETURNING *;

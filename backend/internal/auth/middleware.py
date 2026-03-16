@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from internal.auth.security import check_password
 from internal.database.dependency import database_dependency
+from internal.queries.admin import AsyncQuerier as AdminQuerier
 from internal.queries.models import UserRole
 from internal.queries.token import AsyncQuerier as TokenQuerier
 from internal.queries.token import GetSessionByTokenRow
@@ -49,6 +50,15 @@ async def basic_auth(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
+
+    if user.role == UserRole.ADMIN:
+        admin_info = await AdminQuerier(conn).get_admin(user_id=user.user_id)
+        if admin_info and not admin_info.active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin account deactivated",
+            )
+
     return BasicAuthResponse(user_id=user.user_id, role=user.role)
 
 
@@ -120,12 +130,13 @@ def seller_auth(
     )
 
 
-def admin_auth(
-    session: GetSessionByTokenRow = Security(bearer_auth),
+async def admin_auth(
+    conn: database_dependency, session: GetSessionByTokenRow = Security(bearer_auth)
 ) -> GetSessionByTokenRow:
     """Authentisate admin in a middleware.
 
     Args:
+      conn: database connection
       session: user session from bearer authentication
 
     Returns:
@@ -134,11 +145,18 @@ def admin_auth(
     Raises:
       HTTPException: if user is not a admin
     """
-    if session.role == UserRole.ADMIN:
-        return session
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as admin"
-    )
+    if session.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorised as admin"
+        )
+
+    admin_info = await AdminQuerier(conn).get_admin(user_id=session.user_id)
+    if not admin_info or not admin_info.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin account deactivated"
+        )
+
+    return session
 
 
 def root_auth(credentials: HTTPBasicCredentials = Security(HTTPBasic())) -> None:

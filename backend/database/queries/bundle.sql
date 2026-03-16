@@ -41,3 +41,8 @@ UPDATE bundles
 SET bundle_name=$3, description=$4, total_qty=$5, price=$6, discount_percentage=$7, window_start=$8, window_end=$9, carbon_dioxide=$10
 WHERE bundle_id=$1 AND seller_id=$2
 RETURNING *;
+
+-- name: DeleteBundle :one
+DELETE FROM bundles
+WHERE bundle_id = $1
+RETURNING *;

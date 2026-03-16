@@ -235,14 +235,14 @@ class Seller(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 class SellerIssueReport(pydantic.BaseModel):
     report_id: int
     reservation_id: int
-    issue_type: Optional[SellerIssueType]
+    issue_type: SellerIssueType
     description: str
     created_at: datetime.datetime
     status: IssueStatus

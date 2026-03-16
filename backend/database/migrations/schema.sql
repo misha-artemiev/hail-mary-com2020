@@ -109,8 +109,8 @@ CREATE TABLE IF NOT EXISTS sellers (
     post_code VARCHAR(20) NOT NULL,
     region VARCHAR(100),
     country VARCHAR(100) NOT NULL,
-    latitude DOUBLE PRECISION NOT NULL,
-    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     PRIMARY KEY (user_id),
     FOREIGN KEY (verified_by) REFERENCES admins(user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS admin_issue_reports (
 CREATE TABLE IF NOT EXISTS seller_issue_reports (
     report_id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL,
-    issue_type seller_issue_type,
+    issue_type seller_issue_type NOT NULL,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status issue_status NOT NULL DEFAULT 'open',

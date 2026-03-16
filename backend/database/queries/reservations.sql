@@ -36,3 +36,11 @@ FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
 WHERE consumer_id=$1;
+
+-- name: GetReservations :many
+SELECT * FROM reservations;
+
+-- name: DeleteReservation :one
+DELETE FROM reservations
+WHERE reservation_id = $1
+RETURNING *;

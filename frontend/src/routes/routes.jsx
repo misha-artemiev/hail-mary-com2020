@@ -19,6 +19,8 @@ import EditProfile from "../pages/EditProfile";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
+import SellerDashboard from "../pages/SellerDashboard";
+import ReportError from "../pages/ReportError";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -103,6 +105,18 @@ export const ROUTES = [
                 <CreateBundle />
             </ProtectedRoute>
         ),
+    },
+    {
+        path: "/dashboard",
+        element: (
+            <ProtectedRoute>
+                <SellerDashboard />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/report-error",
+        element: <ReportError />,
     },
     // Catch-all (i.e. 404)
     {

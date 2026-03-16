@@ -227,7 +227,7 @@ class TestSellers(TestCase):
             "discount_percentage": TEST_DISCOUNT,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "carbon_dioxide": 10000,
+            "weight": 10,
         }
 
         response = self.client.post("/sellers/me/bundles", json=payload)
@@ -253,7 +253,7 @@ class TestSellers(TestCase):
             "discount_percentage": TEST_DISCOUNT,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "carbon_dioxide": 10000,
+            "weight": 10,
         }
 
         response = self.client.patch(
