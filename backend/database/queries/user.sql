@@ -35,3 +35,26 @@ RETURNING user_id, username, email, role, created_at;
 -- name: GetUsers :many
 SELECT user_id, username, email, role, created_at, last_login
 FROM users;
+
+-- name: GetUserId :one
+SELECT user_id, role
+FROM users
+WHERE username=$1
+LIMIT 1;
+
+-- name: LeaderboardReservations :many
+SELECT u.username, COUNT(r.reservation_id) AS reservation_count
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+GROUP BY u.user_id, u.username
+ORDER BY reservation_count DESC
+LIMIT $1;
+
+-- name: LeaderboardCarbonDioxide :many
+SELECT u.username, COALESCE(SUM(b.carbon_dioxide), 0)::numeric AS total_carbon_dioxide
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_carbon_dioxide DESC
+LIMIT $1;

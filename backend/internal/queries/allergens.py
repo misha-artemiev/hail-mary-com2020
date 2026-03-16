@@ -11,6 +11,18 @@ import sqlalchemy.ext.asyncio
 from internal.queries import models
 
 
+ADD_BUNDLES_ALLERGEN = """-- name: add_bundles_allergen \\:one
+INSERT INTO bundle_allergens (bundle_id, allergen_id)
+VALUES (:p1,:p2)
+RETURNING bundle_id, allergen_id
+"""
+
+
+class AddBundlesAllergenParams(pydantic.BaseModel):
+    bundle_id: int
+    allergen_id: int
+
+
 CREATE_ALLERGEN = """-- name: create_allergen \\:one
 INSERT INTO allergens (allergen_name)
 VALUES (:p1)
@@ -23,6 +35,18 @@ DELETE FROM allergens
 WHERE allergen_id = :p1
 RETURNING allergen_id, allergen_name
 """
+
+
+DELETE_BUNDLE_ALLERGEN = """-- name: delete_bundle_allergen \\:one
+DELETE FROM bundle_allergens
+WHERE allergen_id=:p1 AND bundle_id=:p2
+RETURNING bundle_id, allergen_id
+"""
+
+
+class DeleteBundleAllergenParams(pydantic.BaseModel):
+    allergen_id: int
+    bundle_id: int
 
 
 GET_ALLERGENS = """-- name: get_allergens \\:many
@@ -57,6 +81,15 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
+    async def add_bundles_allergen(self, arg: AddBundlesAllergenParams) -> Optional[models.BundleAllergen]:
+        row = (await self._conn.execute(sqlalchemy.text(ADD_BUNDLES_ALLERGEN), {"p1": arg.bundle_id, "p2": arg.allergen_id})).first()
+        if row is None:
+            return None
+        return models.BundleAllergen(
+            bundle_id=row[0],
+            allergen_id=row[1],
+        )
+
     async def create_allergen(self, *, allergen_name: str) -> Optional[models.Allergen]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_ALLERGEN), {"p1": allergen_name})).first()
         if row is None:
@@ -73,6 +106,15 @@ class AsyncQuerier:
         return models.Allergen(
             allergen_id=row[0],
             allergen_name=row[1],
+        )
+
+    async def delete_bundle_allergen(self, arg: DeleteBundleAllergenParams) -> Optional[models.BundleAllergen]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_BUNDLE_ALLERGEN), {"p1": arg.allergen_id, "p2": arg.bundle_id})).first()
+        if row is None:
+            return None
+        return models.BundleAllergen(
+            bundle_id=row[0],
+            allergen_id=row[1],
         )
 
     async def get_allergens(self) -> AsyncIterator[models.Allergen]:
