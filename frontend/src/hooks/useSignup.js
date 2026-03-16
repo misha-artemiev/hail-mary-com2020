@@ -25,6 +25,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/consumers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 first_name: form.firstName,
@@ -37,6 +38,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/sellers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 seller_name: form.sellerName,
@@ -61,6 +63,7 @@ export function useSignup() {
     // State object: holds all fields for the form
     const [role, setRole] = useState("");
     const [form, setForm] = useState({
+        username: "",
         email: "",
         password: "",
         confirmPassword: "",
