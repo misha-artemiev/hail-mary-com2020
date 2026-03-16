@@ -15,6 +15,7 @@ dependencies = [
     "geopy==2.4.1",
     "thefuzz[speedup]==0.22.1",
     "greenlet==3.3.2",
+    "minio==7.2.20",
 ]
 
 [project.optional-dependencies]
