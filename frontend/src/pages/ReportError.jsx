@@ -14,6 +14,8 @@ import SubmitButton from "../components/forms/SubmitButton";
 // Config
 import { ERROR_REPORT_FORM_FIELDS } from "../config/errorReportFormFields";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
 /**
  * The error reporting page.
  * Users can switch between user, bundle, and reservation issue forms.
@@ -36,6 +38,98 @@ export default function ReportError() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+
+    const buildDescription = () => {
+        const contextLines = [
+            `Issue category: ${issueType || "unknown"}`,
+            `Issue title: ${form.title}`,
+            `Contact email: ${form.email}`,
+        ];
+
+        if (form.affected_username) {
+            contextLines.push(`Affected username: ${form.affected_username}`);
+        }
+
+        if (form.bundle_id) {
+            contextLines.push(`Bundle ID: ${form.bundle_id}`);
+        }
+
+        if (form.seller_username) {
+            contextLines.push(`Seller username: ${form.seller_username}`);
+        }
+
+        if (form.reservation_id) {
+            contextLines.push(`Reservation ID: ${form.reservation_id}`);
+        }
+
+        return `${form.description}\n\n---\n${contextLines.join("\n")}`;
+    };
+
+    const submitReport = async () => {
+        const token = localStorage.getItem("authToken");
+
+        if (!token) {
+            throw new Error("Please sign in to submit an issue report.");
+        }
+
+        if (!issueType) {
+            throw new Error("Please select an issue type.");
+        }
+
+        const commonHeaders = {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        };
+
+        if (issueType === "reservation") {
+            if (!form.reservation_id) {
+                throw new Error(
+                    "Reservation ID is required for reservation issues.",
+                );
+            }
+
+            const response = await fetch(
+                `${API_BASE_URL}/consumers/me/reservations/${form.reservation_id}/report`,
+                {
+                    method: "POST",
+                    headers: commonHeaders,
+                    body: JSON.stringify({
+                        issue_type: "OTHER",
+                        description: buildDescription(),
+                    }),
+                },
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                throw new Error(
+                    data?.detail ||
+                        "Unable to submit reservation issue report.",
+                );
+            }
+
+            return;
+        }
+
+        const response = await fetch(
+            `${API_BASE_URL}/consumers/me/reports/admin`,
+            {
+                method: "POST",
+                headers: commonHeaders,
+                body: JSON.stringify({
+                    issue_type: "OTHER",
+                    description: buildDescription(),
+                }),
+            },
+        );
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error(
+                data?.detail || "Unable to submit admin issue report.",
+            );
+        }
+    };
 
     /**
      * Handles changes to any field in the form.
@@ -73,17 +167,7 @@ export default function ReportError() {
         setSuccess(false);
 
         try {
-            const payload = {
-                issue_type: issueType,
-                ...form,
-            };
-
-            // TODO: Replace this stub with API call to backend endpoint.
-            // TODO: Persist issue report payload into database.
-            console.log("Issue report payload (temporary):", payload);
-
-            await new Promise((resolve) => setTimeout(resolve, 300));
-
+            await submitReport();
             setSuccess(true);
         } catch (err) {
             setError(
