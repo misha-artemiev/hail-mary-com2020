@@ -3,6 +3,7 @@
 #   sqlc v1.30.0
 # source: user.sql
 import datetime
+import decimal
 import pydantic
 from typing import AsyncIterator, Optional
 
@@ -94,6 +95,37 @@ class GetUsersRow(pydantic.BaseModel):
     role: models.UserRole
     created_at: datetime.datetime
     last_login: datetime.datetime
+
+
+LEADERBOARD_CARBON_DIOXIDE = """-- name: leaderboard_carbon_dioxide \\:many
+SELECT u.username, COALESCE(SUM(b.carbon_dioxide), 0)\\:\\:numeric AS total_carbon_dioxide
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_carbon_dioxide DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardCarbonDioxideRow(pydantic.BaseModel):
+    username: str
+    total_carbon_dioxide: decimal.Decimal
+
+
+LEADERBOARD_RESERVATIONS = """-- name: leaderboard_reservations \\:many
+SELECT u.username, COUNT(r.reservation_id) AS reservation_count
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+GROUP BY u.user_id, u.username
+ORDER BY reservation_count DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardReservationsRow(pydantic.BaseModel):
+    username: str
+    reservation_count: int
 
 
 UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
@@ -205,6 +237,22 @@ class AsyncQuerier:
                 role=row[3],
                 created_at=row[4],
                 last_login=row[5],
+            )
+
+    async def leaderboard_carbon_dioxide(self, *, limit: int) -> AsyncIterator[LeaderboardCarbonDioxideRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_CARBON_DIOXIDE), {"p1": limit})
+        async for row in result:
+            yield LeaderboardCarbonDioxideRow(
+                username=row[0],
+                total_carbon_dioxide=row[1],
+            )
+
+    async def leaderboard_reservations(self, *, limit: int) -> AsyncIterator[LeaderboardReservationsRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_RESERVATIONS), {"p1": limit})
+        async for row in result:
+            yield LeaderboardReservationsRow(
+                username=row[0],
+                reservation_count=row[1],
             )
 
     async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
