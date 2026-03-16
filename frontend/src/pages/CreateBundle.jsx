@@ -48,6 +48,7 @@ export default function CreateBundle() {
         description: "",
         price: "",
         total_qty: 1,
+        weight: "",
         discount_percentage: "",
         window_start: "",
         window_end: "",
