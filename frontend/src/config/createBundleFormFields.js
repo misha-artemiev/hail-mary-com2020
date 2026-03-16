@@ -22,6 +22,15 @@ export const CREATE_BUNDLE_FORM_FIELDS = {
             step: "1",
             required: true,
         },
+        {
+            name: "weight",
+            label: "Weight (kg)",
+            type: "number",
+            min: "0",
+            step: "0.1",
+            required: true,
+            placeholder: "e.g., 1.5",
+        },
     ],
 
     grid: [
