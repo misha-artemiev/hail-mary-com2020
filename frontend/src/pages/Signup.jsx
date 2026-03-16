@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 // Components
@@ -89,6 +90,28 @@ export default function Signup() {
                         renderFields(SIGNUP_FORM_FIELDS.consumer)}
                     {role === "seller" &&
                         renderFields(SIGNUP_FORM_FIELDS.seller)}
+
+                    {/* Terms and conditions */}
+                    <div className="flex items-center gap-2">
+                        <input
+                            id="terms"
+                            type="checkbox"
+                            name="terms"
+                            checked={form.terms}
+                            onChange={handleChange}
+                            required
+                            className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <label htmlFor="terms" className="text-gray-700">
+                            I have read and agree to the{" "}
+                            <Link
+                                to="/terms"
+                                className="text-green-600 hover:underline"
+                            >
+                                Terms and Conditions
+                            </Link>
+                        </label>
+                    </div>
 
                     {/* Submit */}
                     <SubmitButton disabled={loading}>

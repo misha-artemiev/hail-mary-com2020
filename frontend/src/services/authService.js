@@ -26,14 +26,19 @@ export async function createSession(email, password) {
         },
     });
 
+    // Handle errors
     if (!response.ok) {
-        // Check for invalid credentials
-        if (response.status === 401) {
-            throw new Error("Invalid email or password");
+        let errorMessage = "An error occurred. Please try again.";
+
+        try {
+            const errorData = await response.json();
+            errorMessage =
+                errorData.detail || errorData.message || errorMessage;
+        } catch {
+            // Response wasn't JSON, use default message
         }
 
-        // Other authentication errors
-        throw new Error("An error occurred. Please try again.");
+        throw new Error(errorMessage);
     }
 
     return await response.json();
