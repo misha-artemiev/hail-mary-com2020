@@ -3,9 +3,10 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Security, status
+from fastapi import APIRouter, HTTPException, Response, Security, status
 from internal.auth.middleware import consumer_auth
 from internal.auth.security import generate_claim_code
+from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
@@ -284,3 +285,24 @@ async def search_bundles(
                 )
             )
     return filtered_bundles
+
+
+@router.get(path="/{bundle_id}/image", status_code=status.HTTP_200_OK)
+async def get_bundle_image(bundle_id: int, conn: database_dependency) -> Response:
+    """Get bundle image.
+
+    Args:
+        bundle_id: bundle id
+        conn: database connection
+
+    Returns:
+        bundle image
+
+    Raises:
+        HTTPException: if failed to get image
+    """
+    if BundleQuerier(conn).get_bundle(bundle_id=bundle_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
+    return Response(
+        block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
+    )
