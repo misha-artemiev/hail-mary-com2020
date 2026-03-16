@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 
 // Authentication
@@ -19,11 +19,15 @@ import HamburgerMenu from "./HamburgerMenu";
 /**
  * A simple navigation header with links to other pages.
  *
- * @returns {JSX.Element} the navigation bar
+ * @returns {JSX.Element} the navbar component.
  */
 export default function Navbar() {
     const { isAuthenticated, userRole } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
+
+    // Reference object to the the dropdown
+    const aboutDropdownRef = useRef(null);
 
     // TODO: get correct user information
     const user = {
@@ -31,36 +35,118 @@ export default function Navbar() {
         profilePic: defaultProfile,
     };
 
+    // State object: if the dropdown is open
     const closeMenu = () => setIsMenuOpen(false);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (
+                aboutDropdownRef.current &&
+                !aboutDropdownRef.current.contains(event.target)
+            ) {
+                setIsAboutDropdownOpen(false);
+            }
+        }
+
+        // Once opened, start listening for clicks outside
+        document.addEventListener("mousedown", handleClickOutside);
+        return () =>
+            document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     return (
         <nav className="bg-green-600 text-white px-4 py-3 flex justify-between items-center shadow-md relative">
-            {/* Home page logo */}
-            <NavLink to="/" onClick={closeMenu}>
-                <img
-                    src={logoFull}
-                    alt="Logo"
-                    className="h-10 md:h-16 w-auto hover:scale-102 transition"
-                />
-            </NavLink>
-
-            {/* Desktop Navigation */}
+            {/* Left side: Logo and main nav links */}
             <div className="hidden md:flex items-center gap-4 lg:gap-8">
-                <NavLink to="/analytics" className="text-bold text-lg">
-                    Analytics
-                </NavLink>
-                <NavLink to="/aboutus" className="text-bold text-lg">
-                    About Us
+                {/* Home page logo */}
+                <NavLink to="/" onClick={closeMenu}>
+                    <img
+                        src={logoFull}
+                        alt="Logo"
+                        className="h-10 md:h-16 w-auto hover:scale-102 transition"
+                    />
                 </NavLink>
 
-                {/* If user is a seller, show create bundle link */}
-                {userRole === "seller" && (
-                    <NavLink
-                        to="/bundles/create"
-                        className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition"
-                    >
-                        Create new listing
+                {userRole === "consumer" && (
+                    <NavLink to="/leaderboard" className="text-bold text-lg">
+                        Leaderboard
                     </NavLink>
+                )}
+
+                <div className="relative" ref={aboutDropdownRef}>
+                    <button
+                        className="text-bold text-lg flex items-center gap-1"
+                        onClick={() =>
+                            setIsAboutDropdownOpen(!isAboutDropdownOpen)
+                        }
+                    >
+                        About Us
+                        <svg
+                            className={`w-4 h-4 transition-transform ${isAboutDropdownOpen ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                            />
+                        </svg>
+                    </button>
+                    {isAboutDropdownOpen && (
+                        <div className="absolute left-0 mt-2 w-40 bg-white text-black rounded-md shadow-lg py-1 z-50 animate-in">
+                            <NavLink
+                                to="/aboutus"
+                                className="block px-4 py-2 hover:bg-gray-100"
+                                onClick={() => setIsAboutDropdownOpen(false)}
+                            >
+                                About Us
+                            </NavLink>
+                            <NavLink
+                                to="/our-team"
+                                className="block px-4 py-2 hover:bg-gray-100"
+                                onClick={() => setIsAboutDropdownOpen(false)}
+                            >
+                                Our Team
+                            </NavLink>
+                            <NavLink
+                                to="/contact"
+                                className="block px-4 py-2 hover:bg-gray-100"
+                                onClick={() => setIsAboutDropdownOpen(false)}
+                            >
+                                Contact
+                            </NavLink>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Right side: User actions */}
+            <div className="hidden md:flex items-center gap-4 lg:gap-8">
+                {userRole === "consumer" && (
+                    <NavLink to="/reservations" className="text-bold text-lg">
+                        My Reservations
+                    </NavLink>
+                )}
+
+                {userRole === "seller" && (
+                    <>
+                        <NavLink
+                            to="/seller-dashboard"
+                            className="text-bold text-lg"
+                        >
+                            Seller Dashboard
+                        </NavLink>
+                        <NavLink
+                            to="/bundles/create"
+                            className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition"
+                        >
+                            Create new listing
+                        </NavLink>
+                    </>
                 )}
 
                 {/* If signed in, show profile picture (link to profile page) */}
@@ -83,6 +169,17 @@ export default function Navbar() {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Mobile: Logo only */}
+            <div className="md:hidden">
+                <NavLink to="/" onClick={closeMenu}>
+                    <img
+                        src={logoFull}
+                        alt="Logo"
+                        className="h-10 w-auto hover:scale-102 transition"
+                    />
+                </NavLink>
             </div>
 
             {/* Mobile Menu Button */}

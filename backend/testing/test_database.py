@@ -1,5 +1,7 @@
 """Test and init test database."""
 
+import asyncio
+
 from internal.database.manager import database_manager
 from internal.settings.env import database_settings
 
@@ -14,4 +16,9 @@ def init_database() -> None:
         database="hail-mary",
         password="password",  # noqa: S106
     )
-    database_manager.initialise()
+    asyncio.run(database_manager.initialise())
+
+
+def cleanup_database() -> None:
+    """Cleanup connection to test database."""
+    asyncio.run(database_manager.cleanup())

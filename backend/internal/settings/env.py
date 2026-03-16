@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-"""@private"""
+SETTINGS_BASE_DIR = Path(__file__).parent
 
 
 class HostSettings(BaseSettings):
@@ -48,9 +48,24 @@ class AuthSettings(BaseSettings):
     """Settings for authentication hardness."""
 
     token_exparation: int = 432000  # 5 days
+    root_username: str = ""
+    root_password: str = ""
 
     model_config = SettingsConfigDict(
-        env_prefix="AUTH",
+        env_prefix="AUTH_",
+        case_sensitive=False,
+        env_file=BASE_DIR / ".env",
+        extra="ignore",
+    )
+
+
+class BadgesSettings(BaseSettings):
+    """Settings for badges."""
+
+    rules_path: Path = Path(__file__).parent / "badges_rules.yaml"
+
+    model_config = SettingsConfigDict(
+        env_prefix="BADGES",
         case_sensitive=False,
         env_file=BASE_DIR / ".env",
         extra="ignore",
@@ -60,3 +75,4 @@ class AuthSettings(BaseSettings):
 host_settings = HostSettings()
 database_settings = DatabaseSettings()
 auth_settings = AuthSettings()
+badges_settings = BadgesSettings()

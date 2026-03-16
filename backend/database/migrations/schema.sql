@@ -62,8 +62,18 @@ CREATE TYPE weather_flag AS ENUM (
     'windy'
 );
 
+CREATE TYPE chart_type AS ENUM (
+    'line',
+    'multi_line',
+    'bar',
+    'stacked_bar',
+    'pie',
+    'area'
+);
+
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(250) NOT NULL UNIQUE,
     pw_hash VARCHAR(255) NOT NULL,
     role user_role NOT NULL DEFAULT 'consumer',
@@ -83,6 +93,7 @@ CREATE TABLE IF NOT EXISTS admins (
     user_id INT NOT NULL,
     fName VARCHAR(100) NOT NULL,
     lName VARCHAR(100) NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
@@ -98,8 +109,8 @@ CREATE TABLE IF NOT EXISTS sellers (
     post_code VARCHAR(20) NOT NULL,
     region VARCHAR(100),
     country VARCHAR(100) NOT NULL,
-    latitude DOUBLE PRECISION NOT NULL,
-    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     PRIMARY KEY (user_id),
     FOREIGN KEY (verified_by) REFERENCES admins(user_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
@@ -110,6 +121,7 @@ CREATE TABLE IF NOT EXISTS bundles (
     seller_id INT NOT NULL,
     bundle_name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
+    carbon_dioxide INT NOT NULL,
     total_qty INT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     discount_percentage INT NOT NULL,
@@ -133,7 +145,8 @@ CREATE TABLE IF NOT EXISTS bundle_allergens (
 
 CREATE TABLE IF NOT EXISTS category (
     category_id SERIAL PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL UNIQUE
+    category_name VARCHAR(100) NOT NULL UNIQUE,
+    category_coefficient FLOAT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS bundle_category (
@@ -150,7 +163,6 @@ CREATE TABLE IF NOT EXISTS reservations (
     consumer_id INT NOT NULL,
     reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     claim_code VARCHAR(20) NOT NULL,
-    status reservation_status NOT NULL DEFAULT 'reserved',
     collected_at TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES consumers(user_id),
@@ -166,6 +178,7 @@ CREATE TABLE IF NOT EXISTS badges (
 CREATE TABLE IF NOT EXISTS badges_acquired (
     user_id INT NOT NULL,
     badge_id INT NOT NULL,
+    level INT NOT NULL,
     acquired_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, badge_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -185,7 +198,7 @@ CREATE TABLE IF NOT EXISTS admin_issue_reports (
 CREATE TABLE IF NOT EXISTS seller_issue_reports (
     report_id SERIAL PRIMARY KEY,
     reservation_id INT NOT NULL,
-    issue_type seller_issue_type,
+    issue_type seller_issue_type NOT NULL,
     description VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status issue_status NOT NULL DEFAULT 'open',
@@ -237,4 +250,39 @@ CREATE TABLE IF NOT EXISTS forecast_output (
     rationale VARCHAR(500),
     generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_graphs_types (
+    graph_type_id SERIAL PRIMARY KEY,
+    chart_type chart_type NOT NULL,
+    graph_summary VARCHAR(255) NOT NULL,
+    x_axis_label VARCHAR(255) NOT NULL,
+    y_axis_label VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS analytics_graphs (
+    graph_id SERIAL PRIMARY KEY,
+    seller_id INT NOT NULL,
+    graph_type INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (graph_type) REFERENCES analytics_graphs_types(graph_type_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_series (
+    series_id SERIAL PRIMARY KEY,
+    graph_id INT NOT NULL,
+    sort_index INT NOT NULL,
+    series_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (graph_id) REFERENCES analytics_graphs(graph_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS analytics_points (
+    series_id INT NOT NULL,
+    sort_order INT NOT NULL,
+    x_coordinate VARCHAR(255) NOT NULL,
+    y_coordinate DECIMAL(18,4) NOT NULL,
+    sort_index INT NOT NULL,
+    PRIMARY KEY (series_id, sort_order),
+    FOREIGN KEY (series_id) REFERENCES analytics_series(series_id) ON DELETE CASCADE
 );
