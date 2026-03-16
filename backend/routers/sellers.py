@@ -74,17 +74,28 @@ from fastapi import (
     UploadFile,
     status,
 )
+from internal.analytics.co2_estimator import estimate_carbon_doixide_saved
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
+from internal.queries.allergens import (
+    AddBundlesAllergenParams,
+    DeleteBundleAllergenParams,
+)
+from internal.queries.allergens import AsyncQuerier as AllergenQuerier
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.bundle import (
     CreateBundleParams,
     GetSellersBundleParams,
     UpdateBundleParams,
 )
+from internal.queries.category import (
+    AddBundlesCategoryParams,
+    DeleteBundleCategoryParams,
+)
+from internal.queries.category import AsyncQuerier as CategoryQuerier
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
@@ -196,6 +207,8 @@ class BundleForm(BaseModel):
     price: Decimal = Field(decimal_places=2, gt=0)
     discount_percentage: int = Field(lt=100, gt=0)
     weight: int
+    categories: list[int] = Field(min_length=1)
+    allergens: list[int]
     window_start: datetime
     window_end: datetime
 
@@ -225,6 +238,19 @@ async def create_bundle(
     Raises:
       HTTPException: if failed to create bundle
     """
+    category_querier = CategoryQuerier(conn)
+    allergen_querier = AllergenQuerier(conn)
+    coefficients: list[float] = []
+    for category in form.categories:
+        if (
+            category_record := await category_querier.get_category(category_id=category)
+        ) is None:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Failed to get category coefficient",
+            )
+        coefficients.append(category_record.category_coefficient)
+    carbon_dioxide = estimate_carbon_doixide_saved(coefficients, weight_g=form.weight)
     bundle = await BundleQuerier(conn).create_bundle(
         CreateBundleParams(
             seller_id=seller.user_id,
@@ -232,7 +258,7 @@ async def create_bundle(
             description=form.description,
             total_qty=form.total_qty,
             price=form.price,
-            carbon_dioxide=form.weight,
+            carbon_dioxide=carbon_dioxide,
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
@@ -243,7 +269,109 @@ async def create_bundle(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create bundle",
         )
+    for category in form.categories:
+        bundle_category = await category_querier.add_bundles_category(
+            AddBundlesCategoryParams(bundle_id=bundle.bundle_id, category_id=category)
+        )
+        if bundle_category is None:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to add bundle category"
+            )
+    for allergen in form.allergens:
+        bundle_allergen = await allergen_querier.add_bundles_allergen(
+            AddBundlesAllergenParams(bundle_id=bundle.bundle_id, allergen_id=allergen)
+        )
+        if bundle_allergen is None:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to add bundle allergen"
+            )
     return bundle
+
+
+async def update_bundle_categories(
+    bundle_id: int, category_querier: CategoryQuerier, form: BundleForm
+) -> None:
+    """Update bundle categories to a new once.
+
+    Args:
+        bundle_id: bundle id
+        category_querier: categories async querier
+        form: update bundle form
+
+    Raises:
+        HTTPException: if failed to update categories
+    """
+    bundle_categories = [
+        bundle_category
+        async for bundle_category in category_querier.get_bundle_categories(
+            bundle_id=bundle_id
+        )
+    ]
+    for category in form.categories:
+        if category not in bundle_categories:
+            added_category = await category_querier.add_bundles_category(
+                AddBundlesCategoryParams(bundle_id=bundle_id, category_id=category)
+            )
+            if added_category is None:
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Failed to add bundle category",
+                )
+    for bundle_category in bundle_categories:
+        if bundle_category not in form.categories:
+            deleted_category = await category_querier.delete_bundle_category(
+                DeleteBundleCategoryParams(
+                    bundle_id=bundle_id, category_id=bundle_category
+                )
+            )
+            if deleted_category is None:
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "failed to delete bundle category",
+                )
+
+
+async def update_bundle_allergens(
+    bundle_id: int, allergen_querier: AllergenQuerier, form: BundleForm
+) -> None:
+    """Update bandle allergens to a new once.
+
+    Args:
+        bundle_id: bundle id
+        allergen_querier: allergen async querier
+        form: bundle update form
+
+    Raises:
+        HTTPException: if failed to update allergens
+    """
+    bundle_allergens = [
+        bundle_allergen
+        async for bundle_allergen in allergen_querier.get_bundle_allergens(
+            bundle_id=bundle_id
+        )
+    ]
+    for allergen in form.allergens:
+        if allergen not in bundle_allergens:
+            added_allergen = await allergen_querier.add_bundles_allergen(
+                AddBundlesAllergenParams(bundle_id=bundle_id, allergen_id=allergen)
+            )
+            if added_allergen is None:
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "Failed to add bundle allergen",
+                )
+    for bundle_allergen in bundle_allergens:
+        if bundle_allergen not in form.allergens:
+            deleted_allergen = await allergen_querier.delete_bundle_allergen(
+                DeleteBundleAllergenParams(
+                    bundle_id=bundle_id, allergen_id=bundle_allergen
+                )
+            )
+            if deleted_allergen is None:
+                raise HTTPException(
+                    status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "failed to delete bundle allergen",
+                )
 
 
 @router.patch(
@@ -254,7 +382,7 @@ async def create_bundle(
     description="Updates an existing bundle for the authenticated seller.",
 )
 async def update_bundle(
-    bundle_id: str,
+    bundle_id: int,
     form: BundleForm,
     conn: database_dependency,
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
@@ -273,9 +401,22 @@ async def update_bundle(
     Raises:
       HTTPException: if failed to update bundle
     """
+    category_querier = CategoryQuerier(conn)
+    allergen_querier = AllergenQuerier(conn)
+    coefficients: list[float] = []
+    for category in form.categories:
+        if (
+            category_record := await category_querier.get_category(category_id=category)
+        ) is None:
+            raise HTTPException(
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "Failed to get category coefficient",
+            )
+        coefficients.append(category_record.category_coefficient)
+    carbon_dioxide = estimate_carbon_doixide_saved(coefficients, weight_g=form.weight)
     bundle = await BundleQuerier(conn).update_bundle(
         UpdateBundleParams(
-            bundle_id=int(bundle_id),
+            bundle_id=bundle_id,
             seller_id=seller.user_id,
             bundle_name=form.bundle_name,
             description=form.description,
@@ -284,7 +425,7 @@ async def update_bundle(
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
-            carbon_dioxide=form.weight,
+            carbon_dioxide=carbon_dioxide,
         )
     )
     if not bundle:
@@ -292,6 +433,8 @@ async def update_bundle(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bundle not found or not owned by seller",
         )
+    await update_bundle_categories(bundle_id, category_querier, form)
+    await update_bundle_allergens(bundle_id, allergen_querier, form)
     return bundle
 
 
