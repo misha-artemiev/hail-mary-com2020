@@ -26,6 +26,10 @@ export function useCollectReservation(bundleId) {
      * @param {string} claimCode - The claim code of the bundle.
      */
     async function handleCollect(claimCode) {
+        if (!bundleId) {
+            return;
+        }
+
         setCollecting(true);
         setCollectSuccess(false);
 
