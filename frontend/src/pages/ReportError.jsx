@@ -86,7 +86,9 @@ export default function ReportError() {
 
             setSuccess(true);
         } catch (err) {
-            setError(err?.message || "Unable to submit report. Please try again.");
+            setError(
+                err?.message || "Unable to submit report. Please try again.",
+            );
         } finally {
             setLoading(false);
         }
@@ -160,7 +162,8 @@ export default function ReportError() {
 
                     <div>
                         <label className="block font-semibold text-gray-700 mb-1">
-                            Issue Details <span className="text-red-500">*</span>
+                            Issue Details{" "}
+                            <span className="text-red-500">*</span>
                         </label>
                         <textarea
                             name="description"

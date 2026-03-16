@@ -16,12 +16,7 @@ import React from "react";
  *
  * @returns {JSX.Element}
  */
-export default function Tabs({
-    tabs,
-    activeTab,
-    onTabChange,
-    className = "",
-}) {
+export default function Tabs({ tabs, activeTab, onTabChange, className = "" }) {
     return (
         <div className={`flex space-x-2 border-b border-gray-200 ${className}`}>
             {tabs.map((tab) => (
