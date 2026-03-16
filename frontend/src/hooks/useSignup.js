@@ -67,6 +67,7 @@ export function useSignup() {
         email: "",
         password: "",
         confirmPassword: "",
+        terms: false,
         firstName: "",
         lastName: "",
         sellerName: "",
@@ -84,8 +85,11 @@ export function useSignup() {
      * Handles changes to the form.
      */
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setForm((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
     };
 
     /**
@@ -105,6 +109,12 @@ export function useSignup() {
         // Ensure passwords match
         if (form.password !== form.confirmPassword) {
             alert("Please ensure that passwords match");
+            return;
+        }
+
+        // Ensure terms are accepted
+        if (!form.terms) {
+            setError("You must accept the terms and conditions.");
             return;
         }
 
