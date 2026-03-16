@@ -29,7 +29,7 @@ class ReservationRow(BaseModel):
     window_start: time
 
     # The category the bundle belongs to, used for the category distribution.
-    category_id: int
+    category_ids: list[int]
 
     # None means the consumer never showed up (no-show).
     # A timestamp means they collected their bundle (sale).
@@ -146,14 +146,16 @@ class SellerAnalytics:
         # Count collected reservations per category.
         collected_by_category: dict[int, float] = {}
         for reservation in reservations:
-            # Skip reservations with no category or that were not collected.
-            if reservation.category_id is None or reservation.collected_at is None:
+            # Skip reservations that were not collected.
+            if reservation.collected_at is None:
                 continue
-            collected_by_category[reservation.category_id] = (
-                collected_by_category.get(reservation.category_id, 0.0) + 1.0
-            )
+            # A bundle can belong to multiple categories.
+            for category_id in reservation.category_ids:
+                collected_by_category[category_id] = (
+                    collected_by_category.get(category_id, 0.0) + 1.0
+                )
 
-        # Sort the categories to find the top performers.
+        # Sort the categories to find the top ones.
         # -item[1] means sort by total collected DESCENDING (biggest first).
         # item[0] is the tie-breaker: sort by category_id ASCENDING.
         top_categories = sorted(
