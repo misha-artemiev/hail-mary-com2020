@@ -19,6 +19,7 @@ from routers.reports import router as reports_router
 from routers.sellers import router as sellers_router
 from routers.sessions import router as sessions_router
 from routers.users import router as users_router
+from routers.leaderboard import router as leaderboard_router
 from uvicorn import run
 
 
@@ -57,6 +58,7 @@ def register_routers(app: FastAPI) -> None:
         badges_router,
         admin_router,
         reports_router,
+        leaderboard_router,
     ]
     for router in routers:
         app.include_router(router)
