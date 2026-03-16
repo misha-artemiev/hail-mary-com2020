@@ -27,4 +27,8 @@ export const FOOTER_LINKS = [
         to: "/contact",
         description: "Contact Us",
     },
+    {
+        to: "/report-error",
+        description: "Report an Issue",
+    },
 ];
