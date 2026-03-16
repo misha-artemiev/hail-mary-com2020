@@ -1,1 +1,1 @@
-"""Module for block stoarge managment."""
+"""Module for block storage management."""

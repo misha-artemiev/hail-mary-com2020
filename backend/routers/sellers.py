@@ -65,10 +65,19 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Response,
+    Security,
+    UploadFile,
+    status,
+)
 from internal.auth.creation import CreateSellerForm, create_seller
 from internal.auth.middleware import seller_auth
 from internal.badges.engine import BadgeEngine
+from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.bundle import (
@@ -424,3 +433,64 @@ async def reservation_collection(
     await conn.commit()
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation
+
+
+@router.patch(
+    path="/me/bundles/{bundle_id}/image", status_code=status.HTTP_202_ACCEPTED
+)
+async def change_bundle_image(
+    bundle_id: int,
+    file: UploadFile,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> None:
+    """Change bundle image.
+
+    Args:
+        bundle_id: bundle id
+        file: bundle image
+        conn: database connection
+        seller: seller session
+
+    Raises:
+        HTTPException: if failed to change image
+    """
+    if (
+        BundleQuerier(conn).get_sellers_bundle(
+            GetSellersBundleParams(seller_id=seller.user_id, bundle_id=bundle_id)
+        )
+        is None
+    ):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
+    await block_management.upload_bundle_image(bundle_id, file)
+
+
+@router.get(path="/me/bundles/{bundle_id}/image", status_code=status.HTTP_200_OK)
+async def get_bundle_image(
+    bundle_id: int,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> Response:
+    """Get bundle image.
+
+    Args:
+        bundle_id: bundle id
+        conn: database connection
+        seller: seller session
+
+    Returns:
+        bundle image
+
+    Raises:
+        HTTPException: if failed to get bundle image
+    """
+    if (
+        BundleQuerier(conn).get_sellers_bundle(
+            GetSellersBundleParams(seller_id=seller.user_id, bundle_id=bundle_id)
+        )
+        is None
+    ):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
+    return Response(
+        block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
+    )
