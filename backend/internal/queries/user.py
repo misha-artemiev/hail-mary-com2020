@@ -67,7 +67,7 @@ class GetUserRow(pydantic.BaseModel):
 
 
 GET_USER_ID = """-- name: get_user_id \\:one
-SELECT user_id
+SELECT user_id\\:\\:numeric
 FROM users
 WHERE username=:p1
 LIMIT 1
@@ -223,7 +223,7 @@ class AsyncQuerier:
             created_at=row[4],
         )
 
-    async def get_user_id(self, *, username: str) -> Optional[int]:
+    async def get_user_id(self, *, username: str) -> Optional[decimal.Decimal]:
         row = (await self._conn.execute(sqlalchemy.text(GET_USER_ID), {"p1": username})).first()
         if row is None:
             return None
