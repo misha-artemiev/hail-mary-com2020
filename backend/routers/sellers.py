@@ -186,6 +186,7 @@ class BundleForm(BaseModel):
     total_qty: int
     price: Decimal = Field(decimal_places=2, gt=0)
     discount_percentage: int = Field(lt=100, gt=0)
+    weight: int
     window_start: datetime
     window_end: datetime
 
@@ -222,6 +223,7 @@ async def create_bundle(
             description=form.description,
             total_qty=form.total_qty,
             price=form.price,
+            carbon_dioxide=form.weight,
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
@@ -273,6 +275,7 @@ async def update_bundle(
             discount_percentage=form.discount_percentage,
             window_start=form.window_start,
             window_end=form.window_end,
+            carbon_dioxide=form.weight,
         )
     )
     if not bundle:
@@ -418,5 +421,6 @@ async def reservation_collection(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update reservation status",
         )
+    await conn.commit()
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation

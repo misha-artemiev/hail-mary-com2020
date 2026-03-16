@@ -52,7 +52,7 @@ export default function Signup() {
         ));
 
     return (
-        <div className="max-w-xl mx-auto p-6">
+        <div className="max-w-xl mx-auto p-4 md:p-6">
             {/* Signup container */}
             <Card>
                 {/* Error message */}

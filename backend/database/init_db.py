@@ -10,7 +10,7 @@ from internal.settings.env import database_settings
 from psycopg import Connection, Error, connect
 from uvicorn.config import LOGGING_CONFIG
 
-from database.db_constants import ALLERGENS, CATEGORIES
+from database.db_constants import ALLERGENS, BADGES, CATEGORIES
 
 dictConfig(LOGGING_CONFIG)
 SCHEMA_PATH = Path("database/migrations/schema.sql")
@@ -146,24 +146,34 @@ def drop_all_tables(logger: Logger, table_queries: list[str], conn: Connection) 
 def seed_static_data(logger: Logger, conn: Connection) -> None:
     """Inserts categories and allergens into the db."""
     try:
-        with conn.cursor() as cursor:
-            # Seed Categories
-            for cat_id, name in CATEGORIES.items():
-                cursor.execute(
-                    "INSERT INTO category (category_id, category_name) "
-                    "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    (cat_id, name),
-                )
+        # Seed Categories
+        logger.info("inserting categories")
+        for category in CATEGORIES:
+            conn.execute(
+                "INSERT INTO category "
+                "(category_id, category_name, category_coefficient)"
+                "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                (category["cat_id"], category["name"], category["coefficient"]),
+            )
 
-            # Seed Allergens
-            for all_id, name in ALLERGENS.items():
-                cursor.execute(
-                    "INSERT INTO allergens (allergen_id, allergen_name)"
-                    "VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                    (all_id, name),
-                )
+        # Seed Allergens
+        logger.info("inserting allergens")
+        for all_id, name in ALLERGENS.items():
+            conn.execute(
+                "INSERT INTO allergens (allergen_id, allergen_name)"
+                "VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (all_id, name),
+            )
+        # Seed Bundles
+        logger.info("inserting badges")
+        for badge in BADGES:
+            conn.execute(
+                "INSERT INTO badges (badge_id, name, description)"
+                "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+                (badge["badge_id"], badge["name"], badge["description"]),
+            )
         conn.commit()
-        logger.info("Successfully seeded categories and allergens.")
+        logger.info("finished inserting data")
     except Error as e:
         logger.error(f"Error seeding data: {e}")
         conn.rollback()
@@ -197,9 +207,9 @@ def main() -> None:
             # Drop all tables
             drop_all_tables(logger, table_queries, conn)
         case 4:
-            logger.info("Shutting down: database connection closed")
+            logger.info("shutting down: database connection closed")
     conn.close()
-    logger.info("Database connection closed.")
+    logger.info("database connection closed.")
 
 
 if __name__ == "__main__":

@@ -21,6 +21,15 @@ class AdminIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
+class ChartType(str, enum.Enum):
+    LINE = "line"
+    MULTI_LINE = "multi_line"
+    BAR = "bar"
+    STACKED_BAR = "stacked_bar"
+    PIE = "pie"
+    AREA = "area"
+
+
 class DayOfWeek(str, enum.Enum):
     MONDAY = "Monday"
     TUESDAY = "Tuesday"
@@ -76,6 +85,7 @@ class Admin(pydantic.BaseModel):
     user_id: int
     fname: str
     lname: str
+    active: Optional[bool]
 
 
 class AdminIssueReport(pydantic.BaseModel):
@@ -90,6 +100,36 @@ class AdminIssueReport(pydantic.BaseModel):
 class Allergen(pydantic.BaseModel):
     allergen_id: int
     allergen_name: str
+
+
+class AnalyticsGraph(pydantic.BaseModel):
+    graph_id: int
+    seller_id: int
+    graph_type: int
+    created_at: datetime.datetime
+
+
+class AnalyticsGraphsType(pydantic.BaseModel):
+    graph_type_id: int
+    chart_type: ChartType
+    graph_summary: str
+    x_axis_label: str
+    y_axis_label: str
+
+
+class AnalyticsPoint(pydantic.BaseModel):
+    series_id: int
+    sort_order: int
+    x_coordinate: str
+    y_coordinate: decimal.Decimal
+    sort_index: int
+
+
+class AnalyticsSeries(pydantic.BaseModel):
+    series_id: int
+    graph_id: int
+    sort_index: int
+    series_name: str
 
 
 class Badge(pydantic.BaseModel):
@@ -110,7 +150,7 @@ class Bundle(pydantic.BaseModel):
     seller_id: int
     bundle_name: str
     description: str
-    carbon_dioxide: float
+    carbon_dioxide: int
     total_qty: int
     price: decimal.Decimal
     discount_percentage: int
@@ -132,6 +172,7 @@ class BundleCategory(pydantic.BaseModel):
 class Category(pydantic.BaseModel):
     category_id: int
     category_name: str
+    category_coefficient: float
 
 
 class Consumer(pydantic.BaseModel):
@@ -194,14 +235,14 @@ class Seller(pydantic.BaseModel):
     post_code: str
     region: Optional[str]
     country: str
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
 
 
 class SellerIssueReport(pydantic.BaseModel):
     report_id: int
     reservation_id: int
-    issue_type: Optional[SellerIssueType]
+    issue_type: SellerIssueType
     description: str
     created_at: datetime.datetime
     status: IssueStatus

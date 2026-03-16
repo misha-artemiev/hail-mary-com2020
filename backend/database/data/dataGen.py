@@ -18,7 +18,7 @@ from secrets import SystemRandom
 from typing import Any
 
 import pandas as pd
-from database.db_constants import ALLERGENS, CATEGORIES
+from database.db_constants import ALLERGENS, BADGES, CATEGORIES
 from faker import Faker
 from internal.auth.security import generate_claim_code, generate_token
 
@@ -227,6 +227,7 @@ def generate_inventory(seller_ids: list[int], windows_df: pd.DataFrame) -> pd.Da
                     "bundle_id": bundle_id,
                     "seller_id": seller_id,
                     "bundle_name": f"Surplus {fake.word().capitalize()} Bag",
+                    "carbon_dioxide": round(secure_rng.randint(500, 8000), 2),
                     "description": fake.sentence(nb_words=10),
                     "total_qty": secure_rng.randint(1, 4),
                     "price": round(secure_rng.uniform(3.00, 7.50), 2),
@@ -310,7 +311,6 @@ def generate_reservations(
             "consumer_id": secure_rng.choice(consumer_ids),
             "reserved_at": reserved_at,
             "claim_code": code,
-            "status": status,
             "collected_at": collected_at,
         })
 
@@ -415,51 +415,15 @@ def generate_inbox(users_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(messages)
 
 
-def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def generate_badges(consumers_df: pd.DataFrame) -> pd.DataFrame:
     """Creates base badge definitions and assigns tiered levels to consumers.
 
     Args:
       consumers_df: dataframe of consumers
 
     Returns:
-      tuple of badges dataframe and joining user-badge dataframe
+      joining user-badge dataframe
     """
-    # base badge definitions from massimo
-    # base badge definitions
-    badge_data = [
-        {
-            "badge_id": 1,
-            "name": "Green Starter",
-            "description": "Rescue your first meal",
-        },
-        {
-            "badge_id": 2,
-            "name": "Local Hero",
-            "description": "Rescue from multiple different sellers",
-        },
-        {
-            "badge_id": 3,
-            "name": "Variety explorer",
-            "description": "Rescue food from multiple categories",
-        },
-        {
-            "badge_id": 4,
-            "name": "Food Savior",
-            "description": "Save food multiple days in a row",
-        },
-        {"badge_id": 5, "name": "Sweet Tooth", "description": "Save multiple desserts"},
-        {
-            "badge_id": 6,
-            "name": "CO2 Cutter",
-            "description": "Save significant amounts of CO2",
-        },
-        {
-            "badge_id": 7,
-            "name": "Right On Time",
-            "description": "Consistently save meals without no-shows",
-        },
-    ]
-
     # mapping badge id to max level
     badge_max_levels = {1: 1, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3}
 
@@ -470,7 +434,7 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
         if secure_rng.random() < BADGE_PROBABILITY:
             # Picks 1 to 2 random base badges per user
             num_categories = secure_rng.randint(1, 2)
-            chosen_badges = random.sample(badge_data, num_categories)
+            chosen_badges = random.sample(BADGES, num_categories)
 
             for badge in chosen_badges:
                 b_id = int(str(badge["badge_id"]))
@@ -479,21 +443,26 @@ def generate_badges(consumers_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
                 # Pick the highest level the user achieved in this category
                 achieved_level = secure_rng.randint(1, max_level)
 
-                # Set a random start date for when they earned Level 1
-                current_date = START_DATE + timedelta(days=secure_rng.randint(1, 40))
+                # Calculate the total simulated time to reach this level
+                # Base 1-40 days for Level 1, plus 2-14 days for every level after that
+                progression_days = sum(
+                    secure_rng.randint(2, 14) for _ in range(1, achieved_level)
+                )
+                start_offset = secure_rng.randint(1, 40)
 
-                # Award badges chronologically from Level 1 up to their achieved_level
-                for lvl in range(1, achieved_level + 1):
-                    acquired.append({
-                        "user_id": userid,
-                        "badge_id": b_id,
-                        "level": lvl,
-                        "acquired_at": current_date,
-                    })
-                    # Add 2 to 14 days of simulated time before they earn the next level
-                    current_date += timedelta(days=secure_rng.randint(2, 14))
+                acquired_date = START_DATE + timedelta(
+                    days=start_offset + progression_days
+                )
 
-    return pd.DataFrame(badge_data), pd.DataFrame(acquired)
+                # Append ONLY the highest achieved level
+                acquired.append({
+                    "user_id": userid,
+                    "badge_id": b_id,
+                    "level": achieved_level,
+                    "acquired_at": acquired_date,
+                })
+
+    return pd.DataFrame(acquired)
 
 
 def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
@@ -506,7 +475,7 @@ def generate_bundle_categories(bundles_df: pd.DataFrame) -> pd.DataFrame:
         Dataframe representing the junction table.
     """
     bundle_ids = bundles_df["bundle_id"].tolist()
-    category_ids = list(CATEGORIES.keys())
+    category_ids = [category["cat_id"] for category in CATEGORIES]
     links = []
 
     for bundle_id in bundle_ids:
@@ -597,7 +566,7 @@ if __name__ == "__main__":
         df_reservations, df_users
     )
     df_inbox = generate_inbox(df_users)
-    df_badges, df_badges_acquired = generate_badges(df_consumers)
+    df_badges_acquired = generate_badges(df_consumers)
     df_tokens = generate_tokens(df_users)
 
     # saving
@@ -613,7 +582,6 @@ if __name__ == "__main__":
         "seller_issue_reports": df_seller_reports,
         "admin_issue_reports": df_admin_reports,
         "inbox": df_inbox,
-        "badges": df_badges,
         "badges_acquired": df_badges_acquired,
         "token": df_tokens,
     }

@@ -1,6 +1,6 @@
 -- name: CreateBundle :one
-INSERT INTO bundles (seller_id, bundle_name, description, total_qty, price, discount_percentage, window_start, window_end)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO bundles (seller_id, bundle_name, description, total_qty, carbon_dioxide, price, discount_percentage, window_start, window_end)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetBundle :one
@@ -38,6 +38,11 @@ LIMIT 1;
 
 -- name: UpdateBundle :one
 UPDATE bundles
-SET bundle_name=$3, description=$4, total_qty=$5, price=$6, discount_percentage=$7, window_start=$8, window_end=$9
+SET bundle_name=$3, description=$4, total_qty=$5, price=$6, discount_percentage=$7, window_start=$8, window_end=$9, carbon_dioxide=$10
 WHERE bundle_id=$1 AND seller_id=$2
+RETURNING *;
+
+-- name: DeleteBundle :one
+DELETE FROM bundles
+WHERE bundle_id = $1
 RETURNING *;

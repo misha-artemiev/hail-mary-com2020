@@ -2,12 +2,32 @@
 # versions:
 #   sqlc v1.30.0
 # source: category.sql
-from typing import AsyncIterator
+import pydantic
+from typing import AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
 
 from internal.queries import models
+
+
+CREATE_CATEGORY = """-- name: create_category \\:one
+INSERT INTO category (category_name, category_coefficient)
+VALUES (:p1, :p2)
+RETURNING category_id, category_name, category_coefficient
+"""
+
+
+class CreateCategoryParams(pydantic.BaseModel):
+    category_name: str
+    category_coefficient: float
+
+
+DELETE_CATEGORY = """-- name: delete_category \\:one
+DELETE FROM category
+WHERE category_id = :p1
+RETURNING category_id, category_name, category_coefficient
+"""
 
 
 GET_BUNDLE_CATEGORIES = """-- name: get_bundle_categories \\:many
@@ -20,14 +40,56 @@ WHERE b.bundle_id=:p1
 
 
 GET_CATEGORIES = """-- name: get_categories \\:many
-SELECT category_id, category_name
+SELECT category_id, category_name, category_coefficient
 FROM category
 """
+
+
+GET_CATEGORY = """-- name: get_category \\:one
+SELECT category_id, category_name, category_coefficient
+FROM category
+WHERE category_id=:p1
+LIMIT 1
+"""
+
+
+UPDATE_CATEGORY = """-- name: update_category \\:one
+UPDATE category
+SET category_name = :p2, category_coefficient = :p3
+WHERE category_id = :p1
+RETURNING category_id, category_name, category_coefficient
+"""
+
+
+class UpdateCategoryParams(pydantic.BaseModel):
+    category_id: int
+    category_name: str
+    category_coefficient: float
 
 
 class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
+
+    async def create_category(self, arg: CreateCategoryParams) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_CATEGORY), {"p1": arg.category_name, "p2": arg.category_coefficient})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )
+
+    async def delete_category(self, *, category_id: int) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_CATEGORY), {"p1": category_id})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )
 
     async def get_bundle_categories(self, *, bundle_id: int) -> AsyncIterator[int]:
         result = await self._conn.stream(sqlalchemy.text(GET_BUNDLE_CATEGORIES), {"p1": bundle_id})
@@ -40,4 +102,25 @@ class AsyncQuerier:
             yield models.Category(
                 category_id=row[0],
                 category_name=row[1],
+                category_coefficient=row[2],
             )
+
+    async def get_category(self, *, category_id: int) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_CATEGORY), {"p1": category_id})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )
+
+    async def update_category(self, arg: UpdateCategoryParams) -> Optional[models.Category]:
+        row = (await self._conn.execute(sqlalchemy.text(UPDATE_CATEGORY), {"p1": arg.category_id, "p2": arg.category_name, "p3": arg.category_coefficient})).first()
+        if row is None:
+            return None
+        return models.Category(
+            category_id=row[0],
+            category_name=row[1],
+            category_coefficient=row[2],
+        )

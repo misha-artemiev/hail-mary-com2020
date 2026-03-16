@@ -4,12 +4,14 @@ from pydantic import BaseModel, EmailStr, SecretStr
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from internal.geolocation.location import get_location
+from internal.queries.admin import AsyncQuerier as AdminQuerier
+from internal.queries.admin import CreateAdminParams
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import CreateConsumerParams
-from internal.queries.models import Consumer, Seller, UserRole
+from internal.queries.models import Admin, Consumer, Seller, UserRole
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import CreateSellerParams
-from internal.queries.user import AsyncQuerier as UserQuery
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import CreateUserParams, CreateUserRow
 
 from .security import hash_password
@@ -38,7 +40,7 @@ async def create_user(
       ValueError: if database failed to create user
     """
     pw_hash = hash_password(password.get_secret_value())
-    user = await UserQuery(conn).create_user(
+    user = await UserQuerier(conn).create_user(
         CreateUserParams(username=username, email=email, pw_hash=pw_hash, role=role)
     )
     if not user:
@@ -140,3 +142,39 @@ async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller
     if not seller:
         raise ValueError("Failed to create seller")
     return seller
+
+
+class CreateAdminForm(BaseModel):
+    """Form with information to create admin."""
+
+    username: str
+    email: EmailStr
+    password: SecretStr
+    first_name: str
+    last_name: str
+
+
+async def create_admin(form: CreateAdminForm, conn: AsyncConnection) -> Admin:
+    """Create and insert admin and user entry.
+
+    Args:
+      form: form with admin information
+      conn: database connection
+
+    Returns:
+      row with created admin information from the database
+
+    Raises:
+      ValueError: if database failed to create admin
+    """
+    user = await create_user(
+        form.username, form.email, form.password, UserRole.ADMIN, conn
+    )
+    admin = await AdminQuerier(conn).create_admin(
+        CreateAdminParams(
+            user_id=user.user_id, fname=form.first_name, lname=form.last_name
+        )
+    )
+    if not admin:
+        raise ValueError("Failed to create admin")
+    return admin

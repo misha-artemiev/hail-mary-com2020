@@ -14,7 +14,7 @@ from internal.queries import models
 
 COLLECT_RESERVATION = """-- name: collect_reservation \\:one
 UPDATE reservations
-SET status='collected', collected_at=NOW()
+SET collected_at=NOW()
 WHERE reservation_id=:p1
 RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 """
@@ -31,6 +31,13 @@ class CreateReservationParams(pydantic.BaseModel):
     bundle_id: int
     consumer_id: int
     claim_code: str
+
+
+DELETE_RESERVATION = """-- name: delete_reservation \\:one
+DELETE FROM reservations
+WHERE reservation_id = :p1
+RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
+"""
 
 
 GET_BUNDLE_RESERVATIONS = """-- name: get_bundle_reservations \\:many
@@ -51,7 +58,7 @@ GET_CONSUMERS_RESERVATIONS_FULL = """-- name: get_consumers_reservations_full \\
 SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
-INNER JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
 WHERE consumer_id=:p1
 """
 
@@ -62,10 +69,10 @@ class GetConsumersReservationsFullRow(pydantic.BaseModel):
     reserved_at: datetime.datetime
     collected_at: Optional[datetime.datetime]
     seller_id: int
-    carbon_dioxide: float
+    carbon_dioxide: int
     window_start: datetime.datetime
     window_end: datetime.datetime
-    category_id: int
+    category_id: Optional[int]
 
 
 GET_RESERVATION = """-- name: get_reservation \\:one
@@ -78,7 +85,7 @@ WHERE reservation_id=:p1
 GET_RESERVATION_COLLECTION = """-- name: get_reservation_collection \\:one
 SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at
 FROM reservations
-WHERE bundle_id=:p1 AND claim_code=:p2 AND status='reserved'
+WHERE bundle_id=:p1 AND claim_code=:p2 AND collected_at IS NULL
 LIMIT 1
 """
 
@@ -86,6 +93,11 @@ LIMIT 1
 class GetReservationCollectionParams(pydantic.BaseModel):
     bundle_id: int
     claim_code: str
+
+
+GET_RESERVATIONS = """-- name: get_reservations \\:many
+SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at FROM reservations
+"""
 
 
 class AsyncQuerier:
@@ -107,6 +119,19 @@ class AsyncQuerier:
 
     async def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_RESERVATION), {"p1": arg.bundle_id, "p2": arg.consumer_id, "p3": arg.claim_code})).first()
+        if row is None:
+            return None
+        return models.Reservation(
+            reservation_id=row[0],
+            bundle_id=row[1],
+            consumer_id=row[2],
+            reserved_at=row[3],
+            claim_code=row[4],
+            collected_at=row[5],
+        )
+
+    async def delete_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_RESERVATION), {"p1": reservation_id})).first()
         if row is None:
             return None
         return models.Reservation(
@@ -182,3 +207,15 @@ class AsyncQuerier:
             claim_code=row[4],
             collected_at=row[5],
         )
+
+    async def get_reservations(self) -> AsyncIterator[models.Reservation]:
+        result = await self._conn.stream(sqlalchemy.text(GET_RESERVATIONS))
+        async for row in result:
+            yield models.Reservation(
+                reservation_id=row[0],
+                bundle_id=row[1],
+                consumer_id=row[2],
+                reserved_at=row[3],
+                claim_code=row[4],
+                collected_at=row[5],
+            )
