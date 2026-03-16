@@ -4,6 +4,7 @@ from fastapi import BackgroundTasks
 from internal.database.manager import database_manager
 from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
 from internal.queries.analytics import CreateGraphParams, GetGraphParams
+from internal.analytics.graphs import SellerAnalytics
 
 
 class AnalyticsProcesser:
@@ -54,7 +55,11 @@ class AnalyticsProcesser:
                     is None
                 ):
                     raise ValueError("Failed to create analytics graph")
-            # weekly sales posted
-            # sell through rate
-            # category distribution
-            # time window distribution
+            # weekly sales vs posted (multi line)
+            SellerAnalytics.graph_weekly_sales_vs_posted()
+            # sell through rate (pie)
+            SellerAnalytics.graph_sell_through_rate()
+            # category distribution (pie/bar)
+            SellerAnalytics.graph_category_distribution()
+            # time window distribution (pie/bar)
+            SellerAnalytics.graph_time_window_distribution()
