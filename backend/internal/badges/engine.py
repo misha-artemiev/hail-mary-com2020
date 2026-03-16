@@ -97,7 +97,7 @@ class BadgeEngine:
             reservations_filtered = [
                 reservation
                 for reservation in reservations_filtered
-                if reservation.category_id == rule.category_id
+                if rule.category_id in reservation.category_ids
             ]
         if rule.seller_id:
             reservations_filtered = [
@@ -148,7 +148,9 @@ class BadgeEngine:
         ]
         if rule.dif_categories >= 1:
             categories = {
-                reservation.category_id for reservation in reservations_filtered
+                cid
+                for reservation in reservations_filtered
+                for cid in reservation.category_ids
             }
             if len(categories) < rule.dif_categories:
                 return False
@@ -177,7 +179,7 @@ class BadgeEngine:
             reservations_filtered = [
                 reservation
                 for reservation in reservations_filtered
-                if reservation.category_id == rule.category_id
+                if rule.category_id in reservation.category_ids
             ]
         if rule.seller_id:
             reservations_filtered = [
