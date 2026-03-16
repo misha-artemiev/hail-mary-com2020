@@ -30,7 +30,9 @@ class TestMiddleware(IsolatedAsyncioTestCase):
     ) -> None:
         """Test basic auth parses credentials and returns user response."""
         mock_conn = MagicMock()
-        mock_creds = HTTPBasicCredentials(username="test@test.com", password=DUMMY_PASSWORD)  # noqa: E501
+        mock_creds = HTTPBasicCredentials(
+            username="test@test.com", password=DUMMY_PASSWORD
+        )
 
         # Mock User
         mock_user = MagicMock()
@@ -54,7 +56,9 @@ class TestMiddleware(IsolatedAsyncioTestCase):
     ) -> None:
         """Test basic auth fails for a deactivated admin."""
         mock_conn = MagicMock()
-        mock_creds = HTTPBasicCredentials(username="admin@test.com", password=DUMMY_PASSWORD)  # noqa: E501
+        mock_creds = HTTPBasicCredentials(
+            username="admin@test.com", password=DUMMY_PASSWORD
+        )
 
         mock_user = MagicMock()
         mock_user.user_id = TEST_USER_ID

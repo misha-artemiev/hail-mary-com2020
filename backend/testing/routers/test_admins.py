@@ -146,9 +146,7 @@ class TestAdmins(TestCase):
 
         mock_instance = mock_querier.return_value
 
-        async def mock_generator(
-            *_: object, **__: object
-        ) -> AsyncGenerator[Any]:
+        async def mock_generator(*_: object, **__: object) -> AsyncGenerator[Any]:
             await asyncio.sleep(0)
             yield get_mock_admin()
 
@@ -243,10 +241,7 @@ class TestAdmins(TestCase):
         mock_instance = mock_querier.return_value
         mock_instance.create_category = AsyncMock(return_value=get_mock_category())
 
-        payload = {
-            "category_name": "Pizza",
-            "category_coefficient": 1.5,
-        }
+        payload = {"category_name": "Pizza", "category_coefficient": 1.5}
 
         response = self.client.post("/admins/database/categories", json=payload)
 

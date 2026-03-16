@@ -129,9 +129,7 @@ class TestCreation(IsolatedAsyncioTestCase):
         mock_create_user.return_value = mock_user
 
         mock_admin = MagicMock()
-        mock_querier.return_value.create_admin = AsyncMock(
-            return_value=mock_admin
-        )
+        mock_querier.return_value.create_admin = AsyncMock(return_value=mock_admin)
 
         form = CreateAdminForm(
             username="madmin",
