@@ -113,6 +113,8 @@ export const ROUTES = [
                 <SellerDashboard />
             </ProtectedRoute>
         ),
+    },
+    {
         path: "/report-error",
         element: <ReportError />,
     },
