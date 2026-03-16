@@ -2,44 +2,61 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Response, Security
+from fastapi import APIRouter, HTTPException, Security, status
 from internal.auth.middleware import bearer_auth
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.database.dependency import database_dependency
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
+from internal.queries.models import Inbox
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.user import Querier as UserQuerier
+from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserEmailParams
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.patch("/me/password", status_code=202)
+class SendMessageForm(BaseModel):
+    """Form to send a new message."""
+
+    user_id: int
+    message_subject: str
+    message_text: str
+
+
+@router.patch(
+    "/me/password",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Update password",
+    description="Updates the password for the authenticated user.",
+)
 async def update_password(
     form: UpdatePasswordForm,
     conn: database_dependency,
     session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> Response:
+) -> None:
     """Update users password.
 
     Args:
       form: form for password change
       conn: database connection
       session: users session
-
-    Returns:
-      if password was changed
     """
-    _ = update_pw(session.email, form, conn)
-    return Response("Password was updated", 202)
+    _ = await update_pw(session.email, form, conn)
 
 
-@router.patch("/me/email", status_code=202)
+@router.patch(
+    "/me/email",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Update email",
+    description="Updates the email address for the authenticated user.",
+)
 async def update_email(
     email: EmailStr,
     conn: database_dependency,
     session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> Response:
+) -> None:
     """Update users email.
 
     Args:
@@ -47,15 +64,80 @@ async def update_email(
       conn: database connection
       session: users session
 
-    Returns:
-      if sellers email was updated
-
     Raises:
       HTTPException: failed to update user email
     """
-    user = UserQuerier(conn).update_user_email(
+    user = await UserQuerier(conn).update_user_email(
         UpdateUserEmailParams(user_id=session.user_id, email=email)
     )
     if not user:
-        raise HTTPException(500, "failed to update users email")
-    return Response("user email was updated", 201)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update users email",
+        )
+
+
+@router.get(
+    "/me/inbox",
+    status_code=status.HTTP_200_OK,
+    summary="Get user inbox",
+    description="Gets all inbox messages for the authenticated user.",
+    response_model=list[Inbox],
+)
+async def get_inbox(
+    conn: database_dependency,
+    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
+) -> list[Inbox]:
+    """Get inbox for user.
+
+    Args:
+      conn: database connection
+      session: users session
+
+    Returns:
+      A list of inbox messages.
+    """
+    return [
+        msg async for msg in InboxQuerier(conn).get_user_inbox(user_id=session.user_id)
+    ]
+
+
+@router.post(
+    "/me/inbox",
+    status_code=status.HTTP_201_CREATED,
+    summary="Send an inbox message",
+    description="Sends a new message to a user.",
+    response_model=Inbox,
+)
+async def send_message(
+    form: SendMessageForm,
+    conn: database_dependency,
+    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
+) -> Inbox:
+    """Send a message.
+
+    Args:
+      form: The message form
+      conn: database connection
+      session: users session
+
+    Returns:
+      The created message.
+
+    Raises:
+      HTTPException: if message sending fails
+    """
+    message = await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=form.user_id,
+            sender_id=session.user_id,
+            message_subject=form.message_subject,
+            message_text=form.message_text,
+        )
+    )
+    if not message:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send message",
+        )
+    return message

@@ -8,6 +8,7 @@ import React from "react";
 // Routes (individual pages)
 import Home from "../pages/Home";
 import AboutUs from "../pages/AboutUs";
+import OurTeam from "../pages/OurTeam";
 import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
@@ -19,6 +20,7 @@ import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
 import SellerDashboard from "../pages/SellerDashboard";
+import ReportError from "../pages/ReportError";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -39,6 +41,10 @@ export const ROUTES = [
     {
         path: "/aboutus",
         element: <AboutUs />,
+    },
+    {
+        path: "/our-team",
+        element: <OurTeam />,
     },
     {
         path: "/analytics",
@@ -107,6 +113,8 @@ export const ROUTES = [
                 <SellerDashboard />
             </ProtectedRoute>
         ),
+        path: "/report-error",
+        element: <ReportError />,
     },
     // Catch-all (i.e. 404)
     {
