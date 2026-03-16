@@ -139,7 +139,9 @@ export function useSignup() {
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
                 throw new Error(
-                    data?.message ?? `Signup failed (${response.status}).`,
+                    data?.detail ??
+                        data?.message ??
+                        `Signup failed (${response.status}).`,
                 );
             }
 
