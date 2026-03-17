@@ -2,6 +2,11 @@
 SELECT *
 FROM analytics_graphs_types;
 
+-- name: GetGraphType :one
+SELECT *
+FROM analytics_graphs_types
+WHERE graph_type_id=$1;
+
 -- name: CreateGraph :one
 INSERT INTO analytics_graphs (seller_id, graph_type)
 VALUES ($1, $2)

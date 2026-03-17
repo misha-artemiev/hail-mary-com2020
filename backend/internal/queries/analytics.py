@@ -85,6 +85,13 @@ ORDER BY sort_index
 """
 
 
+GET_GRAPH_TYPE = """-- name: get_graph_type \\:one
+SELECT graph_type_id, chart_type, graph_summary, x_axis_label, y_axis_label
+FROM analytics_graphs_types
+WHERE graph_type_id=:p1
+"""
+
+
 GET_GRAPHS = """-- name: get_graphs \\:many
 SELECT graph_id, seller_id, graph_type, created_at
 FROM analytics_graphs
@@ -173,6 +180,18 @@ class AsyncQuerier:
                 series_name=row[2],
                 sort_index=row[3],
             )
+
+    async def get_graph_type(self, *, graph_type_id: int) -> Optional[models.AnalyticsGraphsType]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_GRAPH_TYPE), {"p1": graph_type_id})).first()
+        if row is None:
+            return None
+        return models.AnalyticsGraphsType(
+            graph_type_id=row[0],
+            chart_type=row[1],
+            graph_summary=row[2],
+            x_axis_label=row[3],
+            y_axis_label=row[4],
+        )
 
     async def get_graphs(self, *, seller_id: int) -> AsyncIterator[models.AnalyticsGraph]:
         result = await self._conn.stream(sqlalchemy.text(GET_GRAPHS), {"p1": seller_id})
