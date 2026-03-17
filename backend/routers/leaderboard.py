@@ -16,7 +16,11 @@ class LeaderboardTypes(Enum):
     CARBON_DIOXIDE = "carbon_dioxide"
 
 
-@router.get(path="/")
+@router.get(
+    path="/",
+    summary="Get leaderboard types",
+    description="Retrieves all available leaderboard types.",
+)
 async def get_leaderboard_types() -> list[str]:
     """Get all leaderboard types.
 
@@ -26,7 +30,14 @@ async def get_leaderboard_types() -> list[str]:
     return [leaderboard_type.value for leaderboard_type in LeaderboardTypes]
 
 
-@router.get(path="/leaderboard/{leaderboard_type}")
+@router.get(
+    path="/leaderboard/{leaderboard_type}",
+    summary="Get leaderboard",
+    description=(
+        "Retrieves the leaderboard for a specific type, "
+        "returning top users by reservation count or carbon dioxide saved."
+    ),
+)
 async def get_leaderboard(
     leaderboard_type: LeaderboardTypes, limit: int, conn: database_dependency
 ) -> list[tuple[str, int]]:

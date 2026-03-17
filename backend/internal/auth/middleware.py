@@ -1,5 +1,7 @@
 """Middlewares to include in routes for auto authorisation."""
 
+from typing import Annotated
+
 from fastapi import HTTPException, Security, status
 from fastapi.security import (
     HTTPAuthorizationCredentials,
@@ -175,3 +177,11 @@ def root_auth(credentials: HTTPBasicCredentials = Security(HTTPBasic())) -> None
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED, "Not authorised as root admin"
         )
+
+
+BasicAuthDep = Annotated[BasicAuthResponse, Security(basic_auth)]
+BearerAuthDep = Annotated[GetSessionByTokenRow, Security(bearer_auth)]
+ConsumerAuthDep = Annotated[GetSessionByTokenRow, Security(consumer_auth)]
+SellerAuthDep = Annotated[GetSessionByTokenRow, Security(seller_auth)]
+AdminAuthDep = Annotated[GetSessionByTokenRow, Security(admin_auth)]
+RootAuthDep = Annotated[None, Security(root_auth)]

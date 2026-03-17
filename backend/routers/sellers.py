@@ -65,19 +65,11 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Response,
-    Security,
-    UploadFile,
-    status,
-)
+from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
 from internal.analytics.co2_estimator import estimate_carbon_doixide_saved
 from internal.analytics.processing import AnalyticsProcesser
 from internal.auth.creation import CreateSellerForm, create_seller
-from internal.auth.middleware import seller_auth
+from internal.auth.middleware import SellerAuthDep
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
@@ -111,7 +103,6 @@ from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
-from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -142,8 +133,7 @@ async def get_sellers(conn: database_dependency) -> list[GetSellersRow]:
     description="Retrieves the profile of the authenticated seller.",
 )
 async def get_seller_me(
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    conn: database_dependency, seller: SellerAuthDep
 ) -> GetSellerRow:
     """Get authenticated seller profile.
 
@@ -231,9 +221,7 @@ class BundleForm(BaseModel):
     description="Creates a new bundle for the authenticated seller.",
 )
 async def create_bundle(
-    form: BundleForm,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    form: BundleForm, conn: database_dependency, seller: SellerAuthDep
 ) -> Bundle:
     """Create bundle.
 
@@ -392,10 +380,7 @@ async def update_bundle_allergens(
     description="Updates an existing bundle for the authenticated seller.",
 )
 async def update_bundle(
-    bundle_id: int,
-    form: BundleForm,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    bundle_id: int, form: BundleForm, conn: database_dependency, seller: SellerAuthDep
 ) -> Bundle:
     """Update bundle.
 
@@ -454,10 +439,7 @@ async def update_bundle(
     summary="Get seller bundles",
     description="Retrieves all bundles created by the authenticated seller.",
 )
-async def get_bundles(
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
-) -> list[Bundle]:
+async def get_bundles(conn: database_dependency, seller: SellerAuthDep) -> list[Bundle]:
     """Get sellers bundles.
 
     Args:
@@ -495,9 +477,7 @@ async def get_bundles(
     ),
 )
 async def get_reservations(
-    bundle_id: str,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    bundle_id: int, conn: database_dependency, seller: SellerAuthDep
 ) -> list[Reservation]:
     """Get reservations for sellers bundle.
 
@@ -513,7 +493,7 @@ async def get_reservations(
         HTTPException: if failed to get reservations
     """
     bundle = await BundleQuerier(conn).get_sellers_bundle(
-        GetSellersBundleParams(bundle_id=int(bundle_id), seller_id=seller.user_id)
+        GetSellersBundleParams(bundle_id=bundle_id, seller_id=seller.user_id)
     )
     if not bundle:
         raise HTTPException(
@@ -541,10 +521,10 @@ async def get_reservations(
     description="Confirms the collection of a reservation using a claim code.",
 )
 async def reservation_collection(
-    bundle_id: str,
+    bundle_id: int,
     claim_code: str,
     conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    seller: SellerAuthDep,
     badge_engine: Annotated[BadgeEngine, Depends(BadgeEngine)],
 ) -> Reservation:
     """Confirm reservation collection.
@@ -564,16 +544,21 @@ async def reservation_collection(
     """
     reservation_querier = ReservationsQuerier(conn)
     reservation = await reservation_querier.get_reservation_collection(
-        GetReservationCollectionParams(bundle_id=int(bundle_id), claim_code=claim_code)
+        GetReservationCollectionParams(bundle_id=bundle_id, claim_code=claim_code)
     )
     if not reservation:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Reservation not found"
         )
     bundle = await BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
-    if not bundle or bundle.seller_id != seller.user_id:
+    if not bundle:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found"
+        )
+    if bundle.seller_id != seller.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Reservation does not belong to your bundle",
         )
     claimed_reservation = await reservation_querier.collect_reservation(
         reservation_id=reservation.reservation_id
@@ -588,9 +573,14 @@ async def reservation_collection(
     return claimed_reservation
 
 
-@router.post("/me/analytics", tags=["analytics"])
+@router.post(
+    "/me/analytics",
+    tags=["analytics"],
+    summary="Refresh analytics",
+    description="Triggers a refresh of analytics graphs for the authenticated seller.",
+)
 async def refresh_analytics(
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    seller: SellerAuthDep,
     analytics_processer: Annotated[AnalyticsProcesser, Depends(AnalyticsProcesser)],
 ) -> None:
     """Refresh analytics graphs for the authenticated seller.
@@ -603,13 +593,13 @@ async def refresh_analytics(
 
 
 @router.patch(
-    path="/me/bundles/{bundle_id}/image", status_code=status.HTTP_202_ACCEPTED
+    path="/me/bundles/{bundle_id}/image",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Change bundle image",
+    description="Updates the image for a bundle owned by the authenticated seller.",
 )
 async def change_bundle_image(
-    bundle_id: int,
-    file: UploadFile,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    bundle_id: int, file: UploadFile, conn: database_dependency, seller: SellerAuthDep
 ) -> None:
     """Change bundle image.
 
@@ -632,11 +622,14 @@ async def change_bundle_image(
     await block_management.upload_bundle_image(bundle_id, file)
 
 
-@router.get(path="/me/bundles/{bundle_id}/image", status_code=status.HTTP_200_OK)
+@router.get(
+    path="/me/bundles/{bundle_id}/image",
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle image",
+    description="Retrieves the image for a bundle owned by the authenticated seller.",
+)
 async def get_bundle_image(
-    bundle_id: int,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    bundle_id: int, conn: database_dependency, seller: SellerAuthDep
 ) -> Response:
     """Get bundle image.
 
@@ -663,9 +656,15 @@ async def get_bundle_image(
     )
 
 
-@router.get("/me/analytics", status_code=status.HTTP_200_OK, tags=["analytics"])
+@router.get(
+    "/me/analytics",
+    status_code=status.HTTP_200_OK,
+    tags=["analytics"],
+    summary="Get analytics graph types",
+    description="Retrieves all available analytics graph types for the seller.",
+)
 async def get_analytics_graph_types(
-    conn: database_dependency, _: Annotated[GetSessionByTokenRow, Security(seller_auth)]
+    conn: database_dependency, _: SellerAuthDep
 ) -> list[AnalyticsGraphsType]:
     """Get all graph types.
 
@@ -681,12 +680,14 @@ async def get_analytics_graph_types(
 
 
 @router.get(
-    "/me/analytics/{graph_type_id}", status_code=status.HTTP_200_OK, tags=["analytics"]
+    "/me/analytics/{graph_type_id}",
+    status_code=status.HTTP_200_OK,
+    tags=["analytics"],
+    summary="Get analytics graph",
+    description="Retrieves an analytics graph with series and points for the seller.",
 )
 async def get_analytics_graph(
-    graph_type_id: int,
-    conn: database_dependency,
-    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+    graph_type_id: int, conn: database_dependency, seller: SellerAuthDep
 ) -> tuple[AnalyticsGraph, list[tuple[AnalyticsSeries, list[AnalyticsPoint]]]]:
     """Get analytics graph.
 
