@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hail-mary-minio-pvc
+  namespace: hail-mary
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hail-mary-minio
+  namespace: hail-mary
+  labels:
+    app: hail-mary-minio
+spec:
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+      name: api
+  selector:
+    app: hail-mary-minio
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hail-mary-minio
+  namespace: hail-mary
+  labels:
+    app: hail-mary-minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hail-mary-minio
+  template:
+    metadata:
+      labels:
+        app: hail-mary-minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args:
+            - server
+            - /data
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-minio-secret
+                  key: access-key
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-minio-secret
+                  key: secret-key
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: hail-mary-minio-pvc

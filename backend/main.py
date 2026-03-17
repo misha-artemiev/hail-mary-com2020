@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 from fastapi import APIRouter, FastAPI
+from internal.block.management import block_management
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
 from internal.settings.config import badges_config
@@ -30,6 +31,9 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logger.info("Initialising database engine")
     await database_manager.initialise()
     logger.info("Database ready")
+    logger.info("Initialising block storage")
+    block_management.initialise()
+    logger.info("Block storage ready")
 
     yield
 

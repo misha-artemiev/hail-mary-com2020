@@ -27,6 +27,15 @@ services:
     restart: always
     expose:
       - "80"
+  block-storage:
+    image: minio/minio
+    container_name: hail-mary-block
+    command: server /data
+    expose:
+      - "9000"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
   backend:
     build:
       context: ../../
@@ -40,6 +49,7 @@ services:
     depends_on:
       - database
       - database-init
+      - block-storage
   nginx:
     image: nginx:1.29-alpine
     container_name: hail-mary-proxy
