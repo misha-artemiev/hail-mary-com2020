@@ -21,5 +21,5 @@ def get_location(address: str) -> LocationModel:
         if not loc or type(loc) is not Location:
             return LocationModel(lat=None, lon=None)
         return LocationModel(lat=loc.latitude, lon=loc.longitude)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return LocationModel(lat=None, lon=None)

@@ -1,15 +1,138 @@
 """Sensitive information manimulation."""
 
 import asyncio
+import json
 from secrets import choice, token_urlsafe
 
 from bcrypt import checkpw, gensalt, hashpw
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Request, status
 from pydantic import BaseModel, SecretStr
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from internal.database.manager import database_manager
+from internal.logger.logger import logger
+from internal.queries.activity_log import AsyncQuerier as ActivityLogQuerier
+from internal.queries.activity_log import CreateActivityLogParams
+from internal.queries.models import UserRole
+from internal.queries.token import AsyncQuerier as TokenQuerier
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserPasswordParams, UpdateUserPasswordRow
+
+SENSITIVE_FIELDS = {
+    "password",
+    "pw_hash",
+    "token",
+    "claim_code",
+    "email",
+    "new_password",
+}
+
+
+class LogData(BaseModel):
+    """Data for activity log."""
+
+    user_id: int | None
+    user_role: UserRole | None
+    method: str
+    path: str
+    query_params: dict[str, str]
+    ip_address: str | None
+    body: dict[str, object] | None
+
+
+def sanitize_body(body: dict[str, object]) -> dict[str, object]:
+    """Redact sensitive fields from request body.
+
+    Returns:
+        Body dict with sensitive fields redacted.
+    """
+    result: dict[str, object] = {}
+    for key, value in body.items():
+        if key.lower() in SENSITIVE_FIELDS:
+            result[key] = "REDACTED"
+        else:
+            result[key] = value
+    return result
+
+
+async def get_user_from_token(token: str) -> tuple[int, UserRole] | tuple[None, None]:
+    """Get user_id and role from Bearer token.
+
+    Returns:
+        Tuple of (user_id, user_role) or (None, None) if not found.
+    """
+    try:
+        async for conn in database_manager.get_connection():
+            session = await TokenQuerier(conn).get_session_by_token(token=token)
+            if session:
+                return session.user_id, session.role
+    except SQLAlchemyError:
+        logger.exception("Database error fetching user from token")
+    return None, None
+
+
+async def log_to_db(log_data: LogData) -> None:
+    """Log activity to database."""
+    details: str | None = None
+    if log_data.body:
+        details = json.dumps({"body": log_data.body})
+
+    try:
+        async for conn in database_manager.get_connection():
+            await ActivityLogQuerier(conn).create_activity_log(
+                CreateActivityLogParams(
+                    user_id=log_data.user_id,
+                    user_role=log_data.user_role,
+                    action=f"{log_data.method} {log_data.path}",
+                    resource_type=None,
+                    resource_id=None,
+                    details=details,
+                    ip_address=log_data.ip_address,
+                )
+            )
+            await conn.commit()
+    except SQLAlchemyError:
+        logger.exception("Failed to log to database")
+        return
+
+
+async def log_request(request: Request) -> None:
+    """Log request details to activity_log table."""
+    body = None
+    if request.method in {"POST", "PATCH", "PUT"}:
+        try:
+            raw_body = await request.json()
+            if isinstance(raw_body, dict):
+                body = sanitize_body(raw_body)
+        except json.JSONDecodeError, KeyError:
+            pass  # No body or invalid JSON - expected for some requests
+
+    user_id: int | None = None
+    user_role: UserRole | None = None
+    auth_header = request.headers.get("authorization")
+    is_bearer = auth_header is not None and auth_header.startswith("Bearer ")
+    if is_bearer:
+        auth_values = auth_header
+        if auth_values is None:
+            logger.exception("Failed to read the auth header.")
+            return
+        token = auth_values[7:]
+        result = await get_user_from_token(token)
+        user_id, user_role = result
+
+    should_log = user_id or not is_bearer
+    if should_log:
+        log_data = LogData(
+            user_id=user_id,
+            user_role=user_role,
+            method=request.method,
+            path=str(request.url.path),
+            query_params=dict(request.query_params),
+            ip_address=request.client.host if request.client else None,
+            body=body,
+        )
+        await log_to_db(log_data)
 
 
 def hash_password(password: str) -> str:
@@ -32,7 +155,7 @@ def check_password(password: str, password_hash: str) -> bool:
 
     Args:
       password: plain text password
-      password_hash: hesh that password gets check against
+      password_hash: hash that password gets check against
 
     Returns:
       if password is corresponds to a password hash

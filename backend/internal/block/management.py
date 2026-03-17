@@ -1,5 +1,6 @@
 """Block storage management module."""
 
+import asyncio
 from io import BytesIO
 
 from fastapi import HTTPException, UploadFile, status
@@ -64,7 +65,8 @@ class BlockManagement:
             file: uploaded file
         """
         image_bytes = await process_image(file)
-        self.client.put_object(
+        await asyncio.to_thread(
+            self.client.put_object,
             bucket_name=PROFILE_IMAGES_BUCKET,
             object_name=f"{user_id}.jpeg",
             data=BytesIO(image_bytes),
@@ -80,7 +82,8 @@ class BlockManagement:
             file: uploaded file
         """
         image_bytes = await process_image(file)
-        self.client.put_object(
+        await asyncio.to_thread(
+            self.client.put_object,
             bucket_name=BUNDLE_IMAGES_BUCKET,
             object_name=f"{bundle_id}.jpeg",
             data=BytesIO(image_bytes),
