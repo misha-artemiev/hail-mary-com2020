@@ -8,6 +8,7 @@ import React, { useState } from "react";
 // Components
 import Card from "../components/Card";
 import LeaderboardItem from "../components/LeaderboardItem";
+import RoleSelect from "../components/forms/RoleSelect";
 
 // Hooks
 import useLeaderboard from "../hooks/useLeaderboard";
@@ -22,8 +23,11 @@ export default function Leaderboard() {
     // State objects: stores the leaderboard data
     const [leaderboardCategory, setLeaderboardCategory] =
         useState("reservations");
-    const { leaderboardData, loading, error } =
-        useLeaderboard(leaderboardCategory);
+    const [leaderboardLimit, setLeaderboardLimit] = useState(10);
+    const { leaderboardData, loading, error } = useLeaderboard(
+        leaderboardCategory,
+        leaderboardLimit,
+    );
 
     /**
      * Adjust the score of each item to account for duplicate (tied) scores.
@@ -56,29 +60,51 @@ export default function Leaderboard() {
                 </h1>
 
                 {/* Type selector */}
-                <div className="flex justify-center gap-4 mb-6">
-                    <button
-                        type="button"
-                        onClick={() => setLeaderboardCategory("reservations")}
-                        className={`px-4 py-2 rounded-md font-semibold transition-colors ${
-                            leaderboardCategory === "reservations"
-                                ? "bg-green-600 text-white"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
-                    >
-                        Most Reservations
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setLeaderboardCategory("carbon_dioxide")}
-                        className={`px-4 py-2 rounded-md font-semibold transition-colors ${
-                            leaderboardCategory === "carbon_dioxide"
-                                ? "bg-green-600 text-white"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                        }`}
-                    >
-                        Most CO<sub>2</sub> Saved
-                    </button>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+                    <div className="flex gap-2">
+                        {/* Sort by Most Reservations */}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setLeaderboardCategory("reservations")
+                            }
+                            className={`px-4 py-2 rounded-md font-semibold transition-colors ${
+                                leaderboardCategory === "reservations"
+                                    ? "bg-green-600 text-white"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
+                        >
+                            Most Reservations
+                        </button>
+
+                        {/* Sort by CO2 */}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setLeaderboardCategory("carbon_dioxide")
+                            }
+                            className={`px-4 py-2 rounded-md font-semibold transition-colors ${
+                                leaderboardCategory === "carbon_dioxide"
+                                    ? "bg-green-600 text-white"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
+                        >
+                            Most CO<sub>2</sub> Saved
+                        </button>
+                    </div>
+
+                    {/* Limit selection */}
+                    <RoleSelect
+                        label=""
+                        value={String(leaderboardLimit)}
+                        onChange={(e) => setLeaderboardLimit(e.target.value)}
+                        options={[
+                            { value: 10, label: "Top 10" },
+                            { value: 25, label: "Top 25" },
+                            { value: 50, label: "Top 50" },
+                            { value: 100, label: "Top 100" },
+                        ]}
+                    />
                 </div>
 
                 {/* Loading state */}
