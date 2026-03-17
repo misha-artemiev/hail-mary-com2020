@@ -141,12 +141,7 @@ export default function Leaderboard() {
                                             leaderboardData,
                                             position,
                                         )}
-                                        label={
-                                            leaderboardCategory ===
-                                            "reservations"
-                                                ? "Reservations"
-                                                : "CO2 Saved (g)"
-                                        }
+                                        category={leaderboardCategory}
                                     />
                                 ),
                             )
