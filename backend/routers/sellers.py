@@ -86,6 +86,8 @@ from internal.queries.allergens import (
     DeleteBundleAllergenParams,
 )
 from internal.queries.allergens import AsyncQuerier as AllergenQuerier
+from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
+from internal.queries.analytics import GetGraphParams
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.bundle import (
     CreateBundleParams,
@@ -97,14 +99,19 @@ from internal.queries.category import (
     DeleteBundleCategoryParams,
 )
 from internal.queries.category import AsyncQuerier as CategoryQuerier
-from internal.queries.models import Bundle, Reservation, AnalyticsGraphsType, AnalyticsGraph, AnalyticsSeries, AnalyticsPoint
+from internal.queries.models import (
+    AnalyticsGraph,
+    AnalyticsGraphsType,
+    AnalyticsPoint,
+    AnalyticsSeries,
+    Bundle,
+    Reservation,
+)
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
 from internal.queries.token import GetSessionByTokenRow
-from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
-from internal.queries.analytics import GetGraphParams
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -655,22 +662,69 @@ async def get_bundle_image(
         block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
     )
 
-@router.get("/me/analytics", status_code=status.HTTP_200_OK, tags=["analytics"])
-async def get_analytics_graph_types(conn: database_dependency, _: Annotated[GetSessionByTokenRow, Security(seller_auth)]) -> list[AnalyticsGraphsType]:
-    return [graph_type async for graph_type in AnalyticsQuerier(conn).get_graphs_types()]
 
-@router.get("/me/analytics/{graph_type_id}", status_code=status.HTTP_200_OK, tags=["analytics"])
-async def get_analytics_graph(graph_type_id: int, conn: database_dependency, seller: Annotated[GetSessionByTokenRow, Security(seller_auth)]) -> tuple[AnalyticsGraph, list[tuple[AnalyticsSeries, list[AnalyticsPoint]]]]:
+@router.get("/me/analytics", status_code=status.HTTP_200_OK, tags=["analytics"])
+async def get_analytics_graph_types(
+    conn: database_dependency, _: Annotated[GetSessionByTokenRow, Security(seller_auth)]
+) -> list[AnalyticsGraphsType]:
+    """Get all graph types.
+
+    Args:
+        conn: database connection
+
+    Returns:
+        list of all graph types
+    """
+    return [
+        graph_type async for graph_type in AnalyticsQuerier(conn).get_graphs_types()
+    ]
+
+
+@router.get(
+    "/me/analytics/{graph_type_id}", status_code=status.HTTP_200_OK, tags=["analytics"]
+)
+async def get_analytics_graph(
+    graph_type_id: int,
+    conn: database_dependency,
+    seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
+) -> tuple[AnalyticsGraph, list[tuple[AnalyticsSeries, list[AnalyticsPoint]]]]:
+    """Get analytics graph.
+
+    Args:
+        graph_type_id: graph type id
+        conn: database connection
+        seller: seller session
+
+    Returns:
+        graph, series and points
+
+    Raises:
+        HTTPException: if failed to get graph
+    """
     analytics_querier = AnalyticsQuerier(conn)
     if (await analytics_querier.get_graph_type(graph_type_id=graph_type_id)) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "failed to find graph type")
-    if (graph := await analytics_querier.get_graph(GetGraphParams(seller_id=seller.user_id, graph_type=graph_type_id))) is None:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get graph")
-    series = [series async for series in analytics_querier.get_graph_series(graph_id=graph.graph_id)]
+    if (
+        graph := await analytics_querier.get_graph(
+            GetGraphParams(seller_id=seller.user_id, graph_type=graph_type_id)
+        )
+    ) is None:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get graph"
+        )
+    series = [
+        series
+        async for series in analytics_querier.get_graph_series(graph_id=graph.graph_id)
+    ]
     if len(series) == 0:
         return (graph, [])
     series_and_points: list[tuple[AnalyticsSeries, list[AnalyticsPoint]]] = []
     for single_series in series:
-        single_series_points: list[AnalyticsPoint] = [point async for point in analytics_querier.get_graph_points(series_id=single_series.series_id)]
+        single_series_points: list[AnalyticsPoint] = [
+            point
+            async for point in analytics_querier.get_graph_points(
+                series_id=single_series.series_id
+            )
+        ]
         series_and_points.append((single_series, single_series_points))
     return (graph, series_and_points)
