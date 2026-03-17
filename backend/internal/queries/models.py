@@ -5,7 +5,7 @@ import datetime
 import decimal
 import enum
 import pydantic
-from typing import Optional
+from typing import Any, Optional
 
 
 class AdminIssueType(str, enum.Enum):
@@ -79,6 +79,18 @@ class WeatherFlag(str, enum.Enum):
     RAINY = "rainy"
     SNOWY = "snowy"
     WINDY = "windy"
+
+
+class ActivityLog(pydantic.BaseModel):
+    activity_id: int
+    user_id: Optional[int]
+    user_role: Optional[UserRole]
+    action: str
+    resource_type: Optional[str]
+    resource_id: Optional[int]
+    details: Optional[Any]
+    ip_address: Optional[str]
+    created_at: datetime.datetime
 
 
 class Admin(pydantic.BaseModel):

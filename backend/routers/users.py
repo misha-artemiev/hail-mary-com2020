@@ -1,16 +1,13 @@
 """Endpoints for users."""
 
-from typing import Annotated
-
-from fastapi import APIRouter, HTTPException, Response, Security, UploadFile, status
-from internal.auth.middleware import bearer_auth, consumer_auth
+from fastapi import APIRouter, HTTPException, Response, UploadFile, status
+from internal.auth.middleware import BearerAuthDep, ConsumerAuthDep
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.queries.inbox import AsyncQuerier as InboxQuerier
 from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Inbox, UserRole
-from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserEmailParams
 from pydantic import BaseModel, EmailStr
@@ -33,9 +30,7 @@ class SendMessageForm(BaseModel):
     description="Updates the password for the authenticated user.",
 )
 async def update_password(
-    form: UpdatePasswordForm,
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
+    form: UpdatePasswordForm, conn: database_dependency, session: BearerAuthDep
 ) -> None:
     """Update users password.
 
@@ -44,7 +39,7 @@ async def update_password(
       conn: database connection
       session: users session
     """
-    _ = await update_pw(session.email, form, conn)
+    await update_pw(session.email, form, conn)
 
 
 @router.patch(
@@ -54,9 +49,7 @@ async def update_password(
     description="Updates the email address for the authenticated user.",
 )
 async def update_email(
-    email: EmailStr,
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
+    email: EmailStr, conn: database_dependency, session: BearerAuthDep
 ) -> None:
     """Update users email.
 
@@ -85,10 +78,7 @@ async def update_email(
     description="Gets all inbox messages for the authenticated user.",
     response_model=list[Inbox],
 )
-async def get_inbox(
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> list[Inbox]:
+async def get_inbox(conn: database_dependency, session: BearerAuthDep) -> list[Inbox]:
     """Get inbox for user.
 
     Args:
@@ -111,9 +101,7 @@ async def get_inbox(
     response_model=Inbox,
 )
 async def send_message(
-    form: SendMessageForm,
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
+    form: SendMessageForm, conn: database_dependency, session: BearerAuthDep
 ) -> Inbox:
     """Send a message.
 
@@ -144,7 +132,11 @@ async def send_message(
     return message
 
 
-@router.get(path="/id/{username}")
+@router.get(
+    path="/id/{username}",
+    summary="Get user ID by username",
+    description="Retrieves a user ID and role by their username.",
+)
 async def get_user_id(username: str, conn: database_dependency) -> tuple[int, UserRole]:
     """Get user id from username.
 
@@ -163,10 +155,13 @@ async def get_user_id(username: str, conn: database_dependency) -> tuple[int, Us
     return (user.user_id, user.role)
 
 
-@router.patch(path="/me/profile", status_code=status.HTTP_202_ACCEPTED)
-async def change_profile_image(
-    file: UploadFile, consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)]
-) -> None:
+@router.patch(
+    path="/me/profile",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Change profile image",
+    description="Updates the profile image for the authenticated user.",
+)
+async def change_profile_image(file: UploadFile, consumer: ConsumerAuthDep) -> None:
     """Change user profile image.
 
     Args:
@@ -176,7 +171,12 @@ async def change_profile_image(
     await block_management.upload_profile_image(consumer.user_id, file)
 
 
-@router.get(path="/{user_id}/profile", status_code=status.HTTP_200_OK)
+@router.get(
+    path="/{user_id}/profile",
+    status_code=status.HTTP_200_OK,
+    summary="Get user profile image",
+    description="Retrieves the profile image for a specific user by their ID.",
+)
 async def get_profile_image(user_id: int) -> Response:
     """Get user profile image.
 
@@ -191,10 +191,13 @@ async def get_profile_image(user_id: int) -> Response:
     )
 
 
-@router.get(path="/me/profile", status_code=status.HTTP_200_OK)
-async def get_profile_image_me(
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> Response:
+@router.get(
+    path="/me/profile",
+    status_code=status.HTTP_200_OK,
+    summary="Get own profile image",
+    description="Retrieves the profile image for the authenticated user.",
+)
+async def get_profile_image_me(consumer: ConsumerAuthDep) -> Response:
     """Get user profile image.
 
     Args:
