@@ -24,3 +24,24 @@ _COLD_RATIONALE: str = (
     "Forecast is a conservative cold-start estimate."
 )
 
+class ForecastQuery(BaseModel):
+    """The conditions of an upcoming bundle to forecast demand for."""
+
+    seller_id: int
+    category_id: list[int]
+    day_of_week: DayOfWeek
+    window_start_hour: datetime.time
+    window_end_hour: datetime.time
+    is_holiday: bool
+    temperature: Decimal
+    weather_flag: WeatherFlag
+
+
+class ForecastResult(BaseModel):
+    """Forecast prediction ready to be written to ``forecast_output``."""
+
+    bundle_id: int
+    predicted_reservations: int
+    predicted_no_show_prob: Decimal
+    confidence: Decimal
+    rationale: str | None
