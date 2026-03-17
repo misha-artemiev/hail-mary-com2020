@@ -27,7 +27,7 @@ export const CREATE_BUNDLE_FORM_FIELDS = {
             label: "Weight (kg)",
             type: "number",
             min: "0",
-            step: "0.1",
+            step: "0.001",
             required: true,
             placeholder: "e.g., 1.5",
         },

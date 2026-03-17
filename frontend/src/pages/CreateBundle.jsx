@@ -153,7 +153,6 @@ export default function CreateBundle() {
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            required
                             rows={3}
                             placeholder="Describe what's in this bundle..."
                             className="w-full rounded-md px-3 py-2 border
