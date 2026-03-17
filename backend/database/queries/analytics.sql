@@ -24,12 +24,21 @@ FROM analytics_series
 WHERE graph_id=$1
 ORDER BY sort_index;
 
--- name: DeleteGraphSeries :many
+-- name: DeleteGraphSeries :exec
 DELETE FROM analytics_series
-WHERE graph_id=$1
-RETURNING *;
+WHERE graph_id=$1;
 
 -- name: CreateGraphSeries :one
 INSERT INTO analytics_series (graph_id, series_name, sort_index)
 VALUES ($1, $2, $3)
 RETURNING *;
+
+-- name: CreateGraphPoint :one
+INSERT INTO analytics_points (series_id, sort_index, x, y)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: getGraphPoints :many
+SELECT *
+FROM analytics_points
+WHERE series_id=$1;

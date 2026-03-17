@@ -1,12 +1,20 @@
 """Graph refreshing background processing."""
 
-from fastapi import BackgroundTasks, HTTPException, status
+from decimal import Decimal
+from fastapi import BackgroundTasks
+from sqlalchemy.ext.asyncio import AsyncConnection
 from internal.analytics.graphs import BundleRow, ReservationRow, SellerAnalytics
 from internal.database.manager import database_manager
-from internal.queries.analytics import AsyncQuerier as AnalyticsQuerier
+from internal.queries.analytics import (
+    AsyncQuerier as AnalyticsQuerier,
+    CreateGraphPointParams,
+    CreateGraphSeriesParams,
+)
 from internal.queries.analytics import CreateGraphParams, GetGraphParams
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
+from internal.queries.category import AsyncQuerier as CategoryQuerier
+from internal.logger.logger import logger
 
 
 class AnalyticsProcesser:
@@ -27,14 +35,166 @@ class AnalyticsProcesser:
         self.background_tasks.add_task(self.process_analytics, seller_id)
 
     @staticmethod
+    async def add_sales_vs_posted_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        bundle_rows: list[BundleRow],
+        reservation_rows: list[ReservationRow],
+    ) -> None:
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=1)
+            )
+        ) is None:
+            logger.exception("failed to get seles_vs_posted graph")
+            return
+        if (
+            sales_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="sales", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create sales series for sales_vs_posted")
+            return
+        if (
+            posted_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="posted", sort_index=1
+                )
+            )
+        ) is None:
+            logger.exception("failed to create posted series for sales_vs_posted")
+            return
+        for i, point in enumerate(
+            SellerAnalytics.graph_weekly_sales_vs_posted(bundle_rows, reservation_rows)
+        ):
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=sales_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.sold_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception("failed to create point for sales series for sales_vs_posted")
+                return
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=posted_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.posted_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception("failed to create point for sales series for sales_vs_posted")
+                return
+
+    @staticmethod
+    async def add_sell_through_rate_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        bundle_rows: list[BundleRow],
+        reservation_rows: list[ReservationRow],
+    ) -> None:
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=2)
+            )
+        ) is None:
+            logger.exception("failed to get sell_through_rate graph")
+            return
+        if (
+            sell_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="sell_rate", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create sell series for sell_through_rate graph")
+            return
+        sell_through_rate = SellerAnalytics.graph_sell_through_rate(bundle_rows, reservation_rows).sell_through_percentage
+        if (await analytics_querier.create_graph_point(CreateGraphPointParams(series_id=sell_series.series_id, sort_index=0, x="sold", y=Decimal(sell_through_rate)))) is None:
+            logger.exception("failed to create sold point for sell_through_rate graph")
+            return
+        if (await analytics_querier.create_graph_point(CreateGraphPointParams(series_id=sell_series.series_id, sort_index=1, x="unsold", y=Decimal(100-sell_through_rate)))) is None:
+            logger.exception("failed to create unsold point for sell_through_rate graph")
+            return
+
+    @staticmethod
+    async def add_cateogry_distribution_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        reservation_rows: list[ReservationRow],
+        conn: AsyncConnection
+    ) -> None:
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=3)
+            )
+        ) is None:
+            logger.exception("failed to get category_distribution graph")
+            return
+        if (
+            categories_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="categories", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create categories series for category_distribution graph")
+            return
+        category_distribution = SellerAnalytics.graph_category_distribution(reservation_rows)
+        category_querier = CategoryQuerier(conn)
+        for i, category in enumerate(category_distribution):
+            if (category_row := await category_querier.get_category(category_id=category.category_id)) is None:
+                logger.exception("failed to get category")
+                return
+            if (await analytics_querier.create_graph_point(CreateGraphPointParams(series_id=categories_series.series_id, sort_index=i, x=category_row.category_name, y=Decimal(category.collected_qty)))) is None:
+                logger.exception("failed to create category point for category_distribution graph")
+                return
+
+    @staticmethod
+    async def add_time_window_distribution_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        reservation_rows: list[ReservationRow],
+    ) -> None:
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=4)
+            )
+        ) is None:
+            logger.exception("failed to get time_window_distribution graph")
+            return
+        if (
+            time_windows_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="time_windows", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create time_windows series for time_windows_distribution graph")
+            return
+        time_windows_distribution = SellerAnalytics.graph_time_window_distribution(reservation_rows)
+        for i, time_window in enumerate(time_windows_distribution):
+            if (await analytics_querier.create_graph_point(CreateGraphPointParams(series_id=time_windows_series.series_id, sort_index=i, x=time_window.time_window.strftime("%H:%M"), y=Decimal(time_window.collected_qty)))) is None:
+                logger.exception("failed to create time_window point for time_window_distribution graph")
+                return
+
+    @staticmethod
     async def process_analytics(seller_id: int) -> None:
         """Background graph processing.
 
         Args:
             seller_id: seller_id
 
-        Raises:
-            ValueError: failed to process graphs
         """
         async for conn in database_manager.get_connection():
             analytics_querier = AnalyticsQuerier(conn)
@@ -47,8 +207,8 @@ class AnalyticsProcesser:
                         )
                     )
                 ) is not None:
-                    analytics_querier.delete_graph_series(graph_id=graph.graph_id)
-                if (
+                    await analytics_querier.delete_graph_series(graph_id=graph.graph_id)
+                elif (
                     await analytics_querier.create_graph(
                         CreateGraphParams(
                             seller_id=seller_id, graph_type=graph_type.graph_type_id
@@ -56,25 +216,22 @@ class AnalyticsProcesser:
                     )
                     is None
                 ):
-                    raise ValueError("Failed to create analytics graph")
+                    logger.exception("Failed to create analytics graph")
+                    return
             if (
                 seller_bundles := BundleQuerier(conn).get_sellers_bundles(
                     seller_id=seller_id
                 )
             ) is None:
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "failed to get seller bundles",
-                )
+                logger.exception("failed to get seller bundles",)
+                return
             if (
                 seller_reservations := ReservationQuerier(
                     conn
                 ).get_seller_reservations_full(seller_id=seller_id)
             ) is None:
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    "failed to get seller reservations",
-                )
+                logger.exception("failed to get seller reservations")
+                return
             bundle_rows = [
                 BundleRow(
                     bundle_date=bundle.window_start.date(), total_qty=bundle.total_qty
@@ -85,20 +242,20 @@ class AnalyticsProcesser:
                 ReservationRow(
                     bundle_date=reservation.window_start.date(),
                     window_start=reservation.window_start.time(),
-                    category_id=...,
+                    category_ids=reservation.category_ids,
                     collected_at=reservation.collected_at,
                 )
                 async for reservation in seller_reservations
             ]
-            # weekly sales vs posted (multi line)
-            for points in SellerAnalytics.graph_weekly_sales_vs_posted():
-                pass
-            # sell through rate (pie)
-            for points in SellerAnalytics.graph_sell_through_rate():
-                pass
-            # category distribution (pie/bar)
-            for points in SellerAnalytics.graph_category_distribution():
-                pass
-            # time window distribution (pie/bar)
-            for points in SellerAnalytics.graph_time_window_distribution():
-                pass
+            await AnalyticsProcesser.add_sales_vs_posted_graph(
+                analytics_querier, seller_id, bundle_rows, reservation_rows
+            )
+            await AnalyticsProcesser.add_sell_through_rate_graph(
+                analytics_querier, seller_id, bundle_rows, reservation_rows
+            )
+            await AnalyticsProcesser.add_cateogry_distribution_graph(
+                analytics_querier, seller_id, reservation_rows, conn
+            )
+            await AnalyticsProcesser.add_time_window_distribution_graph(
+                analytics_querier, seller_id, reservation_rows
+            )

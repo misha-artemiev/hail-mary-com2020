@@ -578,6 +578,7 @@ async def reservation_collection(
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation
 
+
 @router.post("/me/analytics", tags=["analytics"])
 async def refresh_analytics(
     seller: Annotated[GetSessionByTokenRow, Security(seller_auth)],
@@ -590,6 +591,7 @@ async def refresh_analytics(
         analytics_processer: analytics processing engine
     """
     analytics_processer.run(seller.user_id)
+
 
 @router.patch(
     path="/me/bundles/{bundle_id}/image", status_code=status.HTTP_202_ACCEPTED

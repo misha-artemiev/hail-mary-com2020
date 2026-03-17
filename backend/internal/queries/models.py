@@ -119,10 +119,9 @@ class AnalyticsGraphsType(pydantic.BaseModel):
 
 class AnalyticsPoint(pydantic.BaseModel):
     series_id: int
-    sort_order: int
-    x_coordinate: str
-    y_coordinate: decimal.Decimal
     sort_index: int
+    x: str
+    y: decimal.Decimal
 
 
 class AnalyticsSeries(pydantic.BaseModel):

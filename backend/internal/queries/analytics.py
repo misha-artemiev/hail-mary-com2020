@@ -2,6 +2,7 @@
 # versions:
 #   sqlc v1.30.0
 # source: analytics.sql
+import decimal
 import pydantic
 from typing import AsyncIterator, Optional
 
@@ -23,6 +24,20 @@ class CreateGraphParams(pydantic.BaseModel):
     graph_type: int
 
 
+CREATE_GRAPH_POINT = """-- name: create_graph_point \\:one
+INSERT INTO analytics_points (series_id, sort_index, x, y)
+VALUES (:p1, :p2, :p3, :p4)
+RETURNING series_id, sort_index, x, y
+"""
+
+
+class CreateGraphPointParams(pydantic.BaseModel):
+    series_id: int
+    sort_index: int
+    x: str
+    y: decimal.Decimal
+
+
 CREATE_GRAPH_SERIES = """-- name: create_graph_series \\:one
 INSERT INTO analytics_series (graph_id, series_name, sort_index)
 VALUES (:p1, :p2, :p3)
@@ -36,10 +51,9 @@ class CreateGraphSeriesParams(pydantic.BaseModel):
     sort_index: int
 
 
-DELETE_GRAPH_SERIES = """-- name: delete_graph_series \\:many
+DELETE_GRAPH_SERIES = """-- name: delete_graph_series \\:exec
 DELETE FROM analytics_series
 WHERE graph_id=:p1
-RETURNING series_id, graph_id, series_name, sort_index
 """
 
 
@@ -54,6 +68,13 @@ LIMIT 1
 class GetGraphParams(pydantic.BaseModel):
     seller_id: int
     graph_type: int
+
+
+GET_GRAPH_POINTS = """-- name: get_graph_points \\:many
+SELECT series_id, sort_index, x, y
+FROM analytics_points
+WHERE series_id=:p1
+"""
 
 
 GET_GRAPH_SERIES = """-- name: get_graph_series \\:many
@@ -92,6 +113,22 @@ class AsyncQuerier:
             created_at=row[3],
         )
 
+    async def create_graph_point(self, arg: CreateGraphPointParams) -> Optional[models.AnalyticsPoint]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_GRAPH_POINT), {
+            "p1": arg.series_id,
+            "p2": arg.sort_index,
+            "p3": arg.x,
+            "p4": arg.y,
+        })).first()
+        if row is None:
+            return None
+        return models.AnalyticsPoint(
+            series_id=row[0],
+            sort_index=row[1],
+            x=row[2],
+            y=row[3],
+        )
+
     async def create_graph_series(self, arg: CreateGraphSeriesParams) -> Optional[models.AnalyticsSeries]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_GRAPH_SERIES), {"p1": arg.graph_id, "p2": arg.series_name, "p3": arg.sort_index})).first()
         if row is None:
@@ -103,15 +140,8 @@ class AsyncQuerier:
             sort_index=row[3],
         )
 
-    async def delete_graph_series(self, *, graph_id: int) -> AsyncIterator[models.AnalyticsSeries]:
-        result = await self._conn.stream(sqlalchemy.text(DELETE_GRAPH_SERIES), {"p1": graph_id})
-        async for row in result:
-            yield models.AnalyticsSeries(
-                series_id=row[0],
-                graph_id=row[1],
-                series_name=row[2],
-                sort_index=row[3],
-            )
+    async def delete_graph_series(self, *, graph_id: int) -> None:
+        await self._conn.execute(sqlalchemy.text(DELETE_GRAPH_SERIES), {"p1": graph_id})
 
     async def get_graph(self, arg: GetGraphParams) -> Optional[models.AnalyticsGraph]:
         row = (await self._conn.execute(sqlalchemy.text(GET_GRAPH), {"p1": arg.seller_id, "p2": arg.graph_type})).first()
@@ -123,6 +153,16 @@ class AsyncQuerier:
             graph_type=row[2],
             created_at=row[3],
         )
+
+    async def get_graph_points(self, *, series_id: int) -> AsyncIterator[models.AnalyticsPoint]:
+        result = await self._conn.stream(sqlalchemy.text(GET_GRAPH_POINTS), {"p1": series_id})
+        async for row in result:
+            yield models.AnalyticsPoint(
+                series_id=row[0],
+                sort_index=row[1],
+                x=row[2],
+                y=row[3],
+            )
 
     async def get_graph_series(self, *, graph_id: int) -> AsyncIterator[models.AnalyticsSeries]:
         result = await self._conn.stream(sqlalchemy.text(GET_GRAPH_SERIES), {"p1": graph_id})
