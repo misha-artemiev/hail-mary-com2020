@@ -7,6 +7,7 @@ from decimal import Decimal
 from statistics import mean
 from typing import Protocol
 
+import lightgbm
 import numpy as np
 from lightgbm import LGBMRegressor
 from pydantic import BaseModel
@@ -89,7 +90,7 @@ def _build_rationale(
     n: int,
     avg_reservations: float,
     avg_no_show_rate: float,
-    method: str,
+    method: (str | None),
     query: ForecastQuery,
     n_categories: int = 1,
 ) -> str:
@@ -101,6 +102,10 @@ def _build_rationale(
     average of 3 similar slots: avg 12.3 reservations, 20.5% no-show rate."
     
     """
+    #adding the method used in case its not passed through
+    if method is None:
+        method = "lightGBM regression model"
+        
     holiday_note = " (public holiday)" if query.is_holiday else ""
     window = (
         f"{query.window_start_hour.strftime('%H:%M')}"
