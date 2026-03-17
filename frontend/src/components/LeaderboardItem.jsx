@@ -13,6 +13,7 @@ import React from "react";
  * @param {Number} props.count - The 'score' of the user in the given category
  * @param {Number} props.position - The place in the leaderboard of this user
  * @param {string} props.category - The category to score by
+ * @param {Function} props.onClick - Click handler to navigate to user profile
  *
  * @returns {JSX.Element} a single line of the leaderboard
  */
@@ -21,6 +22,7 @@ export default function LeaderboardItem({
     count,
     position,
     category,
+    onClick,
 }) {
     /**
      * Converts the top three ranks to emojis (gold/silver/bronze medals)
@@ -53,7 +55,15 @@ export default function LeaderboardItem({
     };
 
     return (
-        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+        <div
+            onClick={onClick}
+            role="button"
+            tabIndex={0}
+            className="flex items-center justify-between
+                       px-4 py-3 rounded-lg
+                       bg-gray-50 border border-gray-100 cursor-pointer
+                       hover:bg-green-50 hover:border-green-200 transition-colors"
+        >
             <div className="flex items-center gap-3">
                 <span className="text-lg w-8 text-center">
                     {getRankEmoji()}

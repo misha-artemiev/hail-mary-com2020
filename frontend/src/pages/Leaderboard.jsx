@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
@@ -20,6 +21,8 @@ import useLeaderboard from "../hooks/useLeaderboard";
  * @returns {JSX.Element} the leaderboard page
  */
 export default function Leaderboard() {
+    const navigate = useNavigate();
+
     // State objects: stores the leaderboard data
     const [leaderboardCategory, setLeaderboardCategory] =
         useState("reservations");
@@ -142,6 +145,7 @@ export default function Leaderboard() {
                                             position,
                                         )}
                                         category={leaderboardCategory}
+                                        onClick={() => navigate(`/user/${username}`)}
                                     />
                                 ),
                             )
