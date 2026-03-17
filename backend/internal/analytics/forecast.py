@@ -1,3 +1,5 @@
+"""Forecasting logic for demand prediction of upcoming bundles."""
+
 from __future__ import annotations
 
 import datetime
@@ -45,3 +47,30 @@ class ForecastResult(BaseModel):
     predicted_no_show_prob: Decimal
     confidence: Decimal
     rationale: str | None
+    
+class _HasFeatures(Protocol):
+    """Structural protocol shared by ForecastInput and ForecastQuery."""
+
+    day_of_week: DayOfWeek
+    window_start_hour: datetime.time
+    window_end_hour: datetime.time
+    is_holiday: bool
+    temperature: Decimal
+    weather_flag: WeatherFlag
+    
+def _encode(obj: _HasFeatures) -> list[float]:
+    """
+    Encode any object matching ``_HasFeatures`` into a numeric vector of features
+    for the forecasting model.
+        
+    Feature order: [day_of_week, window_start, window_end,
+                    is_holiday, temperature, weather_flag]
+    """
+    return [
+        float(_DAY_INDEX[obj.day_of_week]),
+        obj.window_start_hour.hour + obj.window_start_hour.minute / 60.0, #e.g 9:30 -> 9.5
+        obj.window_end_hour.hour + obj.window_end_hour.minute / 60.0,
+        float(obj.is_holiday),
+        float(obj.temperature),
+        float(_WEATHER_INDEX[obj.weather_flag]),
+    ]
