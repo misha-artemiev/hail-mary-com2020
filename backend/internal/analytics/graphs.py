@@ -77,7 +77,7 @@ class SellerAnalytics:
     def graph_weekly_sales_vs_posted(
         bundles: list[BundleRow], reservations: list[ReservationRow]
     ) -> list[SalesGraphPoint]:
-        """Return coordinates for the provided days (Line Graph)."""
+        """Return coordinates for the provided days (Multiline Graph)."""
         # Group total posted slots by day from the bundles list.
         posted_by_day: dict[date, float] = {}
         for bundle in bundles:
