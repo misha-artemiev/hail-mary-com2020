@@ -74,3 +74,13 @@ def _encode(obj: _HasFeatures) -> list[float]:
         float(obj.temperature),
         float(_WEATHER_INDEX[obj.weather_flag]),
     ]
+    
+def _no_show_rate(row: ForecastInput) -> float | None:
+    """Return the observed no-show rate, or ``None`` when reservations == 0."""
+    if row.observed_reservations == 0:
+        return None
+    return row.observed_no_shows / row.observed_reservations
+
+def _confidence_from_n(n: int) -> float:
+    """Map sample count to confidence in [0.05, 0.90] via ``n / (n + 20)``."""
+    return min(0.90, n / (n + 20.0))
