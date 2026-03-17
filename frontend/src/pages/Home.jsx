@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import useAllergens from "../hooks/useAllergens";
 import useCategories from "../hooks/useCategories";
 import useSearchBundles from "../hooks/useSearchBundles";
+import useSellers from "../hooks/useSellers";
 
 // Components
 import Card from "../components/Card";
@@ -42,24 +43,7 @@ export default function Home() {
     const { listings, loading, search } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
-
-    const restaurantOptions = React.useMemo(() => {
-        const uniqueSellers = new Map();
-        listings.forEach((listing) => {
-            if (
-                listing.sellers_name &&
-                !uniqueSellers.has(listing.sellers_name)
-            ) {
-                uniqueSellers.set(listing.sellers_name, {
-                    value: listing.sellers_name,
-                    label: listing.sellers_name,
-                });
-            }
-        });
-        return Array.from(uniqueSellers.values()).sort((a, b) =>
-            a.label.localeCompare(b.label),
-        );
-    }, [listings]);
+    const { sellerOptions: restaurantOptions } = useSellers();
 
     /**
      * Handles changes to the filters.
