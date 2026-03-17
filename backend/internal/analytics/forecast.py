@@ -84,3 +84,37 @@ def _no_show_rate(row: ForecastInput) -> float | None:
 def _confidence_from_n(n: int) -> float:
     """Map sample count to confidence in [0.05, 0.90] via ``n / (n + 20)``."""
     return min(0.90, n / (n + 20.0))
+
+def _build_rationale(
+    n: int,
+    avg_reservations: float,
+    avg_no_show_rate: float,
+    method: str,
+    query: ForecastQuery,
+    n_categories: int = 1,
+) -> str:
+    """
+    Builds a plain-English explanation of how the forecast was produced.
+    
+    outputs something like: 
+    "Based on 15 past slots (Monday, 09:00-10:00, sunny, 23.5°C), using 
+    average of 3 similar slots: avg 12.3 reservations, 20.5% no-show rate."
+    
+    """
+    holiday_note = " (public holiday)" if query.is_holiday else ""
+    window = (
+        f"{query.window_start_hour.strftime('%H:%M')}"
+        f"–{query.window_end_hour.strftime('%H:%M')}"
+    )
+    slot_word = "slot" if n == 1 else "slots"
+    category_note = (
+        f", averaged across {n_categories} categories" if n_categories > 1 else ""
+    )
+    return (
+        f"Based on {n} past {slot_word} "
+        f"({query.day_of_week.value}{holiday_note}, {window}, "
+        f"{query.weather_flag.value}, {float(query.temperature):.1f}°C) "
+        f"using {method}{category_note}: "
+        f"avg {avg_reservations:.1f} reservations, "
+        f"{avg_no_show_rate * 100:.1f}% no-show rate."
+    )
