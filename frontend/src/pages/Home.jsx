@@ -14,6 +14,7 @@ import useSearchBundles from "../hooks/useSearchBundles";
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
+import RestaurantSelect from "../components/forms/SearchableDropdown";
 import Button from "../components/forms/Button";
 import Category from "../components/Category";
 import DropdownSelect from "../components/forms/DropdownSelect";
@@ -41,6 +42,24 @@ export default function Home() {
     const { listings, loading, search } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
+
+    const restaurantOptions = React.useMemo(() => {
+        const uniqueSellers = new Map();
+        listings.forEach((listing) => {
+            if (
+                listing.sellers_name &&
+                !uniqueSellers.has(listing.sellers_name)
+            ) {
+                uniqueSellers.set(listing.sellers_name, {
+                    value: listing.sellers_name,
+                    label: listing.sellers_name,
+                });
+            }
+        });
+        return Array.from(uniqueSellers.values()).sort((a, b) =>
+            a.label.localeCompare(b.label),
+        );
+    }, [listings]);
 
     /**
      * Handles changes to the filters.
@@ -193,20 +212,18 @@ export default function Home() {
 
                 {/* Collapsible filter content */}
                 <div
-                    className={`overflow-hidden transition-all duration-250 ${
-                        filtersOpen
-                            ? "max-h-125 opacity-100 mt-4"
-                            : "max-h-0 opacity-0"
+                    className={`overflow-visible transition-all duration-250 ${
+                        filtersOpen ? "opacity-100 mt-4" : "max-h-0 opacity-0"
                     }`}
                 >
                     {/* Restaurant filter */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormInput
-                            placeholder="Restaurant Name"
-                            name="restaurant"
-                            type="text"
+                        <RestaurantSelect
                             value={filters.restaurant}
                             onChange={handleChange}
+                            options={restaurantOptions}
+                            placeholder="Search restaurants..."
+                            name="restaurant"
                         />
 
                         {/* Max price filter */}
