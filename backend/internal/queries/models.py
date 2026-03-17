@@ -113,23 +113,22 @@ class AnalyticsGraphsType(pydantic.BaseModel):
     graph_type_id: int
     chart_type: ChartType
     graph_summary: str
-    x_axis_label: str
-    y_axis_label: str
+    x_axis_label: Optional[str]
+    y_axis_label: Optional[str]
 
 
 class AnalyticsPoint(pydantic.BaseModel):
     series_id: int
-    sort_order: int
-    x_coordinate: str
-    y_coordinate: decimal.Decimal
     sort_index: int
+    x: str
+    y: decimal.Decimal
 
 
 class AnalyticsSeries(pydantic.BaseModel):
     series_id: int
     graph_id: int
-    sort_index: int
     series_name: str
+    sort_index: int
 
 
 class Badge(pydantic.BaseModel):
