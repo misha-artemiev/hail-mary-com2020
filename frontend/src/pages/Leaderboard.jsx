@@ -25,6 +25,29 @@ export default function Leaderboard() {
     const { leaderboardData, loading, error } =
         useLeaderboard(leaderboardCategory);
 
+    /**
+     * Adjust the score of each item to account for duplicate (tied) scores.
+     *
+     * *e.g.* scores of {14, 14, 12, 10} would have positions {1, 1, 3, 4}
+     *
+     * @param {Array<[]>} data - The data in the whole leaderboard
+     * @param {Number} currentIndex - The index to change
+     *
+     * @returns {Number} the actual adjusted position
+     */
+    const getRank = (data, currentIndex) => {
+        const currentScore = data[currentIndex][1];
+        let higherCount = 0;
+
+        // Increase for each other score higher than this
+        for (let i = 0; i < currentIndex; i++) {
+            if (data[i][1] > currentScore) {
+                higherCount++;
+            }
+        }
+        return higherCount;
+    };
+
     return (
         <div className="max-w-2xl mx-auto p-4 md:p-6">
             <Card>
@@ -88,7 +111,10 @@ export default function Leaderboard() {
                                         key={username}
                                         username={username}
                                         count={count}
-                                        position={position}
+                                        position={getRank(
+                                            leaderboardData,
+                                            position,
+                                        )}
                                         label={
                                             leaderboardCategory ===
                                             "reservations"
