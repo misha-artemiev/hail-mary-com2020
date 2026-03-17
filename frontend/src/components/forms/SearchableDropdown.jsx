@@ -39,15 +39,19 @@ export default function SearchableDropdown({
     );
 
     const handleInputChange = (e) => {
-        setInputValue(e.target.value);
+        const newValue = e.target.value;
+        setInputValue(newValue);
         setIsOpen(true);
+        if (onChange) {
+            onChange({ target: { name, value: newValue } });
+        }
     };
 
-    const handleSelect = (selectedValue, selectedLabel) => {
+    const handleSelect = (selectedLabel) => {
         setInputValue(selectedLabel);
         setIsOpen(false);
         onChange({
-            target: { name, value: selectedValue },
+            target: { name, value: selectedLabel },
         });
     };
 
@@ -91,9 +95,7 @@ export default function SearchableDropdown({
                         {filteredOptions.map((opt) => (
                             <div
                                 key={opt.value}
-                                onClick={() =>
-                                    handleSelect(opt.value, opt.label)
-                                }
+                                onClick={() => handleSelect(opt.label)}
                                 className="px-4 py-2.5 cursor-pointer text-sm hover:bg-green-100 border-b border-gray-100 last:border-b-0"
                             >
                                 {opt.label}
