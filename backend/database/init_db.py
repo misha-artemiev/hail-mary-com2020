@@ -10,7 +10,7 @@ from internal.settings.env import database_settings
 from psycopg import Connection, Error, connect
 from uvicorn.config import LOGGING_CONFIG
 
-from database.db_constants import ALLERGENS, BADGES, CATEGORIES
+from database.db_constants import ALLERGENS, ANALYTICS_GRAPHS_TYPES, BADGES, CATEGORIES
 
 dictConfig(LOGGING_CONFIG)
 SCHEMA_PATH = Path("database/migrations/schema.sql")
@@ -171,6 +171,20 @@ def seed_static_data(logger: Logger, conn: Connection) -> None:
                 "INSERT INTO badges (badge_id, name, description)"
                 "VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
                 (badge["badge_id"], badge["name"], badge["description"]),
+            )
+        logger.info("inserting analytics graphs types")
+        for graphs_types in ANALYTICS_GRAPHS_TYPES:
+            conn.execute(
+                "INSERT INTO analytics_graphs_types "
+                "(graph_type_id, chart_type, graph_summary, x_axis_label, y_axis_label)"
+                "VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                (
+                    graphs_types["graph_type_id"],
+                    graphs_types["chart_type"],
+                    graphs_types["graph_summary"],
+                    graphs_types["x_axis_label"],
+                    graphs_types["y_axis_label"],
+                ),
             )
         conn.commit()
         logger.info("finished inserting data")

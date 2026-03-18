@@ -62,11 +62,10 @@ sequenceDiagram
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Security, status
+from fastapi import APIRouter, HTTPException, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
-from internal.auth.middleware import consumer_auth
+from internal.auth.middleware import ConsumerAuthDep
 from internal.database.dependency import database_dependency
 from internal.queries.admin_issue_reports import (
     AsyncQuerier as AdminIssueReportsQuerier,
@@ -93,7 +92,6 @@ from internal.queries.seller_issue_reports import (
     AsyncQuerier as SellerIssueReportsQuerier,
 )
 from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
-from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/consumers", tags=["consumers"])
@@ -124,8 +122,7 @@ async def get_consumers(conn: database_dependency) -> list[GetConsumersRow]:
     description="Retrieves the profile of the authenticated consumer.",
 )
 async def get_consumer_me(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    conn: database_dependency, consumer: ConsumerAuthDep
 ) -> GetConsumerRow:
     """Get authenticated consumer profile.
 
@@ -204,8 +201,7 @@ async def register_consumer(
     description="Retrieves all reservations made by the authenticated consumer.",
 )
 async def get_reservations(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    conn: database_dependency, consumer: ConsumerAuthDep
 ) -> list[Reservation]:
     """Get consumers reservations.
 
@@ -250,9 +246,7 @@ class UpdateConsumerForm(BaseModel):
     ),
 )
 async def update_consumer(
-    form: UpdateConsumerForm,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    form: UpdateConsumerForm, conn: database_dependency, consumer: ConsumerAuthDep
 ) -> None:
     """Consumer name update.
 
@@ -278,14 +272,13 @@ async def update_consumer(
 
 @router.get(
     "/me/badges",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Consumer badges",
     description="Get all acquired badges by consumer",
     tags=["badges"],
 )
 async def get_consumer_badges(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    conn: database_dependency, consumer: ConsumerAuthDep
 ) -> list[GetConsumerBadgesRow]:
     """Get badges acquired by consumer.
 
@@ -306,15 +299,12 @@ async def get_consumer_badges(
 
 @router.get(
     "/me/streaks",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     summary="Consumer streak",
     description="Get consumer streak in number of weeks",
     tags=["analytics"],
 )
-async def get_streaks(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
-) -> int:
+async def get_streaks(conn: database_dependency, consumer: ConsumerAuthDep) -> int:
     """Get consumer collection streak in number of weeks.
 
     Args:
@@ -376,7 +366,7 @@ async def create_seller_issue_report(
     reservation_id: int,
     form: CreateSellerIssueReportForm,
     conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    consumer: ConsumerAuthDep,
 ) -> SellerIssueReport:
     """Create seller issue report.
 
@@ -433,7 +423,7 @@ class CreateAdminIssueReportForm(BaseModel):
 async def create_admin_issue_report(
     form: CreateAdminIssueReportForm,
     conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    consumer: ConsumerAuthDep,
 ) -> AdminIssueReport:
     """Create admin issue report.
 
@@ -471,8 +461,7 @@ async def create_admin_issue_report(
     tags=["reports"],
 )
 async def get_admin_issue_reports(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    conn: database_dependency, consumer: ConsumerAuthDep
 ) -> list[AdminIssueReport]:
     """Get admin issue reports.
 
@@ -499,8 +488,7 @@ async def get_admin_issue_reports(
     tags=["reports"],
 )
 async def get_seller_issue_reports(
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    conn: database_dependency, consumer: ConsumerAuthDep
 ) -> list[SellerIssueReport]:
     """Get seller issue reports.
 
