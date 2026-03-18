@@ -7,7 +7,6 @@ from decimal import Decimal
 from statistics import mean
 from typing import Protocol
 
-import lightgbm
 import numpy as np
 from lightgbm import LGBMRegressor
 from pydantic import BaseModel
@@ -122,4 +121,47 @@ def _build_rationale(
         f"using {method}{category_note}: "
         f"avg {avg_reservations:.1f} reservations, "
         f"{avg_no_show_rate * 100:.1f}% no-show rate."
+    )
+    
+def _forecast_single_category(
+    subset: list[ForecastInput],
+    query: ForecastQuery,
+    bundle_id: int,
+) -> ForecastResult:
+    """Run a forecast for a single category and return the raw result.
+
+    Expects subset to already be filtered to the seller and
+    category. Called once per category by _average_category_results.
+    """
+    n = len(subset)
+
+    if n == 0:
+        return ForecastResult(
+            bundle_id=bundle_id,
+            predicted_reservations=_COLD_RESERVATIONS,
+            predicted_no_show_prob=_COLD_NO_SHOW_PROB,
+            confidence=_COLD_CONFIDENCE,
+            rationale=_COLD_RATIONALE,
+        )
+
+    if n >= _MIN_ML_SAMPLES:
+        pred_res, pred_ns = _predict_with_lgbm(subset, query)
+        method = "LightGBM"
+    else:
+        pred_res, pred_ns = _predict_weighted_avg(subset, query)
+        method = "similarity-weighted average"
+
+    predicted_reservations = max(0, round(pred_res))
+    predicted_no_show_prob = float(np.clip(pred_ns, 0.0, 1.0))
+
+    avg_res = mean(r.observed_reservations for r in subset)
+    no_show_rates = [rate for r in subset if (rate := _no_show_rate(r)) is not None]
+    avg_no_show = mean(no_show_rates) if no_show_rates else 0.0
+
+    return ForecastResult(
+        bundle_id=bundle_id,
+        predicted_reservations=predicted_reservations,
+        predicted_no_show_prob=Decimal(str(round(predicted_no_show_prob, 4))),
+        confidence=Decimal(str(round(_confidence_from_n(n), 4))),
+        rationale=_build_rationale(n, avg_res, avg_no_show, method, query),
     )
