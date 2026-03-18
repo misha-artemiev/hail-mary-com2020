@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Components
@@ -14,6 +14,9 @@ import RoleSelect from "../components/forms/RoleSelect";
 // Hooks
 import useLeaderboard from "../hooks/useLeaderboard";
 
+// Services
+import { getUsername } from "../services/authService";
+
 /**
  * The leaderboard page of the site.
  * Displays top users by reservations or carbon dioxide saved.
@@ -22,6 +25,12 @@ import useLeaderboard from "../hooks/useLeaderboard";
  */
 export default function Leaderboard() {
     const navigate = useNavigate();
+
+    // Get current user's username
+    const [currentUsername, setCurrentUsername] = useState(null);
+    useEffect(() => {
+        setCurrentUsername(getUsername());
+    }, []);
 
     // State objects: stores the leaderboard data
     const [leaderboardCategory, setLeaderboardCategory] =
@@ -145,6 +154,7 @@ export default function Leaderboard() {
                                             position,
                                         )}
                                         category={leaderboardCategory}
+                                        isCurrentUser={username === currentUsername}
                                         onClick={() => navigate(`/user/${username}`)}
                                     />
                                 ),

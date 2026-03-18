@@ -13,6 +13,7 @@ import React from "react";
  * @param {Number} props.count - The 'score' of the user in the given category
  * @param {Number} props.position - The place in the leaderboard of this user
  * @param {string} props.category - The category to score by
+ * @param {boolean} props.isCurrentUser - Whether this is the currently logged in user
  * @param {Function} props.onClick - Click handler to navigate to user profile
  *
  * @returns {JSX.Element} a single line of the leaderboard
@@ -22,6 +23,7 @@ export default function LeaderboardItem({
     count,
     position,
     category,
+    isCurrentUser = false,
     onClick,
 }) {
     /**
@@ -59,16 +61,26 @@ export default function LeaderboardItem({
             onClick={onClick}
             role="button"
             tabIndex={0}
-            className="flex items-center justify-between
-                       px-4 py-3 rounded-lg
-                       bg-gray-50 border border-gray-100 cursor-pointer
-                       hover:bg-green-50 hover:border-green-200 transition-colors"
+            className={`flex items-center justify-between
+                       px-4 py-3 rounded-lg cursor-pointer transition-colors
+                       ${
+                           isCurrentUser
+                               ? "bg-green-100 border-2 border-green-500"
+                               : "bg-gray-50 border border-gray-100 hover:bg-green-50 hover:border-green-200"
+                       }`}
         >
             <div className="flex items-center gap-3">
                 <span className="text-lg w-8 text-center">
                     {getRankEmoji()}
                 </span>
-                <span className="font-semibold text-gray-800">{username}</span>
+                <span className="font-semibold text-gray-800">
+                    {username}
+                    {isCurrentUser && (
+                        <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded">
+                            You
+                        </span>
+                    )}
+                </span>
             </div>
             <span className="font-bold text-green-700">{generateLabel()}</span>
         </div>
