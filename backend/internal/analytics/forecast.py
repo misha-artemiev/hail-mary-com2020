@@ -6,6 +6,7 @@ import datetime
 from decimal import Decimal
 from statistics import mean
 from typing import Protocol
+from collections import defaultdict
 
 import numpy as np
 from lightgbm import LGBMRegressor
@@ -223,3 +224,39 @@ def generate_forecast(
         for category_id in query.category_ids
     ]
     return _average_category_results(results, bundle_id)
+
+def generate_seller_forecasts(
+    history: list[ForecastInput],
+    bundles: list[tuple[int, ForecastQuery]],
+) -> list[ForecastResult]:
+    """Generate forecasts for all of a seller's upcoming bundles.
+
+    Pre-groups ``history`` by category once upfront so that each
+    category's rows are looked up in O(1) rather than scanning the full
+    list on every call to ``_forecast_single_category``.
+
+    Args:
+        history: All ``forecast_input`` rows for this seller.
+        bundles: A list of ``(bundle_id, ForecastQuery)`` pairs — one per
+            upcoming bundle to forecast.
+
+    Returns:
+        A list of ``ForecastResult`` objects ready to insert into
+        ``forecast_output``, in the same order as ``bundles``.
+    """
+    history_by_category: dict[int, list[ForecastInput]] = defaultdict(list)
+    for row in history:
+        history_by_category[row.category_id].append(row)
+
+    results = []
+    for bundle_id, query in bundles:
+        per_category = [
+            _forecast_single_category(
+                history_by_category[category_id],
+                query,
+                bundle_id,
+            )
+            for category_id in query.category_ids
+        ]
+        results.append(_average_category_results(per_category, bundle_id))
+    return results
