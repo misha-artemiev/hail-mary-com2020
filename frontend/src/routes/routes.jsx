@@ -9,6 +9,7 @@ import React from "react";
 import Home from "../pages/Home";
 import AboutUs from "../pages/AboutUs";
 import OurTeam from "../pages/OurTeam";
+import Leaderboard from "../pages/Leaderboard";
 import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
@@ -45,6 +46,10 @@ export const ROUTES = [
     {
         path: "/our-team",
         element: <OurTeam />,
+    },
+    {
+        path: "/leaderboard",
+        element: <Leaderboard />,
     },
     {
         path: "/analytics",

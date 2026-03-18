@@ -147,7 +147,7 @@ export function useSignup() {
 
             // Auto-login with new user
             const tokenData = await createSession(form.email, form.password);
-            storeAuthToken(tokenData);
+            await storeAuthToken(tokenData);
             authContext.login(tokenData);
 
             // Redirect to home page
