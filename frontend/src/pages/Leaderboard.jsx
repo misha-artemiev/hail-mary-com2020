@@ -154,8 +154,12 @@ export default function Leaderboard() {
                                             position,
                                         )}
                                         category={leaderboardCategory}
-                                        isCurrentUser={username === currentUsername}
-                                        onClick={() => navigate(`/user/${username}`)}
+                                        isCurrentUser={
+                                            username === currentUsername
+                                        }
+                                        onClick={() =>
+                                            navigate(`/user/${username}`)
+                                        }
                                     />
                                 ),
                             )

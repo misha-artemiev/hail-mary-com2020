@@ -4,7 +4,11 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAuthToken, fetchUsername, logout as logoutService } from "../services/authService";
+import {
+    getAuthToken,
+    fetchUsername,
+    logout as logoutService,
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
