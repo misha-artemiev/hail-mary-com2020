@@ -30,7 +30,7 @@ class ForecastQuery(BaseModel):
     """The conditions of an upcoming bundle to forecast demand for."""
 
     seller_id: int
-    category_id: list[int]
+    category_ids: list[int]
     day_of_week: DayOfWeek
     window_start_hour: datetime.time
     window_end_hour: datetime.time
@@ -165,3 +165,61 @@ def _forecast_single_category(
         confidence=Decimal(str(round(_confidence_from_n(n), 4))),
         rationale=_build_rationale(n, avg_res, avg_no_show, method, query),
     )
+    
+def _average_category_results(
+    results: list[ForecastResult],
+    bundle_id: int,
+) -> ForecastResult:
+    """Average a list of per-category ForecastResults into one final result.
+
+    Used by both generate_forecast and generate_seller_forecasts
+    so the averaging logic lives in exactly one place.
+    """
+    avg_reservations = mean(r.predicted_reservations for r in results)
+    avg_no_show_prob = mean(float(r.predicted_no_show_prob) for r in results)
+    avg_confidence = mean(float(r.confidence) for r in results)
+
+    n_categories = len(results)
+    category_note = (
+        f"averaged across {n_categories} categories" if n_categories > 1
+        else results[0].rationale
+    )
+
+    return ForecastResult(
+        bundle_id=bundle_id,
+        predicted_reservations=max(0, round(avg_reservations)),
+        predicted_no_show_prob=Decimal(str(round(avg_no_show_prob, 4))),
+        confidence=Decimal(str(round(avg_confidence, 4))),
+        rationale=(
+            category_note if n_categories == 1
+            else f"Multi-category forecast ({category_note})."
+        ),
+    )
+    
+def generate_forecast(
+    history: list[ForecastInput],
+    query: ForecastQuery,
+    bundle_id: int,
+) -> ForecastResult:
+    """Generate a reservation and no-show forecast for an upcoming bundle.
+
+    Runs a separate forecast for each category in ``query.category_ids``,
+    then averages the results via ``_average_category_results``.
+
+    Args:
+        history: All ``forecast_input`` rows for this seller.
+        query: The conditions of the upcoming bundle.
+        bundle_id: The bundle this forecast is attached to.
+
+    Returns:
+        A ``ForecastResult`` ready to insert into ``forecast_output``.
+    """
+    results = [
+        _forecast_single_category(
+            [r for r in history if r.seller_id == query.seller_id and r.category_id == category_id],
+            query,
+            bundle_id,
+        )
+        for category_id in query.category_ids
+    ]
+    return _average_category_results(results, bundle_id)
