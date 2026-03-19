@@ -299,7 +299,6 @@ function BundleRow({ bundle }) {
             >
                 <td className="py-3 px-4">{bundle.bundle_name}</td>
                 <td className="py-3 px-4">£{bundle.price}</td>
-                <td className="py-3 px-4">{bundle.total_qty}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
                     {reservedCount} / {bundle.total_qty}
@@ -313,10 +312,10 @@ function BundleRow({ bundle }) {
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
-                    <td colSpan={7} className="py-4 px-4 bg-gray-50">
+                    <td colSpan={6} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
-                                Reservations ({reservations.length})
+                                Reservations
                             </h4>
                             {reservations.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
@@ -422,9 +421,6 @@ export default function SellerDashboard() {
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Price
-                                    </th>
-                                    <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Total Qty
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Discount
