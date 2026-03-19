@@ -35,7 +35,7 @@ dev = [
     "pdoc>=16.0.0",
     "psycopg2-binary>=2.9.11",
     "lightgbm>=4.6.0",
-    "holidays>=0.93"
+    "holidays>=0.93",
     "httpx>=0.28.1",
 ]
 
