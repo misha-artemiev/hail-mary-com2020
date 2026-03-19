@@ -1,7 +1,5 @@
 """Forecasting logic for demand prediction of upcoming bundles."""
 
-from __future__ import annotations
-
 import datetime
 from collections import defaultdict
 from decimal import Decimal
