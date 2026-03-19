@@ -70,8 +70,7 @@ def _fetch_weather(
             "latitude": latitude,
             "longitude": longitude,
             "daily": "temperature_2m_max,weathercode",
-            # Europe/London keeps daily windows aligned with UK midnight,
-            # not UTC (they differ by an hour during BST).
+            # Europe/London keeps daily windows aligned with UK midnight.
             "timezone": "Europe/London",
             "start_date": date_str,
             "end_date": date_str,
@@ -173,7 +172,7 @@ def fetch_historical_weather(
         longitude: Seller longitude.
  
     Returns:
-        (temperature, weather_flag) — the actual conditions on that day.
+        (temperature, weather_flag) the conditions on that day.
  
     Raises:
         requests.HTTPError: Open-Meteo returned a non-2xx response.
