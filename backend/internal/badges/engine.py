@@ -311,7 +311,7 @@ class BadgeEngine:
                         )
                 if not to_acquire:
                     continue
-                acquired_badge = BadgeEngine.update_badge(
+                acquired_badge = await BadgeEngine.update_badge(
                     conn, consumer_id, acquire_badge.badge_id, acquire_badge.rule.level
                 )
                 if not acquired_badge:
