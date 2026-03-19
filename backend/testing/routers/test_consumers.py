@@ -155,10 +155,10 @@ class TestConsumers(TestCase):
 
         mock_consumer = MagicMock()
         mock_consumer.user_id = 1
-        mock_consumer.username = "subject 17"
-        mock_consumer.email = "getbetter@ubisoft.com"
-        mock_consumer.fname = "Assassins"
-        mock_consumer.lname = "Creed"
+        mock_consumer.username = "user"
+        mock_consumer.email = "test@test.com"
+        mock_consumer.fname = "First"
+        mock_consumer.lname = "Last"
 
         async def mock_generator(*_: object, **__: object) -> AsyncGenerator[Any]:
             await asyncio.sleep(0)
@@ -179,16 +179,16 @@ class TestConsumers(TestCase):
         mock_instance = mock_querier.return_value
         mock_consumer = MagicMock()
         mock_consumer.user_id = TEST_USER_ID
-        mock_consumer.username = "rayman"
-        mock_consumer.email = "bring@back.com"
-        mock_consumer.fname = "Globox"
-        mock_consumer.lname = "Adventures"
+        mock_consumer.username = "user"
+        mock_consumer.email = "test@test.com"
+        mock_consumer.fname = "First"
+        mock_consumer.lname = "Last"
         mock_instance.get_consumer = AsyncMock(return_value=mock_consumer)
 
         response = self.client.get("/consumers/me")
 
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()["fname"] == "Globox"
+        assert response.json()["fname"] == "First"
 
         del app.dependency_overrides[consumer_auth]
 
@@ -198,10 +198,10 @@ class TestConsumers(TestCase):
         mock_instance = mock_querier.return_value
         mock_consumer = MagicMock()
         mock_consumer.user_id = 1
-        mock_consumer.username = "Metro"
-        mock_consumer.email = "Metro@Exodus.com"
+        mock_consumer.username = "user"
+        mock_consumer.email = "test@test.com"
         mock_consumer.fname = "First"
-        mock_consumer.lname = "Soldier Cloud"
+        mock_consumer.lname = "Last"
         mock_instance.get_consumer = AsyncMock(return_value=mock_consumer)
 
         response = self.client.get("/consumers/1")
@@ -272,19 +272,19 @@ class TestConsumers(TestCase):
         mock_report = MagicMock()
         mock_report.report_id = 1
         mock_report.reservation_id = 1
-        mock_report.issue_type = "food_quality"
+        mock_report.issue_type = "ITEM_MISSING"
         mock_report.description = "Bad"
         mock_report.status = "open"
         mock_rep_instance.create_seller_issue_report = AsyncMock(
             return_value=mock_report
         )
 
-        payload = {"issue_type": "food_quality", "description": "Bad"}
+        payload = {"issue_type": "ITEM_MISSING", "description": "Bad"}
 
         response = self.client.post("/consumers/me/reservations/1/report", json=payload)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["issue_type"] == "food_quality"
+        assert response.json()["issue_type"] == "ITEM_MISSING"
 
         del app.dependency_overrides[consumer_auth]
 
@@ -297,17 +297,17 @@ class TestConsumers(TestCase):
         mock_report = MagicMock()
         mock_report.report_id = 1
         mock_report.user_id = TEST_USER_ID
-        mock_report.issue_type = "technical"
+        mock_report.issue_type = "APP_CRASH"
         mock_report.description = "Bug"
         mock_report.status = "open"
         mock_instance.create_admin_issue_report = AsyncMock(return_value=mock_report)
 
-        payload = {"issue_type": "technical", "description": "Bug"}
+        payload = {"issue_type": "APP_CRASH", "description": "Bug"}
 
         response = self.client.post("/consumers/me/reports/admin", json=payload)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["issue_type"] == "technical"
+        assert response.json()["issue_type"] == "APP_CRASH"
 
         del app.dependency_overrides[consumer_auth]
 
@@ -320,7 +320,7 @@ class TestConsumers(TestCase):
         mock_report = MagicMock()
         mock_report.report_id = 1
         mock_report.user_id = TEST_USER_ID
-        mock_report.issue_type = "technical"
+        mock_report.issue_type = "APP_CRASH"
         mock_report.description = "Bug"
         mock_report.status = "open"
 
@@ -346,7 +346,7 @@ class TestConsumers(TestCase):
         mock_report = MagicMock()
         mock_report.report_id = 1
         mock_report.reservation_id = 1
-        mock_report.issue_type = "food_quality"
+        mock_report.issue_type = "ITEM_MISSING"
         mock_report.description = "Bad"
         mock_report.status = "open"
 
