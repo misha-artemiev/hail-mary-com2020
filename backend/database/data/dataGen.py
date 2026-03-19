@@ -38,7 +38,7 @@ NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
-START_DATE = datetime(year=2026, month=2, day=1, tzinfo=UTC)
+START_DATE = datetime.now(tz=UTC) - timedelta(days=15)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [

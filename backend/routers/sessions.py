@@ -130,14 +130,12 @@ sequenceDiagram
 """
 
 from datetime import datetime
-from typing import Annotated
 
-from fastapi import APIRouter, Security, status
-from internal.auth.middleware import BasicAuthResponse, basic_auth, bearer_auth
+from fastapi import APIRouter, status
+from internal.auth.middleware import BasicAuthDep, BearerAuthDep
 from internal.auth.token import create_token, delete_token
 from internal.database.dependency import database_dependency
 from internal.queries.models import UserRole
-from internal.queries.token import GetSessionByTokenRow
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -159,7 +157,7 @@ class TokenResponseModel(BaseModel):
     description="Authenticates a user and creates a new session token.",
 )
 async def create_session(
-    conn: database_dependency, user: Annotated[BasicAuthResponse, Security(basic_auth)]
+    conn: database_dependency, user: BasicAuthDep
 ) -> TokenResponseModel:
     """Create session if user exists.
 
@@ -182,10 +180,7 @@ async def create_session(
     summary="Delete session",
     description="Deletes the current authenticated session token.",
 )
-async def delete_session(
-    conn: database_dependency,
-    session: Annotated[GetSessionByTokenRow, Security(bearer_auth)],
-) -> None:
+async def delete_session(conn: database_dependency, session: BearerAuthDep) -> None:
     """Delete session from database.
 
     Args:

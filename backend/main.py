@@ -4,7 +4,8 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import version
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
+from internal.auth.security import log_request
 from internal.block.management import block_management
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
@@ -65,7 +66,7 @@ def register_routers(app: FastAPI) -> None:
         leaderboard_router,
     ]
     for router in routers:
-        app.include_router(router)
+        app.include_router(router, dependencies=[Depends(log_request)])
 
 
 register_routers(app)

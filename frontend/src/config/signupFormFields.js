@@ -11,6 +11,12 @@
 export const SIGNUP_FORM_FIELDS = {
     common: [
         {
+            name: "username",
+            label: "Username",
+            type: "text",
+            required: true,
+        },
+        {
             name: "email",
             label: "Email",
             type: "email",

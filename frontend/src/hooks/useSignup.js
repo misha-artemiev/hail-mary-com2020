@@ -25,6 +25,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/consumers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 first_name: form.firstName,
@@ -37,6 +38,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/sellers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 seller_name: form.sellerName,
@@ -61,9 +63,11 @@ export function useSignup() {
     // State object: holds all fields for the form
     const [role, setRole] = useState("");
     const [form, setForm] = useState({
+        username: "",
         email: "",
         password: "",
         confirmPassword: "",
+        terms: false,
         firstName: "",
         lastName: "",
         sellerName: "",
@@ -81,8 +85,11 @@ export function useSignup() {
      * Handles changes to the form.
      */
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setForm((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
     };
 
     /**
@@ -102,6 +109,12 @@ export function useSignup() {
         // Ensure passwords match
         if (form.password !== form.confirmPassword) {
             alert("Please ensure that passwords match");
+            return;
+        }
+
+        // Ensure terms are accepted
+        if (!form.terms) {
+            setError("You must accept the terms and conditions.");
             return;
         }
 
@@ -126,7 +139,9 @@ export function useSignup() {
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
                 throw new Error(
-                    data?.message ?? `Signup failed (${response.status}).`,
+                    data?.detail ??
+                        data?.message ??
+                        `Signup failed (${response.status}).`,
                 );
             }
 

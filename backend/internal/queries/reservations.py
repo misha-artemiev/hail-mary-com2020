@@ -4,7 +4,7 @@
 # source: reservations.sql
 import datetime
 import pydantic
-from typing import AsyncIterator, Optional
+from typing import Any, AsyncIterator, Optional
 
 import sqlalchemy
 import sqlalchemy.ext.asyncio
@@ -55,11 +55,12 @@ WHERE consumer_id=:p1
 
 
 GET_CONSUMERS_RESERVATIONS_FULL = """-- name: get_consumers_reservations_full \\:many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
 WHERE consumer_id=:p1
+GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end
 """
 
 
@@ -72,7 +73,7 @@ class GetConsumersReservationsFullRow(pydantic.BaseModel):
     carbon_dioxide: int
     window_start: datetime.datetime
     window_end: datetime.datetime
-    category_id: Optional[int]
+    category_ids: Any
 
 
 GET_RESERVATION = """-- name: get_reservation \\:one
@@ -98,6 +99,27 @@ class GetReservationCollectionParams(pydantic.BaseModel):
 GET_RESERVATIONS = """-- name: get_reservations \\:many
 SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collected_at FROM reservations
 """
+
+
+GET_SELLER_RESERVATIONS_FULL = """-- name: get_seller_reservations_full \\:many
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+FROM reservations r
+INNER JOIN bundles b ON b.bundle_id = r.bundle_id
+LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+WHERE b.seller_id=:p1
+GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end
+"""
+
+
+class GetSellerReservationsFullRow(pydantic.BaseModel):
+    reservation_id: int
+    bundle_id: int
+    reserved_at: datetime.datetime
+    collected_at: Optional[datetime.datetime]
+    carbon_dioxide: int
+    window_start: datetime.datetime
+    window_end: datetime.datetime
+    category_ids: Any
 
 
 class AsyncQuerier:
@@ -179,7 +201,7 @@ class AsyncQuerier:
                 carbon_dioxide=row[5],
                 window_start=row[6],
                 window_end=row[7],
-                category_id=row[8],
+                category_ids=row[8],
             )
 
     async def get_reservation(self, *, reservation_id: int) -> Optional[models.Reservation]:
@@ -218,4 +240,18 @@ class AsyncQuerier:
                 reserved_at=row[3],
                 claim_code=row[4],
                 collected_at=row[5],
+            )
+
+    async def get_seller_reservations_full(self, *, seller_id: int) -> AsyncIterator[GetSellerReservationsFullRow]:
+        result = await self._conn.stream(sqlalchemy.text(GET_SELLER_RESERVATIONS_FULL), {"p1": seller_id})
+        async for row in result:
+            yield GetSellerReservationsFullRow(
+                reservation_id=row[0],
+                bundle_id=row[1],
+                reserved_at=row[2],
+                collected_at=row[3],
+                carbon_dioxide=row[4],
+                window_start=row[5],
+                window_end=row[6],
+                category_ids=row[7],
             )

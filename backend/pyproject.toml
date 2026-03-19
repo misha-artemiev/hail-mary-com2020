@@ -36,6 +36,7 @@ dev = [
     "psycopg2-binary>=2.9.11",
     "lightgbm>=4.6.0",
     "holidays>=0.93"
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -96,7 +97,9 @@ select = [
 ]
 extend-ignore = [
     "COM812", # missing-trailing-comma
-    "S101" , # assert
+    "S101", # assert
+    "S110", # try-except-pass
+    "BLE001", # blind-except
 ]
 
 [tool.ruff.lint.pydocstyle]
