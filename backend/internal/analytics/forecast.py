@@ -518,3 +518,5 @@ def _predict_weighted_avg(
     # Dot product: multiply each weight by its corresponding value and sum.
     # A row with weight 0.4 and 8 reservations contributes 3.2 to the total.
     return float(np.dot(w_norm, res_vals)), float(np.dot(w_norm, ns_vals))
+
+
