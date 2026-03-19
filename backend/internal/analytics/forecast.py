@@ -9,10 +9,9 @@ from statistics import mean
 from typing import Protocol
 
 import numpy as np
+from internal.queries.models import DayOfWeek, ForecastInput, WeatherFlag
 from lightgbm import LGBMRegressor
 from pydantic import BaseModel
-
-from internal.queries.models import DayOfWeek, ForecastInput, WeatherFlag
 
 # --- Constants ---
 
@@ -25,12 +24,12 @@ _MIN_ML_SAMPLES: int = 10
 # LightGBM and numpy can only work with numbers, not enum values, so these
 # dictionaries are used inside _encode() to convert before training/predicting.
 _DAY_INDEX: dict[DayOfWeek, int] = {}
-for i, m in enumerate(DayOfWeek):
-    _DAY_INDEX[m] = i
-    
+for i, d in enumerate(DayOfWeek):
+    _DAY_INDEX[d] = i
+
 _WEATHER_INDEX: dict[WeatherFlag, int] = {}
-for i, m in enumerate(WeatherFlag):
-    _WEATHER_INDEX[m] = i
+for i, w in enumerate(WeatherFlag):
+    _WEATHER_INDEX[w] = i
 
 # Cold-start defaults — returned when a seller has zero historical rows for a
 # category. Values are intentionally conservative: predict low demand and low
@@ -44,6 +43,7 @@ _COLD_RATIONALE: str = (
 )
 
 # --- Models ---
+
 
 class ForecastQuery(BaseModel):
     """The conditions of an upcoming bundle to forecast demand for."""
@@ -71,8 +71,10 @@ class ForecastResult(BaseModel):
     # Nullable, cold-start results use the shared _COLD_RATIONALE constant,
     # but we allow None.
     rationale: str | None
-    
+
+
 # --- Helpers ---
+
 
 class _HasFeatures(Protocol):
     """Structural protocol shared by ForecastInput and ForecastQuery.
@@ -98,6 +100,9 @@ def _encode(obj: _HasFeatures) -> list[float]:
     The order here should stay the same LightGBM trains on columns by position,
     so the query vector must be built in exactly the same order as the
     training matrix.
+
+    Returns:
+        A list of floats representing the encoded features.
     """
     return [
         float(_DAY_INDEX[obj.day_of_week]),
@@ -130,6 +135,9 @@ def _confidence_from_n(n: int) -> float:
     Uses the formula n / (n + 20) which grows quickly at first then levels
     off, 10 rows gives 0.33, 20 rows gives 0.50, 80 rows gives 0.80.
     Capped at 0.90 so confidence never reaches 1.0.
+
+    Returns:
+        A confidence score between 0.05 and 0.90.
     """
     return min(0.90, n / (n + 20.0))
 
@@ -146,6 +154,9 @@ def _build_rationale(
     Outputs something like:
     "Based on 15 past slots (Monday, 09:00-12:00, rainy, 8.5 degrees C)
     using LightGBM: avg 6.3 reservations, 18.0% no-show rate."
+
+    Returns:
+        A string explanation of the forecast.
     """
     # Only append the holiday note when relevant
     # for the common case where it is not a public holiday.
@@ -153,7 +164,7 @@ def _build_rationale(
 
     window = (
         f"{query.window_start_hour.strftime('%H:%M')}"
-        f"–{query.window_end_hour.strftime('%H:%M')}"
+        f"-{query.window_end_hour.strftime('%H:%M')}"
     )
 
     # Grammatically correct singular/plural so the output reads naturally.
@@ -169,12 +180,12 @@ def _build_rationale(
         f"{avg_no_show_rate * 100:.1f}% no-show rate."
     )
 
+
 # --- Private prediction functions ---
 
+
 def _forecast_single_category(
-    subset: list[ForecastInput],
-    query: ForecastQuery,
-    bundle_id: int,
+    subset: list[ForecastInput], query: ForecastQuery, bundle_id: int
 ) -> ForecastResult:
     """Run a forecast for a single category and return the raw result.
 
@@ -182,6 +193,9 @@ def _forecast_single_category(
     category. This function
     can be reused by generate_seller_forecasts(), which pre-groups
     history once and passes the correct slice directly.
+
+    Returns:
+        A ForecastResult with predictions for the category.
     """
     n = len(subset)
 
@@ -235,14 +249,16 @@ def _forecast_single_category(
 
 
 def _average_category_results(
-    results: list[ForecastResult],
-    bundle_id: int,
+    results: list[ForecastResult], bundle_id: int
 ) -> ForecastResult:
     """Average a list of per-category ForecastResults into one final result.
 
     Used by both generate_forecast() and generate_seller_forecasts() so the
     averaging logic lives in one place. If the
     averaging behaviour ever changes, there is one place to update.
+
+    Returns:
+        A single ForecastResult with averaged predictions.
     """
     avg_reservations = mean(r.predicted_reservations for r in results)
     # float() is needed here because predicted_no_show_prob and confidence are
@@ -261,7 +277,9 @@ def _average_category_results(
     else:
         # Multiple categories, replace the per-category rationale with a
         # short summary.
-        rationale = f"Multi-category forecast (averaged across {n_categories} categories)."
+        rationale = (
+            f"Multi-category forecast (averaged across {n_categories} categories)."
+        )
 
     return ForecastResult(
         bundle_id=bundle_id,
@@ -273,12 +291,12 @@ def _average_category_results(
         rationale=rationale,
     )
 
+
 # --- Public ---
 
+
 def generate_forecast(
-    history: list[ForecastInput],
-    query: ForecastQuery,
-    bundle_id: int,
+    history: list[ForecastInput], query: ForecastQuery, bundle_id: int
 ) -> ForecastResult:
     """Generate a reservation and no-show forecast for an upcoming bundle.
 
@@ -294,14 +312,15 @@ def generate_forecast(
         A ForecastResult ready to insert into forecast_output.
     """
     # Run one forecast per category. Each call receives only the rows that
-    # match both the seller and that specific category. For forecasting many bundles at once,
-    # use
-    # generate_seller_forecasts() instead, which pre-groups the history
-    # once upfront and avoids scanning the full list on every category call.
+    # match both the seller and that specific category. For forecasting many
+    # bundles at once, use generate_seller_forecasts() instead, which
+    # pre-groups the history once upfront and avoids scanning the full list
+    # on every category call.
     results = [
         _forecast_single_category(
             [
-                r for r in history
+                r
+                for r in history
                 if r.seller_id == query.seller_id and r.category_id == category_id
             ],
             query,
@@ -313,8 +332,7 @@ def generate_forecast(
 
 
 def generate_seller_forecasts(
-    history: list[ForecastInput],
-    bundles: list[tuple[int, ForecastQuery]],
+    history: list[ForecastInput], bundles: list[tuple[int, ForecastQuery]]
 ) -> list[ForecastResult]:
     """Generate forecasts for all of a seller's upcoming bundles.
 
@@ -344,9 +362,7 @@ def generate_seller_forecasts(
         # which then uses the cold-start path inside _forecast_single_category.
         per_category = [
             _forecast_single_category(
-                history_by_category[category_id],
-                query,
-                bundle_id,
+                history_by_category[category_id], query, bundle_id
             )
             for category_id in query.category_ids
         ]
@@ -356,13 +372,11 @@ def generate_seller_forecasts(
     return results
 
 
-
 # --- Private prediction functions ---
 
 
 def _predict_with_lgbm(
-    subset: list[ForecastInput],
-    query: ForecastQuery,
+    subset: list[ForecastInput], query: ForecastQuery
 ) -> tuple[float, float]:
     """Train LightGBM regressors on subset and predict for query.
 
@@ -391,7 +405,7 @@ def _predict_with_lgbm(
 
     # Scale tree count to dataset size. More trees improve accuracy on larger
     # datasets but risk overfitting when samples are scarce.
-    #never goes below 50 tress and above 200
+    # never goes below 50 tress and above 200
     n_estimators = len(subset)
     n_estimators = max(n_estimators, 50)
     n_estimators = min(n_estimators, 200)
@@ -427,8 +441,7 @@ def _predict_with_lgbm(
 
 
 def _predict_weighted_avg(
-    subset: list[ForecastInput],
-    query: ForecastQuery,
+    subset: list[ForecastInput], query: ForecastQuery
 ) -> tuple[float, float]:
     """Predict using a similarity-weighted average.
 
