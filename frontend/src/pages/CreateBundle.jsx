@@ -42,6 +42,8 @@ export default function CreateBundle() {
 
     const { creating, createBundle } = useCreateBundle();
 
+    const [categoryError, setCategoryError] = useState("");
+
     // State object: stores form data
     const [form, setFormData] = useState({
         bundle_name: "",
@@ -88,6 +90,9 @@ export default function CreateBundle() {
      */
     const handleCategoriesChange = (selected) => {
         setFormData((prev) => ({ ...prev, categories: selected }));
+        if (selected.length > 0) {
+            setCategoryError("");
+        }
     };
 
     /**
@@ -104,6 +109,13 @@ export default function CreateBundle() {
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Error if no categories selected
+        if (form.categories.length === 0) {
+            setCategoryError("Please select at least one category.");
+            return;
+        }
+        setCategoryError("");
 
         const result = await createBundle(form);
         navigate(`/bundles/${result.bundle_id}`);
@@ -170,12 +182,20 @@ export default function CreateBundle() {
 
                     {/* Categories option dropdown */}
                     {!categoriesLoading && (
-                        <DropdownSelect
-                            options={categoryOptions}
-                            value={form.categories}
-                            name="category"
-                            onChange={handleCategoriesChange}
-                        />
+                        <>
+                            <DropdownSelect
+                                options={categoryOptions}
+                                value={form.categories}
+                                name="category"
+                                onChange={handleCategoriesChange}
+                            />
+                            {/* Error if no categories selected */}
+                            {categoryError && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {categoryError}
+                                </p>
+                            )}
+                        </>
                     )}
 
                     {/* Allergens option dropdown */}

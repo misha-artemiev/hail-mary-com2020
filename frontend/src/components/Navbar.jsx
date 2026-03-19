@@ -134,10 +134,7 @@ export default function Navbar() {
 
                 {userRole === "seller" && (
                     <>
-                        <NavLink
-                            to="/seller-dashboard"
-                            className="text-bold text-lg"
-                        >
+                        <NavLink to="/dashboard" className="text-bold text-lg">
                             Seller Dashboard
                         </NavLink>
                         <NavLink
