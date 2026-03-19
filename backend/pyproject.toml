@@ -37,6 +37,7 @@ dev = [
     "lightgbm>=4.6.0",
     "holidays>=0.93",
     "httpx>=0.28.1",
+    "requests>=1.21.1"
 ]
 
 [build-system]
