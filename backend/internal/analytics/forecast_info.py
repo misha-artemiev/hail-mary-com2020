@@ -99,7 +99,7 @@ def _fetch_weather(
 def _is_uk_holiday(bundle_date: datetime.date) -> bool:
     """Return True if the date is a bank holiday anywhere in the UK."""
     for nation in _UK_NATIONS:
-        if bundle_date in holidays.country_holidays("GB", subdiv=nation):
+        if bundle_date in holidays.country_holidays("GB", nation=nation):
             return True
     return False
 
