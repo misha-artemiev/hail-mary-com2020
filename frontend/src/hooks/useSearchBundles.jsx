@@ -90,7 +90,7 @@ export default function useSearchBundles() {
 
                 setUserLocation({ lat, lon });
 
-                search({ lat, lon });
+                search({ lat, lon, maxDistance: 10 });
             },
             (err) => {
                 console.warn("Location access denied or failed:", err.message);

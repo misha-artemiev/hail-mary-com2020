@@ -28,7 +28,7 @@ import Listing from "../components/Listing";
  */
 export default function Home() {
     const navigate = useNavigate();
-    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(true);
 
     // State object: holds all fields for the form
     const [filters, setFilters] = useState({
@@ -36,7 +36,7 @@ export default function Home() {
         category: "",
         allergens: [],
         maxPrice: "",
-        maxDistance: "",
+        maxDistance: "10",
     });
 
     // Use custom hooks

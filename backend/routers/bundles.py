@@ -145,7 +145,7 @@ class SearchBundlesForm(BaseModel):
 
     lat: float
     lon: float
-    max_dist: int | None = Field(gt=0)
+    max_dist: int = Field(gt=0)
     max_price: float | None = Field(gt=0)
     seller_name: str | None
     allergens: list[int] | None
@@ -189,7 +189,6 @@ async def search_bundles(
     Raises:
         HTTPException: if failed to find item
     """
-    form.max_dist = form.max_dist or 10
     distance_box = dist_safe_box(
         LocationModel(lat=form.lat, lon=form.lon), form.max_dist
     )
