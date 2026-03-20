@@ -86,6 +86,10 @@ from internal.queries.bundle import (
     GetSellersBundleParams,
     UpdateBundleParams,
 )
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+)
+from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.category import (
     AddBundlesCategoryParams,
     DeleteBundleCategoryParams,
@@ -96,13 +100,21 @@ from internal.queries.models import (
     AnalyticsGraphsType,
     AnalyticsPoint,
     AnalyticsSeries,
+    AdminIssueReport,
+    AdminIssueType,
     Bundle,
     Reservation,
+    SellerIssueReport,
+    SellerIssueType,
 )
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+)
+from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -511,6 +523,118 @@ async def get_reservations(
             detail="Failed to find bundle reservations",
         )
     return list(reservations)
+
+
+class CreateSellerIssueReportForm(BaseModel):
+    """Seller issue report creation form."""
+
+    issue_type: SellerIssueType
+    description: str
+
+
+@router.post(
+    "/me/reservations/{reservation_id}/report",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create seller issue report",
+    description="Creates a new seller issue report for a reservation on the seller's bundle.",
+    tags=["reports"],
+)
+async def create_seller_issue_report(
+    reservation_id: int,
+    form: CreateSellerIssueReportForm,
+    conn: database_dependency,
+    seller: SellerAuthDep,
+) -> SellerIssueReport:
+    """Create seller issue report by seller.
+
+    Args:
+        reservation_id: reservation id from path
+        form: seller issue report creation form
+        conn: database connection
+        seller: seller session
+
+    Returns:
+        created seller issue report
+
+    Raises:
+        HTTPException: if reservation not found, not linked to seller bundle, or creation fails
+    """
+    reservation = await ReservationsQuerier(conn).get_reservation(
+        reservation_id=reservation_id
+    )
+    if not reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reservation not found",
+        )
+
+    bundle = await BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
+    if not bundle or bundle.seller_id != seller.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Reservation does not belong to your bundles",
+        )
+
+    report = await SellerIssueReportsQuerier(conn).create_seller_issue_report(
+        CreateSellerIssueReportParams(
+            reservation_id=reservation_id,
+            issue_type=form.issue_type,
+            description=form.description,
+        )
+    )
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create seller issue report",
+        )
+    return report
+
+
+class CreateAdminIssueReportForm(BaseModel):
+    """Admin issue report creation form."""
+
+    issue_type: AdminIssueType
+    description: str
+
+
+@router.post(
+    "/me/reports/admin",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create admin issue report",
+    description="Creates a new admin issue report by seller.",
+    tags=["reports"],
+)
+async def create_admin_issue_report(
+    form: CreateAdminIssueReportForm,
+    conn: database_dependency,
+    seller: SellerAuthDep,
+) -> AdminIssueReport:
+    """Create admin issue report by seller.
+
+    Args:
+        form: admin issue report creation form
+        conn: database connection
+        seller: seller session
+
+    Returns:
+        created admin issue report
+
+    Raises:
+        HTTPException: if failed to create report
+    """
+    report = await AdminIssueReportsQuerier(conn).create_admin_issue_report(
+        CreateAdminIssueReportParams(
+            user_id=seller.user_id,
+            issue_type=form.issue_type,
+            description=form.description,
+        )
+    )
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create admin issue report",
+        )
+    return report
 
 
 @router.patch(

@@ -3,7 +3,8 @@
  * @author Ed Brown
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
@@ -23,6 +24,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
  * @returns {JSX.Element} the report error page
  */
 export default function ReportError() {
+    const [searchParams] = useSearchParams();
     const [issueType, setIssueType] = useState("");
 
     const [form, setForm] = useState({
@@ -38,6 +40,26 @@ export default function ReportError() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
+
+    useEffect(() => {
+        const issueTypeQuery = searchParams.get("issueType");
+        const bundleIdQuery = searchParams.get("bundle_id");
+        const reservationIdQuery = searchParams.get("reservation_id");
+
+        if (
+            issueTypeQuery === "user" ||
+            issueTypeQuery === "bundle" ||
+            issueTypeQuery === "reservation"
+        ) {
+            setIssueType(issueTypeQuery);
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            bundle_id: bundleIdQuery || prev.bundle_id,
+            reservation_id: reservationIdQuery || prev.reservation_id,
+        }));
+    }, [searchParams]);
 
     const buildDescription = () => {
         const contextLines = [
@@ -67,9 +89,14 @@ export default function ReportError() {
 
     const submitReport = async () => {
         const token = localStorage.getItem("authToken");
+        const userRole = localStorage.getItem("userRole");
 
         if (!token) {
             throw new Error("Please sign in to submit an issue report.");
+        }
+
+        if (userRole !== "consumer" && userRole !== "seller") {
+            throw new Error("Only consumers and sellers can submit issue reports.");
         }
 
         if (!issueType) {
@@ -88,8 +115,13 @@ export default function ReportError() {
                 );
             }
 
+            const reservationEndpoint =
+                userRole === "seller"
+                    ? `${API_BASE_URL}/sellers/me/reservations/${form.reservation_id}/report`
+                    : `${API_BASE_URL}/consumers/me/reservations/${form.reservation_id}/report`;
+
             const response = await fetch(
-                `${API_BASE_URL}/consumers/me/reservations/${form.reservation_id}/report`,
+                reservationEndpoint,
                 {
                     method: "POST",
                     headers: commonHeaders,
@@ -111,8 +143,13 @@ export default function ReportError() {
             return;
         }
 
+        const adminEndpoint =
+            userRole === "seller"
+                ? `${API_BASE_URL}/sellers/me/reports/admin`
+                : `${API_BASE_URL}/consumers/me/reports/admin`;
+
         const response = await fetch(
-            `${API_BASE_URL}/consumers/me/reports/admin`,
+            adminEndpoint,
             {
                 method: "POST",
                 headers: commonHeaders,

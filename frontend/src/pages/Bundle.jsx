@@ -119,6 +119,11 @@ export default function Bundle() {
                 id={reservation.reservation_id}
                 reserved_at={reservation.reserved_at}
                 claimCode={reservation.claim_code}
+                onReport={() =>
+                    navigate(
+                        `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
+                    )
+                }
             />
         ));
 
@@ -180,6 +185,20 @@ export default function Bundle() {
                     label="Pickup Window"
                     value={`${formatDateTime(windowStart)} - ${formatDateTime(windowEnd)}`}
                 />
+
+                {(userRole === "consumer" || userRole === "seller") && (
+                    <div className="mt-4">
+                        <Button
+                            onClick={() =>
+                                navigate(
+                                    `/report-error?issueType=bundle&bundle_id=${id}`,
+                                )
+                            }
+                        >
+                            Report This Bundle
+                        </Button>
+                    </div>
+                )}
             </Card>
 
             {/* Consumer reservation section */}
@@ -246,6 +265,20 @@ export default function Bundle() {
                                                 </span>
                                             </p>
                                         )}
+
+                                    {!isCollected && reservation?.reservation_id && (
+                                        <div className="mt-4">
+                                            <Button
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
+                                                    )
+                                                }
+                                            >
+                                                Report This Reservation
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })()

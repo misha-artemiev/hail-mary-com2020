@@ -21,7 +21,9 @@ import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
 import SellerDashboard from "../pages/SellerDashboard";
+import SellerIssues from "../pages/SellerIssues";
 import ReportError from "../pages/ReportError";
+import AdminPage from "../pages/AdminPage";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -116,6 +118,22 @@ export const ROUTES = [
         element: (
             <ProtectedRoute>
                 <SellerDashboard />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/dashboard/issues",
+        element: (
+            <ProtectedRoute>
+                <SellerIssues />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/admin",
+        element: (
+            <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminPage />
             </ProtectedRoute>
         ),
     },

@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 import useSellerBundles from "../hooks/useSellerBundles";
+import useSellerIssueReports from "../hooks/useSellerIssueReports";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
 
@@ -348,8 +349,12 @@ export default function SellerDashboard() {
     const { userRole } = useAuth();
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
+    const { issueReports, loading: issuesLoading } = useSellerIssueReports();
     const [showCollectModal, setShowCollectModal] = useState(false);
     const allReservations = useAllSellerReservations(bundles);
+    const openIssuesCount = issueReports.filter(
+        (issue) => issue.status === "open",
+    ).length;
 
     if (userRole !== "seller") {
         return (
@@ -383,6 +388,33 @@ export default function SellerDashboard() {
                     <Button onClick={() => setShowCollectModal(true)}>
                         Enter Claim Code
                     </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={() => navigate("/dashboard/issues?status=open")}
+                        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-left hover:bg-amber-100 transition"
+                    >
+                        <p className="text-sm font-medium text-amber-800">
+                            Open Issues
+                        </p>
+                        <p className="text-3xl font-bold text-amber-900">
+                            {issuesLoading ? "..." : openIssuesCount}
+                        </p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/dashboard/issues")}
+                        className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-left hover:bg-gray-100 transition"
+                    >
+                        <p className="text-sm font-medium text-gray-700">
+                            Total Derived Issues
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900">
+                            {issuesLoading ? "..." : issueReports.length}
+                        </p>
+                    </button>
                 </div>
             </Card>
 
