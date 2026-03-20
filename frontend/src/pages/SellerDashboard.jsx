@@ -20,8 +20,9 @@ import {
 } from "recharts";
 
 import { useAuth } from "../context/AuthContext";
-
 import useSellerBundles from "../hooks/useSellerBundles";
+
+import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
 import { useSellerAllReservations } from "../hooks/useSellerAllReservations";
@@ -297,7 +298,7 @@ function BundleRow({ bundle }) {
 }
 
 export default function SellerDashboard() {
-    const { userRole } = useAuth();
+    const { userRole, logout } = useAuth();
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
     const [showCollectModal, setShowCollectModal] = useState(false);
@@ -337,6 +338,8 @@ export default function SellerDashboard() {
                     </Button>
                 </div>
             </Card>
+
+            <SellerProfileCard onLogout={logout} />
 
             {showCollectModal && (
                 <CollectModal
