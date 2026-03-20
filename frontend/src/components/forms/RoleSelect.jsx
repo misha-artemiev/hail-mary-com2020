@@ -18,11 +18,20 @@ import React from "react";
  *
  * @returns {JSX.Element} a styled select field.
  */
-export default function RoleSelect({ label, value, onChange, options }) {
+export default function RoleSelect({
+    label,
+    value,
+    onChange,
+    options,
+    required = false,
+}) {
     return (
         <div>
             {/* Label */}
-            <label className="block font-semibold text-gray-700">{label}</label>
+            <label className="block font-semibold text-gray-700">
+                {label}
+                {required && <span className="text-red-500"> *</span>}
+            </label>
             <select
                 required
                 value={value}
