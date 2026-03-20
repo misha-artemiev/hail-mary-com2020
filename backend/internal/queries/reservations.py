@@ -20,6 +20,13 @@ RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, colle
 """
 
 
+COUNT_CONSUMER_COLLECTED_RESERVATIONS = """-- name: count_consumer_collected_reservations \\:one
+SELECT COUNT(*) AS collected_count
+FROM reservations
+WHERE consumer_id=:p1 AND collected_at IS NOT NULL
+"""
+
+
 CREATE_RESERVATION = """-- name: create_reservation \\:one
 INSERT INTO reservations (bundle_id, consumer_id, claim_code)
 VALUES (:p1,:p2,:p3)
@@ -138,6 +145,12 @@ class AsyncQuerier:
             claim_code=row[4],
             collected_at=row[5],
         )
+
+    async def count_consumer_collected_reservations(self, *, consumer_id: int) -> Optional[int]:
+        row = (await self._conn.execute(sqlalchemy.text(COUNT_CONSUMER_COLLECTED_RESERVATIONS), {"p1": consumer_id})).first()
+        if row is None:
+            return None
+        return row[0]
 
     async def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_RESERVATION), {"p1": arg.bundle_id, "p2": arg.consumer_id, "p3": arg.claim_code})).first()

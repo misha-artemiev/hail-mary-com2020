@@ -102,7 +102,7 @@ from internal.queries.models import (
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
-from internal.queries.seller import GetSellerRow, GetSellersRow
+from internal.queries.seller import GetSellerRow, GetSellersRow, UpdateSellerParams
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
@@ -196,6 +196,48 @@ async def register_seller(form: CreateSellerForm, conn: database_dependency) -> 
       conn: database connection
     """
     _ = await create_seller(form, conn)
+
+
+class UpdateSellerForm(BaseModel):
+    """Form for updating seller profile."""
+
+    seller_name: str
+    address_line1: str
+    address_line2: str | None = None
+    city: str
+    post_code: str
+    region: str | None = None
+    country: str
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+@router.patch(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Update seller profile",
+    description="Updates the profile information for the authenticated seller.",
+)
+async def update_seller(
+    form: UpdateSellerForm, conn: database_dependency, seller: SellerAuthDep
+) -> None:
+    """Update seller profile.
+
+    Args:
+        form: seller update form
+        conn: database connection
+        seller: seller session
+
+    Raises:
+        HTTPException: if failed to update seller
+    """
+    params = UpdateSellerParams(user_id=seller.user_id, **form.model_dump())
+    updated_seller = await SellerQuerier(conn).update_seller(params)
+    if not updated_seller:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update seller",
+        )
 
 
 class BundleForm(BaseModel):
