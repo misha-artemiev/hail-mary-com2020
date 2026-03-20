@@ -37,10 +37,7 @@ dev = [
     "pandas-stubs>=3.0.0.260204",
     "pdoc>=16.0.0",
     "psycopg2-binary>=2.9.11",
-    "lightgbm>=4.6.0",
-    "holidays>=0.93",
     "httpx>=0.28.1",
-    "requests>=1.21.1"
 ]
 
 [build-system]

@@ -9,7 +9,7 @@ import datetime
 from decimal import Decimal
 
 import holidays
-import requests
+import requests # type: ignore[import-untyped]
 from internal.queries.models import DayOfWeek, WeatherFlag
 from pydantic import BaseModel
 
