@@ -20,6 +20,7 @@ import EditProfile from "../pages/EditProfile";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
+import CreateAdmin from "../pages/CreateAdmin";
 import SellerDashboard from "../pages/SellerDashboard";
 import ReportError from "../pages/ReportError";
 
@@ -122,6 +123,10 @@ export const ROUTES = [
     {
         path: "/report-error",
         element: <ReportError />,
+    },
+    {
+        path: "/admin/create",
+        element: <CreateAdmin />,
     },
     // Catch-all (i.e. 404)
     {

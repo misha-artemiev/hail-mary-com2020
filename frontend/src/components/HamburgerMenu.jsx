@@ -69,6 +69,16 @@ export default function HamburgerMenu({ isOpen, onClose }) {
                 </NavLink>
             )}
 
+            {userRole === "admin" && (
+                <NavLink
+                    to="/admin/create"
+                    className="text-bold text-lg"
+                    onClick={onClose}
+                >
+                    Admin
+                </NavLink>
+            )}
+
             <NavLink
                 to="/aboutus"
                 className="text-bold text-lg"

@@ -149,6 +149,12 @@ export default function Navbar() {
                     </>
                 )}
 
+                {userRole === "admin" && (
+                    <NavLink to="/admin/create" className="text-bold text-lg">
+                        Create new Administrator
+                    </NavLink>
+                )}
+
                 {/* If signed in, show profile picture (link to profile page) */}
                 {/* Otherwise, show login/signup link */}
                 <div className="hover:scale-110 transition">
