@@ -29,7 +29,7 @@ _WEATHER_INDEX: dict[WeatherFlag, int] = {}
 for i, w in enumerate(WeatherFlag):
     _WEATHER_INDEX[w] = i
 
-# Cold-start defaults — returned when a seller has zero historical rows for a
+# Cold-start defaults, returned when a seller has zero historical rows for a
 # category. Values are intentionally conservative: predict low demand and low
 # confidence so the seller is not misled by a guess with no evidence behind it.
 _COLD_RESERVATIONS: int = 1
@@ -471,7 +471,7 @@ def _predict_weighted_avg(
     for row in subset:
         score = 0.0
 
-        # Day of week is the strongest predictor — a Monday bundle's history
+        # Day of week is the strongest predictor, a Monday bundle's history
         # is far more relevant to a future Monday than a Saturday's history.
         if row.day_of_week == query.day_of_week:
             score += 2.0
@@ -483,7 +483,7 @@ def _predict_weighted_avg(
         )
         score += max(0.0, 1.5 * (1.0 - hour_diff / 2.0))
 
-        # Holiday status is nearly as important as day of week — demand on a
+        # Holiday status is nearly as important as day of week, demand on a
         # bank holiday behaves very differently to a normal weekday.
         if row.is_holiday == query.is_holiday:
             score += 1.5
@@ -493,7 +493,7 @@ def _predict_weighted_avg(
         if row.weather_flag == query.weather_flag:
             score += 1.0
 
-        # Proximity score for temperature — full points for identical temp,
+        # Proximity score for temperature, full points for identical temp,
         # dropping to 0 at 5°C difference. Lowest weighted feature because
         # the weather flag already captures most of the temperature signal.
         score += max(0.0, 0.5 * (1.0 - abs(float(row.temperature) - q_temp) / 5.0))
