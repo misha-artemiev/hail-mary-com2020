@@ -71,8 +71,8 @@ export default function SellerProfileEditForm({
             )}
 
             <div className="flex flex-col items-center">
-                <label className="cursor-pointer hover:opacity-80 transition">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-600 relative group">
+                <label className="cursor-pointer">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-600">
                         <img
                             src={currentImageUrl}
                             alt="Profile"
@@ -81,12 +81,10 @@ export default function SellerProfileEditForm({
                                 e.target.src = defaultProfile;
                             }}
                         />
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <span className="text-white text-sm font-medium">
-                                Change
-                            </span>
-                        </div>
                     </div>
+                    <span className="block text-xs text-green-600 mt-1 text-center">
+                        Change Photo
+                    </span>
                 </label>
                 <input
                     type="file"
@@ -172,11 +170,11 @@ export default function SellerProfileEditForm({
                     type="button"
                     onClick={onCancel}
                     disabled={saving}
-                    className="px-6 py-2"
+                    className="px-6 py-2.5"
                 >
                     Cancel
                 </Button>
-                <SubmitButton disabled={saving} className="px-6 py-2">
+                <SubmitButton disabled={saving} className="px-6 py-2.5">
                     {saving ? "Saving..." : "Save Changes"}
                 </SubmitButton>
             </div>
