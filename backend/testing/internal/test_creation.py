@@ -109,6 +109,8 @@ class TestCreation(IsolatedAsyncioTestCase):
             city="London",
             post_code="E1",
             country="UK",
+            latitude=0,
+            longitude=0,
         )
 
         seller = await create_seller(form, mock_conn)
