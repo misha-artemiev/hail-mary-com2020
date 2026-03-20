@@ -64,13 +64,17 @@ export default function SellerProfileCard({ onLogout }) {
         : [51.505, -0.09];
 
     return (
-        <Card className="mb-6 relative">
+        <Card className="mb-6">
             <div className="flex justify-between items-start mb-4">
-                <div>
+                <div className="flex-1">
                     <h2 className="text-xl font-bold text-green-700 mb-2">
                         {profile.seller_name}
                     </h2>
                     <div className="text-sm text-gray-600 space-y-1">
+                        <div className="flex gap-2">
+                            <span className="font-semibold w-32">Name:</span>
+                            <span>{profile.seller_name}</span>
+                        </div>
                         <div className="flex gap-2">
                             <span className="font-semibold w-32">
                                 Address Line 1:
@@ -117,7 +121,7 @@ export default function SellerProfileCard({ onLogout }) {
                 </div>
             </div>
 
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex justify-center min-h-[120px] items-center">
                 <img
                     src={imageUrl || defaultProfile}
                     alt={profile.seller_name}

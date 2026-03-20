@@ -70,8 +70,8 @@ export default function SellerProfileEditForm({
                 </div>
             )}
 
-            <div className="flex flex-col items-center">
-                <label className="cursor-pointer">
+            <div className="flex justify-center">
+                <label className="cursor-pointer relative">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-600">
                         <img
                             src={currentImageUrl}
@@ -81,17 +81,19 @@ export default function SellerProfileEditForm({
                                 e.target.src = defaultProfile;
                             }}
                         />
+                        <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-100">
+                            <span className="text-white text-sm font-medium">
+                                Change
+                            </span>
+                        </div>
                     </div>
-                    <span className="block text-xs text-green-600 mt-1 text-center">
-                        Change Photo
-                    </span>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
                 </label>
-                <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
