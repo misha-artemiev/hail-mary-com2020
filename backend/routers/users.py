@@ -1,7 +1,7 @@
 """Endpoints for users."""
 
 from fastapi import APIRouter, HTTPException, Response, UploadFile, status
-from internal.auth.middleware import BearerAuthDep, ConsumerAuthDep
+from internal.auth.middleware import BearerAuthDep
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
@@ -156,29 +156,29 @@ async def get_user_id(username: str, conn: database_dependency) -> tuple[int, Us
 
 
 @router.patch(
-    path="/me/profile",
+    path="/me/image",
     status_code=status.HTTP_202_ACCEPTED,
     summary="Change profile image",
     description="Updates the profile image for the authenticated user.",
 )
-async def change_profile_image(file: UploadFile, consumer: ConsumerAuthDep) -> None:
+async def change_profile_image(file: UploadFile, session: BearerAuthDep) -> None:
     """Change user profile image.
 
     Args:
         file: profile image
-        consumer: consumer session
+        session: user session
     """
-    await block_management.upload_profile_image(consumer.user_id, file)
+    await block_management.upload_profile_image(session.user_id, file)
 
 
 @router.get(
-    path="/{user_id}/profile",
+    path="/{user_id}/image",
     status_code=status.HTTP_200_OK,
     summary="Get user profile image",
     description="Retrieves the profile image for a specific user by their ID.",
 )
-async def get_profile_image(user_id: int) -> Response:
-    """Get user profile image.
+async def get_profile_image_by_id(user_id: int) -> Response:
+    """Get user profile image by ID.
 
     Args:
         user_id: user id
@@ -192,20 +192,20 @@ async def get_profile_image(user_id: int) -> Response:
 
 
 @router.get(
-    path="/me/profile",
+    path="/me/image",
     status_code=status.HTTP_200_OK,
     summary="Get own profile image",
     description="Retrieves the profile image for the authenticated user.",
 )
-async def get_profile_image_me(consumer: ConsumerAuthDep) -> Response:
-    """Get user profile image.
+async def get_profile_image_me(session: BearerAuthDep) -> Response:
+    """Get own profile image.
 
     Args:
-        consumer: consumer session
+        session: user session
 
     Returns:
         user profile image
     """
     return Response(
-        block_management.get_profile_image(consumer.user_id), media_type="image/jpeg"
+        block_management.get_profile_image(session.user_id), media_type="image/jpeg"
     )

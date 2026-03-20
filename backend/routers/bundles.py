@@ -185,9 +185,6 @@ async def search_bundles(
 
     Returns:
       found bundles card information
-
-    Raises:
-        HTTPException: if failed to find item
     """
     distance_box = dist_safe_box(
         LocationModel(lat=form.lat, lon=form.lon), form.max_dist
