@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
@@ -14,6 +13,7 @@ import RoleSelect from "../components/forms/RoleSelect";
 import Divider from "../components/Divider";
 import SubmitButton from "../components/forms/SubmitButton";
 import Button from "../components/forms/Button";
+import LocationPicker from "../components/LocationPicker";
 
 // Config
 import { SIGNUP_FORM_FIELDS } from "../config/signupFormFields";
@@ -30,8 +30,16 @@ import { useSignup } from "../hooks/useSignup";
  */
 export default function Signup() {
     const navigate = useNavigate();
-    const { form, handleChange, role, setRole, error, loading, handleSubmit } =
-        useSignup();
+    const {
+        form,
+        handleChange,
+        handleLocationChange,
+        role,
+        setRole,
+        error,
+        loading,
+        handleSubmit,
+    } = useSignup();
 
     /**
      * Dynamically renders given information fields.
@@ -83,6 +91,7 @@ export default function Signup() {
                             { value: "consumer", label: "Consumer" },
                             { value: "seller", label: "Seller" },
                         ]}
+                        required
                     />
 
                     {/* Role-specific fields */}
@@ -90,6 +99,16 @@ export default function Signup() {
                         renderFields(SIGNUP_FORM_FIELDS.consumer)}
                     {role === "seller" &&
                         renderFields(SIGNUP_FORM_FIELDS.seller)}
+
+                    {/* Location picker for sellers */}
+                    {role === "seller" && (
+                        <LocationPicker
+                            value={form.location}
+                            onChange={handleLocationChange}
+                            label="Pick Location on Map"
+                            required
+                        />
+                    )}
 
                     {/* Terms and conditions */}
                     <div className="flex items-center gap-2">
@@ -110,6 +129,7 @@ export default function Signup() {
                             >
                                 Terms and Conditions
                             </Link>
+                            <span className="text-red-500"> *</span>
                         </label>
                     </div>
 
