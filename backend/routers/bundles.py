@@ -203,11 +203,6 @@ async def search_bundles(
             )
         )
     ]
-    if not sellers:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get sellers",
-        )
     filtered_bundles: list[SearchBundlesResponse] = []
     for seller in sellers:
         dist = get_distance(
