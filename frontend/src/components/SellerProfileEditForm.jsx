@@ -4,7 +4,13 @@ import SubmitButton from "./forms/SubmitButton";
 import Button from "./forms/Button";
 import LocationPicker from "./LocationPicker";
 
-export default function SellerProfileEditForm({ profile, onSave, onCancel }) {
+export default function SellerProfileEditForm({
+    profile,
+    imageUrl,
+    defaultProfile,
+    onSave,
+    onCancel,
+}) {
     const [formData, setFormData] = useState({
         address_line1: profile.address_line1 ?? "",
         address_line2: profile.address_line2 ?? "",
@@ -54,6 +60,8 @@ export default function SellerProfileEditForm({ profile, onSave, onCancel }) {
         }
     };
 
+    const currentImageUrl = previewUrl || imageUrl || defaultProfile;
+
     return (
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             {error && (
@@ -63,24 +71,29 @@ export default function SellerProfileEditForm({ profile, onSave, onCancel }) {
             )}
 
             <div className="flex flex-col items-center">
-                <label className="cursor-pointer">
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-green-600">
+                <label className="cursor-pointer hover:opacity-80 transition">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-green-600 relative group">
                         <img
-                            src={previewUrl ?? profile.profile_image}
+                            src={currentImageUrl}
                             alt="Profile"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.target.src = defaultProfile;
+                            }}
                         />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span className="text-white text-sm font-medium">
+                                Change
+                            </span>
+                        </div>
                     </div>
-                    <span className="block text-xs text-green-600 mt-1 text-center">
-                        Change Photo
-                    </span>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        className="hidden"
-                    />
                 </label>
+                <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,10 +168,15 @@ export default function SellerProfileEditForm({ profile, onSave, onCancel }) {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" onClick={onCancel} disabled={saving}>
+                <Button
+                    type="button"
+                    onClick={onCancel}
+                    disabled={saving}
+                    className="px-6 py-2"
+                >
                     Cancel
                 </Button>
-                <SubmitButton disabled={saving}>
+                <SubmitButton disabled={saving} className="px-6 py-2">
                     {saving ? "Saving..." : "Save Changes"}
                 </SubmitButton>
             </div>

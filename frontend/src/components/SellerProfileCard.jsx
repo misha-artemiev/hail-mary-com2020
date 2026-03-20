@@ -76,24 +76,52 @@ export default function SellerProfileCard({ onLogout }) {
                         }}
                     />
                     <div>
-                        <h2 className="text-xl font-bold text-green-700">
+                        <h2 className="text-xl font-bold text-green-700 mb-2">
                             {profile.seller_name}
                         </h2>
-                        <div className="text-sm text-gray-600">
-                            <p>{profile.address_line1}</p>
+                        <div className="text-sm text-gray-600 space-y-1">
+                            <div className="flex gap-2">
+                                <span className="font-semibold w-28">
+                                    Address:
+                                </span>
+                                <span>{profile.address_line1}</span>
+                            </div>
                             {profile.address_line2 && (
-                                <p>{profile.address_line2}</p>
+                                <div className="flex gap-2">
+                                    <span className="w-28"></span>
+                                    <span>{profile.address_line2}</span>
+                                </div>
                             )}
-                            <p>
-                                {profile.city}
-                                {profile.region && `, ${profile.region}`}
-                                {profile.post_code && `, ${profile.post_code}`}
-                            </p>
-                            <p>{profile.country}</p>
+                            <div className="flex gap-2">
+                                <span className="font-semibold w-28">
+                                    City:
+                                </span>
+                                <span>{profile.city}</span>
+                            </div>
+                            {profile.region && (
+                                <div className="flex gap-2">
+                                    <span className="font-semibold w-28">
+                                        Region:
+                                    </span>
+                                    <span>{profile.region}</span>
+                                </div>
+                            )}
+                            <div className="flex gap-2">
+                                <span className="font-semibold w-28">
+                                    Post Code:
+                                </span>
+                                <span>{profile.post_code}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="font-semibold w-28">
+                                    Country:
+                                </span>
+                                <span>{profile.country}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
                     {!isEditing && (
                         <Button onClick={() => setIsEditing(true)}>Edit</Button>
                     )}
@@ -125,6 +153,8 @@ export default function SellerProfileCard({ onLogout }) {
             {isEditing && (
                 <SellerProfileEditForm
                     profile={profile}
+                    imageUrl={imageUrl}
+                    defaultProfile={defaultProfile}
                     onSave={handleSave}
                     onCancel={handleCancel}
                 />
