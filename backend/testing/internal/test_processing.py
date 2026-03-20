@@ -28,14 +28,14 @@ class TestProcessing(IsolatedAsyncioTestCase):
         ]
 
     def test_run_background_task(self) -> None:  # noqa: PLR6301
-        """Test the processer successfully schedules the background job."""
+        """Test the processor successfully schedules the background job."""
         mock_bg_tasks = MagicMock(spec=BackgroundTasks)
-        processer = AnalyticsProcesser(mock_bg_tasks)
+        processor = AnalyticsProcesser(mock_bg_tasks)
 
-        processer.run(seller_id=1)
+        processor.run(seller_id=1)
 
         mock_bg_tasks.add_task.assert_called_once()
-        assert mock_bg_tasks.add_task.call_args[0][0] == processer.process_analytics
+        assert mock_bg_tasks.add_task.call_args[0][0] == processor.process_analytics
 
     async def test_add_sales_vs_posted_graph(self) -> None:
         """Test compiling and saving the sales vs posted graph points."""
