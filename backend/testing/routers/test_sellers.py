@@ -90,6 +90,12 @@ def get_mock_bundle() -> MagicMock:
     bundle.discount_percentage = TEST_DISCOUNT
     bundle.window_start = datetime.now()  # noqa: DTZ005
     bundle.window_end = datetime.now()  # noqa: DTZ005
+
+    bundle.carbon_dioxide = 10
+    bundle.status = "ACTIVE"
+    bundle.created_at = datetime.now()  # noqa: DTZ005
+    bundle.updated_at = datetime.now()  # noqa: DTZ005
+
     return bundle
 
 
@@ -204,7 +210,6 @@ class TestSellers(TestCase):
 
         response = self.client.post("/sellers", json=payload)
 
-        # This will print the exact missing field to your console if it fails again!
         if response.status_code != status.HTTP_201_CREATED:
             print("FASTAPI VALIDATION ERROR:", response.json())
 
@@ -223,16 +228,18 @@ class TestSellers(TestCase):
             "bundle_name": "Test Bundle",
             "description": "A nice bundle",
             "total_qty": TEST_QTY,
-            "price": TEST_PRICE,
+            "price": "10.00",
             "discount_percentage": TEST_DISCOUNT,
+            "weight": 10,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "weight": 10,
+            "categories": [1],
+            "allergens": [1],
         }
 
         response = self.client.post("/sellers/me/bundles", json=payload)
 
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED, response.text
         assert response.json()["bundle_name"] == "Test Bundle"
 
         del app.dependency_overrides[seller_auth]
@@ -249,18 +256,20 @@ class TestSellers(TestCase):
             "bundle_name": "Updated Bundle",
             "description": "Updated nice bundle",
             "total_qty": TEST_QTY,
-            "price": TEST_PRICE,
+            "price": "10.00",
             "discount_percentage": TEST_DISCOUNT,
+            "weight": 10,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "weight": 10,
+            "categories": [1],
+            "allergens": [1],
         }
 
         response = self.client.patch(
             f"/sellers/me/bundles/{TEST_BUNDLE_ID}", json=payload
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_200_OK, response.text
         assert response.json()["bundle_name"] == "Test Bundle"
 
         del app.dependency_overrides[seller_auth]
