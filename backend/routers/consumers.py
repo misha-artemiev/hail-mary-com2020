@@ -234,35 +234,22 @@ async def get_reservations(
     tags=["reservations"],
     status_code=status.HTTP_200_OK,
     summary="Get number of consumer rescued reservations",
-    description="Retrieves number of rescued reservations.",
+    description="Retrieves number of rescued (collected) reservations.",
 )
 async def get_rescued(conn: database_dependency, consumer: ConsumerAuthDep) -> int:
-    """Get consumers reservations.
+    """Get count of rescued (collected) reservations for the authenticated consumer.
 
     Args:
       conn: database connection
       consumer: consumer session
 
     Returns:
-        number of consumer resqued reservations
-
-    Raises:
-        HTTPException: if failed to get reservations
+        number of rescued (collected) reservations
     """
-    reservations = [
-        item
-        async for item in ReservationsQuerier(conn).get_consumers_reservations(
-            consumer_id=consumer.user_id
-        )
-    ]
-    if reservations is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get reservations",
-        )
-    return sum(
-        1 for reservation in reservations if reservation.collected_at is not None
+    result = await ReservationsQuerier(conn).count_consumer_collected_reservations(
+        consumer_id=consumer.user_id
     )
+    return result or 0
 
 
 class UpdateConsumerForm(BaseModel):
