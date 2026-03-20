@@ -1,11 +1,11 @@
 """Endpoints for bundles."""
 
 from datetime import datetime
-from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Security, status
-from internal.auth.middleware import consumer_auth
+from fastapi import APIRouter, HTTPException, Response, status
+from internal.auth.middleware import ConsumerAuthDep
 from internal.auth.security import generate_claim_code
+from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
@@ -17,7 +17,6 @@ from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerByLocationParams
-from internal.queries.token import GetSessionByTokenRow
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
@@ -89,9 +88,7 @@ async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     ),
 )
 async def reserve_bundle(
-    bundle_id: str,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    bundle_id: str, conn: database_dependency, consumer: ConsumerAuthDep
 ) -> Reservation:
     """Create bundle reservation.
 
@@ -284,3 +281,29 @@ async def search_bundles(
                 )
             )
     return filtered_bundles
+
+
+@router.get(
+    path="/{bundle_id}/image",
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle image",
+    description="Retrieves the image for a specific bundle.",
+)
+async def get_bundle_image(bundle_id: int, conn: database_dependency) -> Response:
+    """Get bundle image.
+
+    Args:
+        bundle_id: bundle id
+        conn: database connection
+
+    Returns:
+        bundle image
+
+    Raises:
+        HTTPException: if failed to get image
+    """
+    if BundleQuerier(conn).get_bundle(bundle_id=bundle_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
+    return Response(
+        block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
+    )

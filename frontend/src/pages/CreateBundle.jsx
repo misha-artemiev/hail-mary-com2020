@@ -48,6 +48,7 @@ export default function CreateBundle() {
         description: "",
         price: "",
         total_qty: 1,
+        weight: "",
         discount_percentage: "",
         window_start: "",
         window_end: "",
@@ -152,7 +153,6 @@ export default function CreateBundle() {
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            required
                             rows={3}
                             placeholder="Describe what's in this bundle..."
                             className="w-full rounded-md px-3 py-2 border

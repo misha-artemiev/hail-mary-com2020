@@ -10,10 +10,12 @@ import { useNavigate } from "react-router-dom";
 import useAllergens from "../hooks/useAllergens";
 import useCategories from "../hooks/useCategories";
 import useSearchBundles from "../hooks/useSearchBundles";
+import useSellers from "../hooks/useSellers";
 
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
+import RestaurantSelect from "../components/forms/SearchableDropdown";
 import Button from "../components/forms/Button";
 import Category from "../components/Category";
 import DropdownSelect from "../components/forms/DropdownSelect";
@@ -41,6 +43,7 @@ export default function Home() {
     const { listings, loading, search } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
+    const { sellerOptions: restaurantOptions } = useSellers();
 
     /**
      * Handles changes to the filters.
@@ -193,20 +196,18 @@ export default function Home() {
 
                 {/* Collapsible filter content */}
                 <div
-                    className={`overflow-hidden transition-all duration-250 ${
-                        filtersOpen
-                            ? "max-h-125 opacity-100 mt-4"
-                            : "max-h-0 opacity-0"
+                    className={`overflow-visible transition-all duration-250 ${
+                        filtersOpen ? "opacity-100 mt-4" : "max-h-0 opacity-0"
                     }`}
                 >
                     {/* Restaurant filter */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormInput
-                            placeholder="Restaurant Name"
-                            name="restaurant"
-                            type="text"
+                        <RestaurantSelect
                             value={filters.restaurant}
                             onChange={handleChange}
+                            options={restaurantOptions}
+                            placeholder="Search restaurants..."
+                            name="restaurant"
                         />
 
                         {/* Max price filter */}

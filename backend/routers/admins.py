@@ -1,10 +1,8 @@
 """Endpoints for admins."""
 
-from typing import Annotated
-
-from fastapi import APIRouter, HTTPException, Security, status
+from fastapi import APIRouter, HTTPException, status
 from internal.auth.creation import CreateAdminForm, create_admin
-from internal.auth.middleware import admin_auth, root_auth
+from internal.auth.middleware import AdminAuthDep, RootAuthDep
 from internal.auth.security import hash_password
 from internal.database.dependency import database_dependency
 from internal.queries.admin import AsyncQuerier as AdminQuerier
@@ -54,7 +52,6 @@ from internal.queries.seller_issue_reports import (
     AsyncQuerier as SellerIssueReportsQuerier,
 )
 from internal.queries.seller_issue_reports import UpdateSellerIssueReportStatusParams
-from internal.queries.token import GetSessionByTokenRow
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import (
     DeleteUserRow,
@@ -84,9 +81,7 @@ class UpdateAdminForm(BaseModel):
     tags=["root admin"],
 )
 async def register_admin(
-    form: CreateAdminForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(root_auth)],
+    form: CreateAdminForm, conn: database_dependency, _: RootAuthDep
 ) -> None:
     """Create admin by root user.
 
@@ -104,9 +99,7 @@ async def register_admin(
     description="Retrieves a list of all registered admins by root user.",
     tags=["root admin"],
 )
-async def get_admins(
-    conn: database_dependency, _: Annotated[None, Security(root_auth)]
-) -> list[GetAdminsRow]:
+async def get_admins(conn: database_dependency, _: RootAuthDep) -> list[GetAdminsRow]:
     """Get all admins by root user.
 
     Args:
@@ -125,8 +118,7 @@ async def get_admins(
     description="Retrieves the profile of the authenticated admin.",
 )
 async def get_admin_me(
-    conn: database_dependency,
-    admin_session: Annotated[GetSessionByTokenRow, Security(admin_auth)],
+    conn: database_dependency, admin_session: AdminAuthDep
 ) -> GetAdminRow:
     """Get authenticated admin profile.
 
@@ -156,7 +148,7 @@ async def get_admin_me(
     tags=["root admin"],
 )
 async def get_admin_by_id(
-    admin_id: int, conn: database_dependency, _: Annotated[None, Security(root_auth)]
+    admin_id: int, conn: database_dependency, _: RootAuthDep
 ) -> GetAdminRow:
     """Get admin profile by ID by root user.
 
@@ -186,10 +178,7 @@ async def get_admin_by_id(
     tags=["root admin"],
 )
 async def update_admin(
-    admin_id: int,
-    form: UpdateAdminForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(root_auth)],
+    admin_id: int, form: UpdateAdminForm, conn: database_dependency, _: RootAuthDep
 ) -> Admin:
     """Admin name update by root user.
 
@@ -223,7 +212,7 @@ async def update_admin(
     tags=["root admin"],
 )
 async def deactivate_admin(
-    admin_id: int, conn: database_dependency, _: Annotated[None, Security(root_auth)]
+    admin_id: int, conn: database_dependency, _: RootAuthDep
 ) -> Admin:
     """Deactivate admin.
 
@@ -253,7 +242,7 @@ async def deactivate_admin(
     tags=["root admin"],
 )
 async def activate_admin(
-    admin_id: int, conn: database_dependency, _: Annotated[None, Security(root_auth)]
+    admin_id: int, conn: database_dependency, _: RootAuthDep
 ) -> Admin:
     """Activate admin.
 
@@ -275,9 +264,14 @@ async def activate_admin(
     return admin_activation_result
 
 
-@router.get("/database/users", status_code=status.HTTP_200_OK, summary="Get all users")
+@router.get(
+    "/database/users",
+    status_code=status.HTTP_200_OK,
+    summary="Get all users",
+    description="Retrieves a list of all users in the system.",
+)
 async def get_all_users(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[GetUsersRow]:
     """Get all users.
 
@@ -300,12 +294,10 @@ class UpdateUserEmailForm(BaseModel):
     "/database/users/{user_id}/email",
     status_code=status.HTTP_200_OK,
     summary="Update user email",
+    description="Updates the email address for a specific user.",
 )
 async def update_user_email(
-    user_id: int,
-    form: UpdateUserEmailForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    user_id: int, form: UpdateUserEmailForm, conn: database_dependency, _: AdminAuthDep
 ) -> UpdateUserEmailRow:
     """Update user email.
 
@@ -338,12 +330,13 @@ class UpdateUserPasswordForm(BaseModel):
     "/database/users/{user_id}/password",
     status_code=status.HTTP_200_OK,
     summary="Update user password",
+    description="Updates the password for a specific user.",
 )
 async def update_user_password(
     user_id: int,
     form: UpdateUserPasswordForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> UpdateUserPasswordRow:
     """Update user password.
 
@@ -368,10 +361,13 @@ async def update_user_password(
 
 
 @router.delete(
-    "/database/users/{user_id}", status_code=status.HTTP_200_OK, summary="Delete user"
+    "/database/users/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete user",
+    description="Deletes a specific user from the system.",
 )
 async def delete_user(
-    user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    user_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> DeleteUserRow:
     """Delete user.
 
@@ -392,10 +388,13 @@ async def delete_user(
 
 
 @router.get(
-    "/database/sellers", status_code=status.HTTP_200_OK, summary="Get all sellers"
+    "/database/sellers",
+    status_code=status.HTTP_200_OK,
+    summary="Get all sellers",
+    description="Retrieves a list of all sellers in the system.",
 )
 async def get_all_sellers(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[GetSellersRow]:
     """Get all sellers.
 
@@ -412,11 +411,10 @@ async def get_all_sellers(
     "/database/sellers/{seller_id}/verify",
     status_code=status.HTTP_200_OK,
     summary="Verify seller",
+    description="Verifies a seller. Only possible if coordinates exist.",
 )
 async def verify_seller(
-    seller_id: int,
-    conn: database_dependency,
-    admin_session: Annotated[GetSessionByTokenRow, Security(admin_auth)],
+    seller_id: int, conn: database_dependency, admin_session: AdminAuthDep
 ) -> Seller:
     """Verify seller. Only possible if coordinates exist.
 
@@ -454,9 +452,10 @@ async def verify_seller(
     "/database/sellers/{seller_id}/unverify",
     status_code=status.HTTP_200_OK,
     summary="Unverify seller",
+    description="Removes verification status from a seller.",
 )
 async def unverify_seller(
-    seller_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    seller_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Seller:
     """Unverify seller.
 
@@ -496,12 +495,10 @@ class UpdateSellerForm(BaseModel):
     "/database/sellers/{seller_id}",
     status_code=status.HTTP_200_OK,
     summary="Update seller profile",
+    description="Updates the profile information for a specific seller.",
 )
 async def update_seller_profile(
-    seller_id: int,
-    form: UpdateSellerForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    seller_id: int, form: UpdateSellerForm, conn: database_dependency, _: AdminAuthDep
 ) -> Seller:
     """Update seller profile.
 
@@ -550,10 +547,13 @@ async def update_seller_profile(
 
 
 @router.get(
-    "/database/consumers", status_code=status.HTTP_200_OK, summary="Get all consumers"
+    "/database/consumers",
+    status_code=status.HTTP_200_OK,
+    summary="Get all consumers",
+    description="Retrieves a list of all consumers in the system.",
 )
 async def get_all_consumers(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[GetConsumersRow]:
     """Get all consumers.
 
@@ -579,12 +579,13 @@ class UpdateConsumerForm(BaseModel):
     "/database/consumers/{consumer_id}",
     status_code=status.HTTP_200_OK,
     summary="Update consumer profile",
+    description="Updates the profile information for a specific consumer.",
 )
 async def update_consumer_profile(
     consumer_id: int,
     form: UpdateConsumerForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> Consumer:
     """Update consumer profile.
 
@@ -610,11 +611,12 @@ async def update_consumer_profile(
 
 
 @router.get(
-    "/database/bundles", status_code=status.HTTP_200_OK, summary="Get all bundles"
+    "/database/bundles",
+    status_code=status.HTTP_200_OK,
+    summary="Get all bundles",
+    description="Retrieves a list of all bundles in the system.",
 )
-async def get_all_bundles(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
-) -> list[Bundle]:
+async def get_all_bundles(conn: database_dependency, _: AdminAuthDep) -> list[Bundle]:
     """Get all bundles.
 
     Args:
@@ -630,9 +632,10 @@ async def get_all_bundles(
     "/database/bundles/{bundle_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete bundle",
+    description="Deletes a specific bundle from the system.",
 )
 async def delete_bundle(
-    bundle_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    bundle_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Bundle:
     """Delete bundle.
 
@@ -656,9 +659,10 @@ async def delete_bundle(
     "/database/reservations",
     status_code=status.HTTP_200_OK,
     summary="Get all reservations",
+    description="Retrieves a list of all reservations in the system.",
 )
 async def get_all_reservations(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[Reservation]:
     """Get all reservations.
 
@@ -678,11 +682,10 @@ async def get_all_reservations(
     "/database/reservations/{reservation_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete reservation",
+    description="Deletes a specific reservation from the system.",
 )
 async def delete_reservation(
-    reservation_id: int,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    reservation_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Reservation:
     """Delete reservation.
 
@@ -705,10 +708,13 @@ async def delete_reservation(
 
 
 @router.get(
-    "/database/allergens", status_code=status.HTTP_200_OK, summary="Get all allergens"
+    "/database/allergens",
+    status_code=status.HTTP_200_OK,
+    summary="Get all allergens",
+    description="Retrieves a list of all allergens in the system.",
 )
 async def get_all_allergens(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[Allergen]:
     """Get all allergens.
 
@@ -733,11 +739,10 @@ class CreateAllergenForm(BaseModel):
     "/database/allergens",
     status_code=status.HTTP_201_CREATED,
     summary="Create allergen",
+    description="Creates a new allergen in the system.",
 )
 async def create_allergen(
-    form: CreateAllergenForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    form: CreateAllergenForm, conn: database_dependency, _: AdminAuthDep
 ) -> Allergen:
     """Create allergen.
 
@@ -771,12 +776,13 @@ class UpdateAllergenForm(BaseModel):
     "/database/allergens/{allergen_id}",
     status_code=status.HTTP_200_OK,
     summary="Update allergen",
+    description="Updates the name of a specific allergen.",
 )
 async def update_allergen(
     allergen_id: int,
     form: UpdateAllergenForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> Allergen:
     """Update allergen.
 
@@ -803,11 +809,10 @@ async def update_allergen(
     "/database/allergens/{allergen_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete allergen",
+    description="Deletes a specific allergen from the system.",
 )
 async def delete_allergen(
-    allergen_id: int,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    allergen_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Allergen:
     """Delete allergen.
 
@@ -830,10 +835,13 @@ async def delete_allergen(
 
 
 @router.get(
-    "/database/categories", status_code=status.HTTP_200_OK, summary="Get all categories"
+    "/database/categories",
+    status_code=status.HTTP_200_OK,
+    summary="Get all categories",
+    description="Retrieves a list of all categories in the system.",
 )
 async def get_all_categories(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[Category]:
     """Get all categories.
 
@@ -859,11 +867,10 @@ class CreateCategoryForm(BaseModel):
     "/database/categories",
     status_code=status.HTTP_201_CREATED,
     summary="Create category",
+    description="Creates a new category in the system.",
 )
 async def create_category(
-    form: CreateCategoryForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    form: CreateCategoryForm, conn: database_dependency, _: AdminAuthDep
 ) -> Category:
     """Create category.
 
@@ -894,12 +901,13 @@ async def create_category(
     "/database/categories/{category_id}",
     status_code=status.HTTP_200_OK,
     summary="Update category",
+    description="Updates the name and coefficient of a specific category.",
 )
 async def update_category(
     category_id: int,
     form: CreateCategoryForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> Category:
     """Update category.
 
@@ -930,11 +938,10 @@ async def update_category(
     "/database/categories/{category_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete category",
+    description="Deletes a specific category from the system.",
 )
 async def delete_category(
-    category_id: int,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    category_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Category:
     """Delete category.
 
@@ -957,11 +964,12 @@ async def delete_category(
 
 
 @router.get(
-    "/database/badges", status_code=status.HTTP_200_OK, summary="Get all badges"
+    "/database/badges",
+    status_code=status.HTTP_200_OK,
+    summary="Get all badges",
+    description="Retrieves a list of all badges in the system.",
 )
-async def get_all_badges(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
-) -> list[Badge]:
+async def get_all_badges(conn: database_dependency, _: AdminAuthDep) -> list[Badge]:
     """Get all badges.
 
     Args:
@@ -984,12 +992,10 @@ class UpdateBadgeForm(BaseModel):
     "/database/badges/{badge_id}",
     status_code=status.HTTP_200_OK,
     summary="Update badge",
+    description="Updates the name and description of a specific badge.",
 )
 async def update_badge(
-    badge_id: int,
-    form: UpdateBadgeForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    badge_id: int, form: UpdateBadgeForm, conn: database_dependency, _: AdminAuthDep
 ) -> Badge:
     """Update badge.
 
@@ -1018,9 +1024,10 @@ async def update_badge(
     "/database/reports/admin",
     status_code=status.HTTP_200_OK,
     summary="Get all admin issue reports",
+    description="Retrieves a list of all admin issue reports in the system.",
 )
 async def get_admin_reports(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[AdminIssueReport]:
     """Get all admin issue reports.
 
@@ -1046,12 +1053,13 @@ class UpdateReportStatusForm(BaseModel):
     "/database/reports/admin/{report_id}/status",
     status_code=status.HTTP_200_OK,
     summary="Update admin issue report status",
+    description="Updates the status of a specific admin issue report.",
 )
 async def update_admin_report_status(
     report_id: int,
     form: UpdateReportStatusForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> AdminIssueReport:
     """Update admin issue report status.
 
@@ -1080,9 +1088,10 @@ async def update_admin_report_status(
     "/database/reports/seller",
     status_code=status.HTTP_200_OK,
     summary="Get all seller issue reports",
+    description="Retrieves a list of all seller issue reports in the system.",
 )
 async def get_seller_reports(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    conn: database_dependency, _: AdminAuthDep
 ) -> list[SellerIssueReport]:
     """Get all seller issue reports.
 
@@ -1104,12 +1113,13 @@ async def get_seller_reports(
     "/database/reports/seller/{report_id}/status",
     status_code=status.HTTP_200_OK,
     summary="Update seller issue report status",
+    description="Updates the status of a specific seller issue report.",
 )
 async def update_seller_report_status(
     report_id: int,
     form: UpdateReportStatusForm,
     conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    _: AdminAuthDep,
 ) -> SellerIssueReport:
     """Update seller issue report status.
 
@@ -1135,11 +1145,12 @@ async def update_seller_report_status(
 
 
 @router.get(
-    "/database/inbox", status_code=status.HTTP_200_OK, summary="Get all inbox messages"
+    "/database/inbox",
+    status_code=status.HTTP_200_OK,
+    summary="Get all inbox messages",
+    description="Retrieves a list of all inbox messages in the system.",
 )
-async def get_all_inboxes(
-    conn: database_dependency, _: Annotated[None, Security(admin_auth)]
-) -> list[Inbox]:
+async def get_all_inboxes(conn: database_dependency, _: AdminAuthDep) -> list[Inbox]:
     """Get all inbox messages.
 
     Args:
@@ -1155,9 +1166,10 @@ async def get_all_inboxes(
     "/database/inbox/user/{user_id}",
     status_code=status.HTTP_200_OK,
     summary="Get user inbox",
+    description="Retrieves all inbox messages for a specific user.",
 )
 async def get_user_inbox(
-    user_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    user_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> list[Inbox]:
     """Get all inbox messages for a specific user.
 
@@ -1187,11 +1199,10 @@ class CreateInboxMessageForm(BaseModel):
     "/database/inbox",
     status_code=status.HTTP_201_CREATED,
     summary="Create inbox message",
+    description="Creates a new inbox message in the system.",
 )
 async def create_inbox_message(
-    form: CreateInboxMessageForm,
-    conn: database_dependency,
-    _: Annotated[None, Security(admin_auth)],
+    form: CreateInboxMessageForm, conn: database_dependency, _: AdminAuthDep
 ) -> Inbox:
     """Create an inbox message.
 
@@ -1224,9 +1235,10 @@ async def create_inbox_message(
     "/database/inbox/{message_id}",
     status_code=status.HTTP_200_OK,
     summary="Delete inbox message",
+    description="Deletes a specific inbox message from the system.",
 )
 async def delete_inbox_message(
-    message_id: int, conn: database_dependency, _: Annotated[None, Security(admin_auth)]
+    message_id: int, conn: database_dependency, _: AdminAuthDep
 ) -> Inbox:
     """Delete an inbox message.
 

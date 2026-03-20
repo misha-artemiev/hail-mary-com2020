@@ -46,6 +46,7 @@ export default function useCreateBundle() {
                     description: bundleData.description,
                     price: parseFloat(bundleData.price),
                     total_qty: bundleData.total_qty,
+                    weight: Math.round(parseFloat(bundleData.weight) * 1000),
                     discount_percentage: parseInt(
                         bundleData.discount_percentage,
                     ),

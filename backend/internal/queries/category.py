@@ -11,6 +11,18 @@ import sqlalchemy.ext.asyncio
 from internal.queries import models
 
 
+ADD_BUNDLES_CATEGORY = """-- name: add_bundles_category \\:one
+INSERT INTO bundle_category (bundle_id, category_id)
+VALUES (:p1,:p2)
+RETURNING category_id, bundle_id
+"""
+
+
+class AddBundlesCategoryParams(pydantic.BaseModel):
+    bundle_id: int
+    category_id: int
+
+
 CREATE_CATEGORY = """-- name: create_category \\:one
 INSERT INTO category (category_name, category_coefficient)
 VALUES (:p1, :p2)
@@ -21,6 +33,18 @@ RETURNING category_id, category_name, category_coefficient
 class CreateCategoryParams(pydantic.BaseModel):
     category_name: str
     category_coefficient: float
+
+
+DELETE_BUNDLE_CATEGORY = """-- name: delete_bundle_category \\:one
+DELETE FROM bundle_category
+WHERE category_id=:p1 AND bundle_id=:p2
+RETURNING category_id, bundle_id
+"""
+
+
+class DeleteBundleCategoryParams(pydantic.BaseModel):
+    category_id: int
+    bundle_id: int
 
 
 DELETE_CATEGORY = """-- name: delete_category \\:one
@@ -71,6 +95,15 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
+    async def add_bundles_category(self, arg: AddBundlesCategoryParams) -> Optional[models.BundleCategory]:
+        row = (await self._conn.execute(sqlalchemy.text(ADD_BUNDLES_CATEGORY), {"p1": arg.bundle_id, "p2": arg.category_id})).first()
+        if row is None:
+            return None
+        return models.BundleCategory(
+            category_id=row[0],
+            bundle_id=row[1],
+        )
+
     async def create_category(self, arg: CreateCategoryParams) -> Optional[models.Category]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_CATEGORY), {"p1": arg.category_name, "p2": arg.category_coefficient})).first()
         if row is None:
@@ -79,6 +112,15 @@ class AsyncQuerier:
             category_id=row[0],
             category_name=row[1],
             category_coefficient=row[2],
+        )
+
+    async def delete_bundle_category(self, arg: DeleteBundleCategoryParams) -> Optional[models.BundleCategory]:
+        row = (await self._conn.execute(sqlalchemy.text(DELETE_BUNDLE_CATEGORY), {"p1": arg.category_id, "p2": arg.bundle_id})).first()
+        if row is None:
+            return None
+        return models.BundleCategory(
+            category_id=row[0],
+            bundle_id=row[1],
         )
 
     async def delete_category(self, *, category_id: int) -> Optional[models.Category]:

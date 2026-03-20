@@ -5,7 +5,7 @@ import datetime
 import decimal
 import enum
 import pydantic
-from typing import Optional
+from typing import Any, Optional
 
 
 class AdminIssueType(str, enum.Enum):
@@ -81,6 +81,18 @@ class WeatherFlag(str, enum.Enum):
     WINDY = "windy"
 
 
+class ActivityLog(pydantic.BaseModel):
+    activity_id: int
+    user_id: Optional[int]
+    user_role: Optional[UserRole]
+    action: str
+    resource_type: Optional[str]
+    resource_id: Optional[int]
+    details: Optional[Any]
+    ip_address: Optional[str]
+    created_at: datetime.datetime
+
+
 class Admin(pydantic.BaseModel):
     user_id: int
     fname: str
@@ -113,23 +125,22 @@ class AnalyticsGraphsType(pydantic.BaseModel):
     graph_type_id: int
     chart_type: ChartType
     graph_summary: str
-    x_axis_label: str
-    y_axis_label: str
+    x_axis_label: Optional[str]
+    y_axis_label: Optional[str]
 
 
 class AnalyticsPoint(pydantic.BaseModel):
     series_id: int
-    sort_order: int
-    x_coordinate: str
-    y_coordinate: decimal.Decimal
     sort_index: int
+    x: str
+    y: decimal.Decimal
 
 
 class AnalyticsSeries(pydantic.BaseModel):
     series_id: int
     graph_id: int
-    sort_index: int
     series_name: str
+    sort_index: int
 
 
 class Badge(pydantic.BaseModel):
