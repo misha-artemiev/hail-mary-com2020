@@ -22,6 +22,7 @@ import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
 import CreateAdmin from "../pages/CreateAdmin";
+import ManageAdmins from "../pages/ManageAdmins";
 import SellerDashboard from "../pages/SellerDashboard";
 import ReportError from "../pages/ReportError";
 
@@ -141,6 +142,10 @@ export const ROUTES = [
                 <CreateAdmin />
             </AdminRoute>
         ),
+    },
+    {
+        path: "/admin/manage",
+        element: <ManageAdmins />,
     },
     // Catch-all (i.e. 404)
     {
