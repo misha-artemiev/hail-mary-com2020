@@ -233,19 +233,23 @@ async def update_seller(
     seller_querier = SellerQuerier(conn)
     seller_record = await seller_querier.get_seller(user_id=seller.user_id)
     if seller_record is None:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to get seller")
-    updated_seller = await seller_querier.update_seller(UpdateSellerParams(
-        user_id=seller.user_id,
-        seller_name=seller_record.seller_name,
-        address_line1=form.address_line1,
-        address_line2=form.address_line2,
-        city=form.city,
-        post_code=form.post_code,
-        region=form.region,
-        country=form.country,
-        latitude=form.latitude,
-        longitude=form.longitude,
-    ))
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to get seller"
+        )
+    updated_seller = await seller_querier.update_seller(
+        UpdateSellerParams(
+            user_id=seller.user_id,
+            seller_name=seller_record.seller_name,
+            address_line1=form.address_line1,
+            address_line2=form.address_line2,
+            city=form.city,
+            post_code=form.post_code,
+            region=form.region,
+            country=form.country,
+            latitude=form.latitude,
+            longitude=form.longitude,
+        )
+    )
     if not updated_seller:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
