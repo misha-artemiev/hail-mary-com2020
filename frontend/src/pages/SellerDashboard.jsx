@@ -285,6 +285,7 @@ function StatsSection({ bundles, reservations }) {
 }
 
 function BundleRow({ bundle }) {
+    const navigate = useNavigate();
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
 
@@ -310,10 +311,20 @@ function BundleRow({ bundle }) {
                 <td className="py-3 px-4">
                     {new Date(bundle.window_end).toLocaleString()}
                 </td>
+                <td className="py-3 px-4">
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/bundles/${bundle.bundle_id}`);
+                        }}
+                    >
+                        Open Listing
+                    </Button>
+                </td>
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
-                    <td colSpan={6} className="py-4 px-4 bg-gray-50">
+                    <td colSpan={7} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
                                 Reservations
@@ -467,6 +478,9 @@ export default function SellerDashboard() {
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Window End
+                                    </th>
+                                    <th className="py-3 px-4 text-green-700 font-semibold">
+                                        Listing
                                     </th>
                                 </tr>
                             </thead>
