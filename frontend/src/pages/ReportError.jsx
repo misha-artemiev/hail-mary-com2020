@@ -142,10 +142,7 @@ export default function ReportError() {
             return;
         }
 
-        const adminEndpoint =
-            userRole === "seller"
-                ? `${API_BASE_URL}/sellers/me/reports/admin`
-                : `${API_BASE_URL}/consumers/me/reports/admin`;
+        const adminEndpoint = `${API_BASE_URL}/users/me/reports/admin`;
 
         const response = await fetch(adminEndpoint, {
             method: "POST",
