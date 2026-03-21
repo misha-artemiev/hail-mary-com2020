@@ -100,7 +100,11 @@ async def log_to_db(log_data: LogData) -> None:
 async def log_request(request: Request) -> None:
     """Log request details to activity_log table."""
     body = None
-    if request.method in {"POST", "PATCH", "PUT"}:
+    content_type = request.headers.get("content-type", "")
+    if (
+        request.method in {"POST", "PATCH", "PUT"}
+        and "application/json" in content_type
+    ):
         try:
             raw_body = await request.json()
             if isinstance(raw_body, dict):
