@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 import useSellerBundles from "../hooks/useSellerBundles";
+import useSellerIssueReports from "../hooks/useSellerIssueReports";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
 
@@ -272,6 +273,7 @@ function StatsSection({ bundles, reservations }) {
 }
 
 function BundleRow({ bundle }) {
+    const navigate = useNavigate();
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
 
@@ -287,7 +289,6 @@ function BundleRow({ bundle }) {
             >
                 <td className="py-3 px-4">{bundle.bundle_name}</td>
                 <td className="py-3 px-4">£{bundle.price}</td>
-                <td className="py-3 px-4">{bundle.total_qty}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
                     {reservedCount} / {bundle.total_qty}
@@ -298,13 +299,23 @@ function BundleRow({ bundle }) {
                 <td className="py-3 px-4">
                     {new Date(bundle.window_end).toLocaleString()}
                 </td>
+                <td className="py-3 px-4">
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/bundles/${bundle.bundle_id}`);
+                        }}
+                    >
+                        Open Listing
+                    </Button>
+                </td>
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
                     <td colSpan={7} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
-                                Reservations ({reservations.length})
+                                Reservations
                             </h4>
                             {reservations.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
@@ -337,8 +348,12 @@ export default function SellerDashboard() {
     const { userRole } = useAuth();
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
+    const { issueReports, loading: issuesLoading } = useSellerIssueReports();
     const [showCollectModal, setShowCollectModal] = useState(false);
     const allReservations = useAllSellerReservations(bundles);
+    const openIssuesCount = issueReports.filter(
+        (issue) => issue.status === "open",
+    ).length;
 
     if (userRole !== "seller") {
         return (
@@ -372,6 +387,35 @@ export default function SellerDashboard() {
                     <Button onClick={() => setShowCollectModal(true)}>
                         Enter Claim Code
                     </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate("/dashboard/issues?status=open")
+                        }
+                        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-left hover:bg-amber-100 transition"
+                    >
+                        <p className="text-sm font-medium text-amber-800">
+                            Open Issues
+                        </p>
+                        <p className="text-3xl font-bold text-amber-900">
+                            {issuesLoading ? "..." : openIssuesCount}
+                        </p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/dashboard/issues")}
+                        className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-left hover:bg-gray-100 transition"
+                    >
+                        <p className="text-sm font-medium text-gray-700">
+                            Total Derived Issues
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900">
+                            {issuesLoading ? "..." : issueReports.length}
+                        </p>
+                    </button>
                 </div>
             </Card>
 
@@ -412,9 +456,6 @@ export default function SellerDashboard() {
                                         Price
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Total Qty
-                                    </th>
-                                    <th className="py-3 px-4 text-green-700 font-semibold">
                                         Discount
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
@@ -425,6 +466,9 @@ export default function SellerDashboard() {
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Window End
+                                    </th>
+                                    <th className="py-3 px-4 text-green-700 font-semibold">
+                                        Listing
                                     </th>
                                 </tr>
                             </thead>

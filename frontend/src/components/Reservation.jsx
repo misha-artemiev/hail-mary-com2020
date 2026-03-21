@@ -15,6 +15,7 @@ import React from "react";
  * @param {string} props.status - The status of the reservation.
  * @param {(event: React.MouseEvent<HTMLDivElement>) => void} [props.onClick]
  *          - Optional click event handler
+ * @param {() => void} [props.onReport] - Optional report action.
  *
  * @returns {JSX.Element} a reservation panel.
  */
@@ -24,6 +25,7 @@ export default function Reservation({
     claimCode,
     status,
     onClick,
+    onReport,
 }) {
     const statusColors = {
         reserved: "bg-yellow-100 text-yellow-800",
@@ -53,6 +55,18 @@ export default function Reservation({
             </div>
 
             <div className="flex items-center gap-3">
+                {onReport && (
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onReport();
+                        }}
+                        className="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition"
+                    >
+                        Report
+                    </button>
+                )}
                 <span
                     className={`px-2 py-1 rounded text-xs font-medium ${statusColors[status] || ""}`}
                 >
