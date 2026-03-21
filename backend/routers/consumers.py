@@ -235,7 +235,7 @@ async def get_rescued(conn: database_dependency, consumer: ConsumerAuthDep) -> i
     result = await ReservationsQuerier(conn).count_consumer_collected_reservations(
         consumer_id=consumer.user_id
     )
-    return result or 0
+    return result.collected_count if result else 0
 
 
 class UpdateConsumerForm(BaseModel):

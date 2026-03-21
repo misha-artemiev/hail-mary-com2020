@@ -85,7 +85,7 @@ async def log_to_db(log_data: LogData) -> None:
                     user_id=log_data.user_id,
                     action=f"{log_data.method} {log_data.path}",
                     details=details,
-                    ip_address=log_data.ip_address,
+                    ip_address=log_data.ip_address or "",
                 )
             )
             await conn.commit()
