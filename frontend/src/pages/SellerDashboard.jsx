@@ -327,15 +327,20 @@ export default function SellerDashboard() {
                     <h1 className="text-3xl font-bold text-green-700">
                         Seller Dashboard
                     </h1>
-                    <Button onClick={() => navigate("/bundles/create")}>
-                        Create Bundle
-                    </Button>
-                </div>
-
-                <div className="mb-6">
-                    <Button onClick={() => setShowCollectModal(true)}>
-                        Enter Claim Code
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setShowCollectModal(true)}
+                            className="!w-auto"
+                        >
+                            Enter Claim Code
+                        </Button>
+                        <Button
+                            onClick={() => navigate("/bundles/create")}
+                            className="!w-auto"
+                        >
+                            Create Bundle
+                        </Button>
+                    </div>
                 </div>
             </Card>
 
