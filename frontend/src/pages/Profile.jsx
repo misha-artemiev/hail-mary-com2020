@@ -15,15 +15,38 @@ import InfoLine from "../components/InfoLine";
 // Hooks
 import useConsumerProfile from "../hooks/useConsumerProfile";
 import { useUserImage } from "../hooks/useUserImage";
+import useBadges from "../hooks/useBadges";
 
 // Resources
 import defaultProfile from "../assets/default-user.jpg";
 
+const BADGE_IMAGES = import.meta.glob("../assets/badges/*_*.jpeg", {
+    eager: true,
+    import: "default",
+});
+
+const getBadgeImage = (badgeId, level = 1) => {
+    const key = Object.keys(BADGE_IMAGES).find((path) =>
+        path.includes(`_${badgeId}.${level}.jpeg`),
+    );
+    return key ? BADGE_IMAGES[key] : null;
+};
+
 export default function Profile() {
     const { logout } = useAuth();
     const navigate = useNavigate();
-    const { profile, loading, error } = useConsumerProfile();
+    const {
+        profile,
+        loading: profileLoading,
+        error: profileError,
+    } = useConsumerProfile();
     const { imageUrl } = useUserImage();
+    const {
+        badges,
+        loading: badgesLoading,
+        error: badgesError,
+        getConsumerBadgeLevel,
+    } = useBadges();
 
     const handleLogout = () => {
         logout();
@@ -34,7 +57,7 @@ export default function Profile() {
         navigate("/editprofile");
     };
 
-    if (loading) {
+    if (profileLoading || badgesLoading) {
         return (
             <div className="max-w-3xl mx-auto p-4 md:p-6">
                 <Card>
@@ -46,12 +69,12 @@ export default function Profile() {
         );
     }
 
-    if (error || !profile) {
+    if (profileError || !profile) {
         return (
             <div className="max-w-3xl mx-auto p-4 md:p-6">
                 <Card>
                     <p className="text-red-500 text-center py-4">
-                        {error ?? "Profile not found"}
+                        {profileError ?? "Profile not found"}
                     </p>
                 </Card>
             </div>
@@ -116,8 +139,55 @@ export default function Profile() {
                     Badges
                 </h2>
 
-                {/* TODO: get badges properly */}
-                <p>No badges yet...!</p>
+                {badgesError && (
+                    <p className="text-red-500 text-center py-4">
+                        {badgesError}
+                    </p>
+                )}
+
+                <div className="flex flex-wrap gap-4 justify-center">
+                    {badges.map((badge) => {
+                        const acquiredLevel = getConsumerBadgeLevel(
+                            badge.badge_id,
+                        );
+                        const isAcquired = acquiredLevel > 0;
+                        const badgeImage = getBadgeImage(
+                            badge.badge_id,
+                            isAcquired ? acquiredLevel : 1,
+                        );
+                        return (
+                            <div
+                                key={badge.badge_id}
+                                className="flex flex-col items-center max-w-24 group relative"
+                            >
+                                {badgeImage ? (
+                                    <img
+                                        src={badgeImage}
+                                        alt={badge.name}
+                                        className={`w-16 h-16 object-contain ${isAcquired ? "" : "grayscale opacity-50"}`}
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                                        <span className="text-gray-400 text-xs">
+                                            {badge.name.charAt(0)}
+                                        </span>
+                                    </div>
+                                )}
+                                <span className="text-xs font-medium text-gray-700 mt-1 text-center">
+                                    {badge.name}
+                                </span>
+                                {isAcquired && (
+                                    <span className="text-xs text-green-600 font-medium">
+                                        Lv.{acquiredLevel}
+                                    </span>
+                                )}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-white text-gray-800 text-xs rounded-md border-2 border-green-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                    {badge.description}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </Card>
         </div>
     );
