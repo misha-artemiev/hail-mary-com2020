@@ -73,10 +73,6 @@ from internal.auth.middleware import SellerAuthDep
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
-from internal.queries.admin_issue_reports import (
-    AsyncQuerier as AdminIssueReportsQuerier,
-)
-from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.allergens import (
     AddBundlesAllergenParams,
     DeleteBundleAllergenParams,
@@ -96,25 +92,17 @@ from internal.queries.category import (
 )
 from internal.queries.category import AsyncQuerier as CategoryQuerier
 from internal.queries.models import (
-    AdminIssueReport,
-    AdminIssueType,
     AnalyticsGraph,
     AnalyticsGraphsType,
     AnalyticsPoint,
     AnalyticsSeries,
     Bundle,
     Reservation,
-    SellerIssueReport,
-    SellerIssueType,
 )
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetReservationCollectionParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerRow, GetSellersRow
-from internal.queries.seller_issue_reports import (
-    AsyncQuerier as SellerIssueReportsQuerier,
-)
-from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/sellers", tags=["sellers"])
