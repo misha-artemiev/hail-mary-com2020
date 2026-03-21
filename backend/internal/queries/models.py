@@ -86,7 +86,7 @@ class ActivityLog(pydantic.BaseModel):
     user_id: Optional[int]
     action: str
     details: Optional[Any]
-    ip_address: Optional[str]
+    ip_address: str
     created_at: datetime.datetime
 
 
