@@ -75,7 +75,9 @@ function ReservationTable({ title, rows, showCollectedAt }) {
                                         {reservation.claim_code || "-"}
                                     </td>
                                     <td className="py-3 px-4">
-                                        {formatDateTime(reservation.reserved_at)}
+                                        {formatDateTime(
+                                            reservation.reserved_at,
+                                        )}
                                     </td>
                                     {showCollectedAt && (
                                         <td className="py-3 px-4">
@@ -117,7 +119,9 @@ export default function ConsumerDashboard() {
         async function fetchBundleNames() {
             const token = localStorage.getItem("authToken");
             const uniqueBundleIds = [
-                ...new Set(reservations.map((reservation) => reservation.bundle_id)),
+                ...new Set(
+                    reservations.map((reservation) => reservation.bundle_id),
+                ),
             ];
 
             if (!token || uniqueBundleIds.length === 0) {
