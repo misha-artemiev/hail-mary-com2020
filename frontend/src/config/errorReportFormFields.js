@@ -1,6 +1,6 @@
 /**
  * errorReportFormFields.js
- * @author GitHub Copilot
+ * @author Ed Brown
  */
 
 /**

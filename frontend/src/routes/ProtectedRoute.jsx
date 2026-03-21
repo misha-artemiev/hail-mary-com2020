@@ -14,13 +14,14 @@ import { useAuth } from "../context/AuthContext";
  *
  * @param {Object} props
  * @param {React.ReactNode} props.children - The page to be protected.
+ * @param {string[]} [props.allowedRoles] - Optional list of roles that can access the route.
  *
  * @returns {JSX.Element} a potential redirect to the login page, if unauthenticated.
  */
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, allowedRoles = null }) {
     const location = useLocation();
 
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated, userRole, loading } = useAuth();
 
     // Wait for loading to complete
     if (loading) {
@@ -30,6 +31,11 @@ export default function ProtectedRoute({ children }) {
     // Redirect to the login page
     if (!isAuthenticated) {
         return <Navigate to="/login" replace state={{ from: location }} />;
+    }
+
+    // Redirect authenticated users without the required role.
+    if (allowedRoles && !allowedRoles.includes(userRole)) {
+        return <Navigate to="/" replace />;
     }
 
     return children;

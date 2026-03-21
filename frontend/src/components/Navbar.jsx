@@ -138,6 +138,12 @@ export default function Navbar() {
                             Seller Dashboard
                         </NavLink>
                         <NavLink
+                            to="/dashboard/issues"
+                            className="text-bold text-lg"
+                        >
+                            Issue Reports
+                        </NavLink>
+                        <NavLink
                             to="/bundles/create"
                             className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition"
                         >
