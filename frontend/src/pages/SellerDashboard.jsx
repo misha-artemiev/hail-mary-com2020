@@ -21,6 +21,7 @@ import {
 
 import { useAuth } from "../context/AuthContext";
 import useSellerBundles from "../hooks/useSellerBundles";
+import useSellerIssueReports from "../hooks/useSellerIssueReports";
 
 import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
@@ -301,6 +302,9 @@ export default function SellerDashboard() {
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
     const { issueReports, loading: issuesLoading } = useSellerIssueReports();
+    const openIssuesCount = issueReports.filter(
+        (issue) => issue.status === "open",
+    ).length;
     const [showCollectModal, setShowCollectModal] = useState(false);
     const allReservations = useSellerAllReservations(bundles);
 
