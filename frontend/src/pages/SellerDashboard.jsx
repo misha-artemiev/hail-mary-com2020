@@ -117,8 +117,8 @@ function CollectModal({ bundles, onClose }) {
     return (
         <Modal isOpen={true} onClose={handleClose} title="Collect Bundle">
             <p className="text-gray-600 mb-4">
-                Enter the claim code from the customer to mark this bundle
-                as collected.
+                Enter the claim code from the customer to mark this bundle as
+                collected.
             </p>
             <form onSubmit={handleSubmit}>
                 <div className="mb-4">
@@ -127,9 +127,7 @@ function CollectModal({ bundles, onClose }) {
                     </label>
                     <select
                         value={selectedBundleId}
-                        onChange={(e) =>
-                            setSelectedBundleId(e.target.value)
-                        }
+                        onChange={(e) => setSelectedBundleId(e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded"
                         required
                     >
@@ -153,12 +151,8 @@ function CollectModal({ bundles, onClose }) {
                     required
                 />
                 <div className="flex gap-2 mt-4">
-                    <SubmitButton
-                        disabled={collecting || !selectedBundleId}
-                    >
-                        {collecting
-                            ? "Collecting..."
-                            : "Confirm Collection"}
+                    <SubmitButton disabled={collecting || !selectedBundleId}>
+                        {collecting ? "Collecting..." : "Confirm Collection"}
                     </SubmitButton>
                     <Button type="button" onClick={handleClose}>
                         Cancel

@@ -17,7 +17,10 @@ export default function CreateAdmin() {
     const navigate = useNavigate();
     const { creating, createAdmin } = useCreateAdmin();
 
-    const [rootCredentials, setRootCredentials] = useState({ username: "", password: "" });
+    const [rootCredentials, setRootCredentials] = useState({
+        username: "",
+        password: "",
+    });
 
     const [form, setFormData] = useState({
         username: "",
@@ -31,7 +34,10 @@ export default function CreateAdmin() {
     const [error, setError] = useState(null);
 
     const handleRootChange = (e) => {
-        setRootCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        setRootCredentials((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+        }));
     };
 
     const handleChange = (e) => {
@@ -56,7 +62,11 @@ export default function CreateAdmin() {
         };
 
         try {
-            await createAdmin(adminData, rootCredentials.username, rootCredentials.password);
+            await createAdmin(
+                adminData,
+                rootCredentials.username,
+                rootCredentials.password,
+            );
             navigate("/admin/manage");
         } catch (err) {
             setError(err.message);
@@ -98,25 +108,78 @@ export default function CreateAdmin() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput label="Username" name="username" type="text" value={form.username} onChange={handleChange} required placeholder="Enter username" />
-                        <FormInput label="Email" name="email" type="email" value={form.email} onChange={handleChange} required placeholder="Enter email" />
+                        <FormInput
+                            label="Username"
+                            name="username"
+                            type="text"
+                            value={form.username}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter username"
+                        />
+                        <FormInput
+                            label="Email"
+                            name="email"
+                            type="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter email"
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput label="First Name" name="first_name" type="text" value={form.first_name} onChange={handleChange} required placeholder="Enter first name" />
-                        <FormInput label="Last Name" name="last_name" type="text" value={form.last_name} onChange={handleChange} required placeholder="Enter last name" />
+                        <FormInput
+                            label="First Name"
+                            name="first_name"
+                            type="text"
+                            value={form.first_name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter first name"
+                        />
+                        <FormInput
+                            label="Last Name"
+                            name="last_name"
+                            type="text"
+                            value={form.last_name}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter last name"
+                        />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput label="Password" name="password" type="password" value={form.password} onChange={handleChange} required placeholder="Enter password" />
-                        <FormInput label="Confirm Password" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} required placeholder="Confirm password" />
+                        <FormInput
+                            label="Password"
+                            name="password"
+                            type="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            required
+                            placeholder="Enter password"
+                        />
+                        <FormInput
+                            label="Confirm Password"
+                            name="confirmPassword"
+                            type="password"
+                            value={form.confirmPassword}
+                            onChange={handleChange}
+                            required
+                            placeholder="Confirm password"
+                        />
                     </div>
 
                     <div className="flex gap-4 pt-4">
                         <SubmitButton disabled={creating}>
                             {creating ? "Creating Admin..." : "Create Admin"}
                         </SubmitButton>
-                        <Button type="button" onClick={() => navigate("/admin/manage")}>Cancel</Button>
+                        <Button
+                            type="button"
+                            onClick={() => navigate("/admin/manage")}
+                        >
+                            Cancel
+                        </Button>
                     </div>
                 </form>
             </Card>
