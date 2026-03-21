@@ -23,6 +23,10 @@ export default function ManageAdmins() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    const [selectedAdmin, setSelectedAdmin] = useState(null);
+    const [editForm, setEditForm] = useState({ first_name: "", last_name: "", email: "", password: "" });
+    const [editing, setEditing] = useState(false);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setRootCredentials((prev) => ({ ...prev, [name]: value }));
@@ -80,6 +84,100 @@ export default function ManageAdmins() {
                 );
             }
 
+            await fetchAdmins();
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const openEditModal = (admin) => {
+        setSelectedAdmin(admin);
+        setEditForm({
+            first_name: admin.first_name || "",
+            last_name: admin.last_name || "",
+            email: admin.email || "",
+            password: "",
+        });
+        setEditing(true);
+    };
+
+    const closeEditModal = () => {
+        setSelectedAdmin(null);
+        setEditForm({ first_name: "", last_name: "", email: "", password: "" });
+        setEditing(false);
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value } = e.target;
+        setEditForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const updateAdmin = async (e) => {
+        e.preventDefault();
+        const credentials = btoa(
+            `${rootCredentials.username}:${rootCredentials.password}`,
+        );
+
+        try {
+            const profileResponse = await fetch(
+                `${API_BASE_URL}/admins/${selectedAdmin.user_id}`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Basic ${credentials}`,
+                    },
+                    body: JSON.stringify({
+                        first_name: editForm.first_name,
+                        last_name: editForm.last_name,
+                    }),
+                },
+            );
+
+            if (!profileResponse.ok) {
+                const errorData = await profileResponse.json();
+                throw new Error(errorData.detail || "Failed to update admin profile");
+            }
+
+            if (editForm.email && editForm.email !== selectedAdmin.email) {
+                const emailResponse = await fetch(
+                    `${API_BASE_URL}/admins/database/users/${selectedAdmin.user_id}/email`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Basic ${credentials}`,
+                        },
+                        body: JSON.stringify({ email: editForm.email }),
+                    },
+                );
+
+                if (!emailResponse.ok) {
+                    const errorData = await emailResponse.json();
+                    throw new Error(errorData.detail || "Failed to update email");
+                }
+            }
+
+            if (editForm.password) {
+                const passwordResponse = await fetch(
+                    `${API_BASE_URL}/admins/database/users/${selectedAdmin.user_id}/password`,
+                    {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Basic ${credentials}`,
+                        },
+                        body: JSON.stringify({ password: editForm.password }),
+                    },
+                );
+
+                if (!passwordResponse.ok) {
+                    const errorData = await passwordResponse.json();
+                    throw new Error(errorData.detail || "Failed to update password");
+                }
+            }
+
+            closeEditModal();
             await fetchAdmins();
         } catch (err) {
             setError(err.message);
@@ -173,7 +271,8 @@ export default function ManageAdmins() {
                                 {admins.map((admin) => (
                                     <tr
                                         key={admin.user_id}
-                                        className="border-b border-gray-100 hover:bg-gray-50"
+                                        className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => openEditModal(admin)}
                                     >
                                         <td className="py-3 px-4">
                                             {admin.username}
@@ -194,7 +293,10 @@ export default function ManageAdmins() {
                                                     : "Inactive"}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-right">
+                                        <td
+                                            className="py-3 px-4 text-right"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <button
                                                 onClick={() =>
                                                     toggleAdminStatus(
@@ -217,6 +319,71 @@ export default function ManageAdmins() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {editing && selectedAdmin && (
+                    <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4">
+                                Edit Admin: {selectedAdmin.username}
+                            </h2>
+
+                            {error && (
+                                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                                    {error}
+                                </div>
+                            )}
+
+                            <form onSubmit={updateAdmin} className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="First Name"
+                                        name="first_name"
+                                        type="text"
+                                        value={editForm.first_name}
+                                        onChange={handleEditChange}
+                                        required
+                                    />
+                                    <FormInput
+                                        label="Last Name"
+                                        name="last_name"
+                                        type="text"
+                                        value={editForm.last_name}
+                                        onChange={handleEditChange}
+                                        required
+                                    />
+                                </div>
+                                <FormInput
+                                    label="Email"
+                                    name="email"
+                                    type="email"
+                                    value={editForm.email}
+                                    onChange={handleEditChange}
+                                    required
+                                />
+                                <FormInput
+                                    label="New Password"
+                                    name="password"
+                                    type="password"
+                                    value={editForm.password}
+                                    onChange={handleEditChange}
+                                    placeholder="Leave blank to keep current password"
+                                />
+                                <div className="flex gap-3 pt-2">
+                                    <SubmitButton type="submit">
+                                        Save Changes
+                                    </SubmitButton>
+                                    <button
+                                        type="button"
+                                        onClick={closeEditModal}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 )}
             </Card>
