@@ -1,9 +1,20 @@
 /**
- * AdminsTable.jsx
+ * AdminsTable.js
+ * @author Thomas Noakes
  */
 
 import React from "react";
 
+/**
+ * A table component for displaying admin accounts.
+ *
+ * @param {Object} props
+ * @param {Array} props.admins - Array of admin objects to display.
+ * @param {Function} props.onRowClick - Callback when a row is clicked.
+ * @param {Function} props.onToggleStatus - Callback when activate/deactivate button is clicked.
+ *
+ * @returns {JSX.Element} the rendered table.
+ */
 export default function AdminsTable({ admins, onRowClick, onToggleStatus }) {
     return (
         <div className="overflow-x-auto mt-6">
@@ -31,12 +42,8 @@ export default function AdminsTable({ admins, onRowClick, onToggleStatus }) {
                             className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                             onClick={() => onRowClick(admin)}
                         >
-                            <td className="py-3 px-4">
-                                {admin.username}
-                            </td>
-                            <td className="py-3 px-4">
-                                {admin.email}
-                            </td>
+                            <td className="py-3 px-4">{admin.username}</td>
+                            <td className="py-3 px-4">{admin.email}</td>
                             <td className="py-3 px-4">
                                 <span
                                     className={`px-2 py-1 rounded text-sm ${
@@ -45,9 +52,7 @@ export default function AdminsTable({ admins, onRowClick, onToggleStatus }) {
                                             : "bg-red-100 text-red-700"
                                     }`}
                                 >
-                                    {admin.active
-                                        ? "Active"
-                                        : "Inactive"}
+                                    {admin.active ? "Active" : "Inactive"}
                                 </span>
                             </td>
                             <td
@@ -56,7 +61,10 @@ export default function AdminsTable({ admins, onRowClick, onToggleStatus }) {
                             >
                                 <button
                                     onClick={() =>
-                                        onToggleStatus(admin.user_id, admin.active)
+                                        onToggleStatus(
+                                            admin.user_id,
+                                            admin.active,
+                                        )
                                     }
                                     className={`px-3 py-1 rounded text-sm ${
                                         admin.active
@@ -64,9 +72,7 @@ export default function AdminsTable({ admins, onRowClick, onToggleStatus }) {
                                             : "bg-green-100 text-green-700 hover:bg-green-200"
                                     }`}
                                 >
-                                    {admin.active
-                                        ? "Deactivate"
-                                        : "Activate"}
+                                    {admin.active ? "Deactivate" : "Activate"}
                                 </button>
                             </td>
                         </tr>

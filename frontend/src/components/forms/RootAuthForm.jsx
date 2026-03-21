@@ -1,5 +1,6 @@
 /**
  * RootAuthForm.jsx
+ * @author Thomas Noakes
  */
 
 import React from "react";
@@ -8,7 +9,23 @@ import FormInput from "./FormInput";
 import SubmitButton from "./SubmitButton";
 import { ROOT_AUTH_FIELDS } from "../../config/rootAuthFields";
 
-export default function RootAuthForm({ credentials, onChange, onSubmit, loading }) {
+/**
+ * A form for root authentication with fields for username and password.
+ *
+ * @param {Object} props
+ * @param {Object} props.credentials - Current credential values.
+ * @param {Function} props.onChange - Change handler for input fields.
+ * @param {Function} props.onSubmit - Submit handler for the form.
+ * @param {boolean} props.loading - Whether the form is in a loading state.
+ *
+ * @returns {JSX.Element} the rendered form.
+ */
+export default function RootAuthForm({
+    credentials,
+    onChange,
+    onSubmit,
+    loading,
+}) {
     return (
         <form onSubmit={onSubmit} className="space-y-4">
             <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
@@ -31,7 +48,11 @@ export default function RootAuthForm({ credentials, onChange, onSubmit, loading 
                 </div>
             </div>
             <div className="flex gap-4 pt-4">
-                <SubmitButton type="submit" className="w-auto px-6 mt-0" disabled={loading}>
+                <SubmitButton
+                    type="submit"
+                    className="w-auto px-6 mt-0"
+                    disabled={loading}
+                >
                     {loading ? "Loading..." : "View Admins"}
                 </SubmitButton>
             </div>
