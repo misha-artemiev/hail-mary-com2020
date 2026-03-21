@@ -25,6 +25,7 @@ import CreateAdmin from "../pages/CreateAdmin";
 import ManageAdmins from "../pages/ManageAdmins";
 import SellerDashboard from "../pages/SellerDashboard";
 import SellerIssues from "../pages/SellerIssues";
+import ConsumerDashboard from "../pages/ConsumerDashboard";
 import ReportError from "../pages/ReportError";
 import AdminPage from "../pages/AdminPage";
 
@@ -129,6 +130,14 @@ export const ROUTES = [
         element: (
             <ProtectedRoute>
                 <SellerIssues />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/reservations",
+        element: (
+            <ProtectedRoute>
+                <ConsumerDashboard />
             </ProtectedRoute>
         ),
     },
