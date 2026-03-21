@@ -65,7 +65,7 @@ export default function SellerProfileCard({ onLogout }) {
 
     return (
         <Card className="mb-6">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-center mb-4 gap-4">
                 <div className="flex-1">
                     <h2 className="text-xl font-bold text-green-700 mb-2">
                         {profile.seller_name}
@@ -111,25 +111,30 @@ export default function SellerProfileCard({ onLogout }) {
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    {!isEditing && (
-                        <Button onClick={() => setIsEditing(true)}>Edit</Button>
-                    )}
-                    <Button onClick={onLogout} variant="danger">
-                        Logout
-                    </Button>
-                </div>
-            </div>
 
-            <div className="flex justify-center min-h-[120px] items-center">
-                <img
-                    src={imageUrl || defaultProfile}
-                    alt={profile.seller_name}
-                    className="w-24 h-24 rounded-full object-cover border-2 border-green-600"
-                    onError={(e) => {
-                        e.target.src = defaultProfile;
-                    }}
-                />
+                <div className="flex justify-center">
+                    <img
+                        src={imageUrl || defaultProfile}
+                        alt={profile.seller_name}
+                        className="w-30 h-30 rounded-full object-cover border-2 border-green-600"
+                        onError={(e) => {
+                            e.target.src = defaultProfile;
+                        }}
+                    />
+                </div>
+
+                <div className="flex-1 flex justify-end items-center gap-2">
+                    <div className="flex gap-2 w-fit">
+                        {!isEditing && (
+                            <Button onClick={() => setIsEditing(true)}>
+                                Edit
+                            </Button>
+                        )}
+                        <Button onClick={onLogout} variant="danger">
+                            Logout
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             {hasLocation && (
