@@ -512,6 +512,7 @@ async def get_reservations(
         )
     return list(reservations)
 
+
 @router.patch(
     "/me/bundles/{bundle_id}/reservations/collect",
     tags=["reservations"],
