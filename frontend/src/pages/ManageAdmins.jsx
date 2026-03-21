@@ -107,8 +107,8 @@ export default function ManageAdmins() {
     const openEditModal = (admin) => {
         setSelectedAdmin(admin);
         setEditForm({
-            first_name: admin.first_name || "",
-            last_name: admin.last_name || "",
+            first_name: admin.fname || "",
+            last_name: admin.lname || "",
             email: admin.email || "",
             password: "",
         });
