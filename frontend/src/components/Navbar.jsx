@@ -150,9 +150,14 @@ export default function Navbar() {
                 )}
 
                 {userRole === "admin" && (
-                    <NavLink to="/admin/create" className="text-bold text-lg">
-                        Create new Administrator
-                    </NavLink>
+                    <>
+                        <NavLink to="/admin/create" className="text-bold text-lg">
+                            Create Admin
+                        </NavLink>
+                        <NavLink to="/admin/manage" className="text-bold text-lg">
+                            Manage Admins
+                        </NavLink>
+                    </>
                 )}
 
                 {/* If signed in, show profile picture (link to profile page) */}
