@@ -73,6 +73,10 @@ from internal.auth.middleware import SellerAuthDep
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+)
+from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.allergens import (
     AddBundlesAllergenParams,
     DeleteBundleAllergenParams,
@@ -86,22 +90,18 @@ from internal.queries.bundle import (
     GetSellersBundleParams,
     UpdateBundleParams,
 )
-from internal.queries.admin_issue_reports import (
-    AsyncQuerier as AdminIssueReportsQuerier,
-)
-from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.category import (
     AddBundlesCategoryParams,
     DeleteBundleCategoryParams,
 )
 from internal.queries.category import AsyncQuerier as CategoryQuerier
 from internal.queries.models import (
+    AdminIssueReport,
+    AdminIssueType,
     AnalyticsGraph,
     AnalyticsGraphsType,
     AnalyticsPoint,
     AnalyticsSeries,
-    AdminIssueReport,
-    AdminIssueType,
     Bundle,
     Reservation,
     SellerIssueReport,
@@ -536,7 +536,7 @@ class CreateSellerIssueReportForm(BaseModel):
     "/me/reservations/{reservation_id}/report",
     status_code=status.HTTP_201_CREATED,
     summary="Create seller issue report",
-    description="Creates a new seller issue report for a reservation on the seller's bundle.",
+    description="Creates a seller issue report for a reservation bundle.",
     tags=["reports"],
 )
 async def create_seller_issue_report(
@@ -557,15 +557,15 @@ async def create_seller_issue_report(
         created seller issue report
 
     Raises:
-        HTTPException: if reservation not found, not linked to seller bundle, or creation fails
+        HTTPException: if reservation not found, not linked to seller bundle,
+            or creation fails
     """
     reservation = await ReservationsQuerier(conn).get_reservation(
         reservation_id=reservation_id
     )
     if not reservation:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Reservation not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Reservation not found"
         )
 
     bundle = await BundleQuerier(conn).get_bundle(bundle_id=reservation.bundle_id)
@@ -605,9 +605,7 @@ class CreateAdminIssueReportForm(BaseModel):
     tags=["reports"],
 )
 async def create_admin_issue_report(
-    form: CreateAdminIssueReportForm,
-    conn: database_dependency,
-    seller: SellerAuthDep,
+    form: CreateAdminIssueReportForm, conn: database_dependency, seller: SellerAuthDep
 ) -> AdminIssueReport:
     """Create admin issue report by seller.
 
