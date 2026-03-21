@@ -170,6 +170,24 @@ async def change_profile_image(file: UploadFile, session: BearerAuthDep) -> None
     """
     await block_management.upload_profile_image(session.user_id, file)
 
+@router.get(
+    path="/me/image",
+    status_code=status.HTTP_200_OK,
+    summary="Get own profile image",
+    description="Retrieves the profile image for the authenticated user.",
+)
+async def get_profile_image_me(session: BearerAuthDep) -> Response:
+    """Get own profile image.
+
+    Args:
+        session: user session
+
+    Returns:
+        user profile image
+    """
+    return Response(
+        block_management.get_profile_image(session.user_id), media_type="image/jpeg"
+    )
 
 @router.get(
     path="/{user_id}/image",
@@ -188,24 +206,4 @@ async def get_profile_image_by_id(user_id: int) -> Response:
     """
     return Response(
         block_management.get_profile_image(user_id), media_type="image/jpeg"
-    )
-
-
-@router.get(
-    path="/me/image",
-    status_code=status.HTTP_200_OK,
-    summary="Get own profile image",
-    description="Retrieves the profile image for the authenticated user.",
-)
-async def get_profile_image_me(session: BearerAuthDep) -> Response:
-    """Get own profile image.
-
-    Args:
-        session: user session
-
-    Returns:
-        user profile image
-    """
-    return Response(
-        block_management.get_profile_image(session.user_id), media_type="image/jpeg"
     )
