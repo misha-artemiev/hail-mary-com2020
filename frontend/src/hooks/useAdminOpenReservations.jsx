@@ -49,16 +49,17 @@ export default function useAdminOpenReservations() {
                     "Content-Type": "application/json",
                 };
 
-                const [bundlesResponse, reservationsResponse] = await Promise.all([
-                    fetch(`${API_BASE_URL}/admins/database/bundles`, {
-                        method: "GET",
-                        headers,
-                    }),
-                    fetch(`${API_BASE_URL}/admins/database/reservations`, {
-                        method: "GET",
-                        headers,
-                    }),
-                ]);
+                const [bundlesResponse, reservationsResponse] =
+                    await Promise.all([
+                        fetch(`${API_BASE_URL}/admins/database/bundles`, {
+                            method: "GET",
+                            headers,
+                        }),
+                        fetch(`${API_BASE_URL}/admins/database/reservations`, {
+                            method: "GET",
+                            headers,
+                        }),
+                    ]);
 
                 if (!bundlesResponse.ok || !reservationsResponse.ok) {
                     const bundlesError = await bundlesResponse
@@ -85,7 +86,8 @@ export default function useAdminOpenReservations() {
                         const bundle = bundleMap.get(reservation.bundle_id);
                         return {
                             ...reservation,
-                            bundle_name: bundle?.bundle_name || "Unknown bundle",
+                            bundle_name:
+                                bundle?.bundle_name || "Unknown bundle",
                             window_end: bundle?.window_end || null,
                             status: deriveStatus(reservation, bundle),
                         };

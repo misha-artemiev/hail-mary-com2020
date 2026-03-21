@@ -75,7 +75,7 @@ export default function DeveloperProfile() {
         { id: "issues", label: "Issues" },
         { id: "users", label: "Users" },
     ];
-    
+
     // Use hooks for data fetching (no direct API calls)
     const { listings, loading, search } = useSearchBundles();
     const {
@@ -121,7 +121,8 @@ export default function DeveloperProfile() {
 
     const filteredIssueReports = issueReports.filter((report) => {
         const sourceMatches =
-            issueSourceFilter === "all" || report.source_type === issueSourceFilter;
+            issueSourceFilter === "all" ||
+            report.source_type === issueSourceFilter;
         const statusMatches =
             issueStatusFilter === "all" || report.status === issueStatusFilter;
 
@@ -390,7 +391,9 @@ export default function DeveloperProfile() {
                     name="reservationConsumerFilter"
                     type="text"
                     value={reservationConsumerFilter}
-                    onChange={(e) => setReservationConsumerFilter(e.target.value)}
+                    onChange={(e) =>
+                        setReservationConsumerFilter(e.target.value)
+                    }
                 />
                 <FormInput
                     placeholder="Filter by claim code"
@@ -422,48 +425,50 @@ export default function DeveloperProfile() {
             {!openReservationsLoading &&
                 !openReservationsError &&
                 filteredOpenReservations.length > 0 && (
-                <div className="space-y-4">
-                    {filteredOpenReservations.map((reservation) => (
-                        <div
-                            key={reservation.reservation_id}
-                            className="p-4 rounded-lg border border-gray-200 bg-gray-50"
-                        >
-                            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    {reservation.bundle_name}
-                                </h3>
-                                <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                                    Open
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-700">
-                                Reservation ID: {reservation.reservation_id}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                                Bundle ID: {reservation.bundle_id}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                                Consumer ID: {reservation.consumer_id}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                                Claim Code: {reservation.claim_code}
-                            </p>
-                            <p className="text-sm text-gray-700">
-                                Reserved At:{" "}
-                                {new Date(reservation.reserved_at).toLocaleString()}
-                            </p>
-                            {reservation.window_end && (
+                    <div className="space-y-4">
+                        {filteredOpenReservations.map((reservation) => (
+                            <div
+                                key={reservation.reservation_id}
+                                className="p-4 rounded-lg border border-gray-200 bg-gray-50"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <h3 className="text-lg font-semibold text-gray-800">
+                                        {reservation.bundle_name}
+                                    </h3>
+                                    <span className="text-xs font-semibold px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                                        Open
+                                    </span>
+                                </div>
                                 <p className="text-sm text-gray-700">
-                                    Pickup Window Ends:{" "}
+                                    Reservation ID: {reservation.reservation_id}
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                    Bundle ID: {reservation.bundle_id}
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                    Consumer ID: {reservation.consumer_id}
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                    Claim Code: {reservation.claim_code}
+                                </p>
+                                <p className="text-sm text-gray-700">
+                                    Reserved At:{" "}
                                     {new Date(
-                                        reservation.window_end,
+                                        reservation.reserved_at,
                                     ).toLocaleString()}
                                 </p>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
+                                {reservation.window_end && (
+                                    <p className="text-sm text-gray-700">
+                                        Pickup Window Ends:{" "}
+                                        {new Date(
+                                            reservation.window_end,
+                                        ).toLocaleString()}
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
         </Card>
     );
 
@@ -509,64 +514,78 @@ export default function DeveloperProfile() {
                 </div>
             )}
 
-            {!issuesLoading && !issuesError && filteredIssueReports.length === 0 && (
-                <p className="text-gray-600">No issue reports found.</p>
-            )}
+            {!issuesLoading &&
+                !issuesError &&
+                filteredIssueReports.length === 0 && (
+                    <p className="text-gray-600">No issue reports found.</p>
+                )}
 
-            {!issuesLoading && !issuesError && filteredIssueReports.length > 0 && (
-                <div className="space-y-3">
-                    {filteredIssueReports.map((report) => (
-                        <div
-                            key={`${report.source_type}-${report.report_id}`}
-                            className="border border-gray-200 rounded-lg p-4 bg-white"
-                        >
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <span className="font-semibold text-gray-800">
-                                    Report #{report.report_id}
-                                </span>
-                                <span
-                                    className={`text-xs font-semibold px-2 py-1 rounded ${statusClasses(
-                                        report.status,
-                                    )}`}
-                                >
-                                    {prettyLabel(report.status)}
-                                </span>
-                            </div>
+            {!issuesLoading &&
+                !issuesError &&
+                filteredIssueReports.length > 0 && (
+                    <div className="space-y-3">
+                        {filteredIssueReports.map((report) => (
+                            <div
+                                key={`${report.source_type}-${report.report_id}`}
+                                className="border border-gray-200 rounded-lg p-4 bg-white"
+                            >
+                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                    <span className="font-semibold text-gray-800">
+                                        Report #{report.report_id}
+                                    </span>
+                                    <span
+                                        className={`text-xs font-semibold px-2 py-1 rounded ${statusClasses(
+                                            report.status,
+                                        )}`}
+                                    >
+                                        {prettyLabel(report.status)}
+                                    </span>
+                                </div>
 
-                            <p className="text-sm text-gray-700 mb-1">
-                                <span className="font-semibold">Source:</span>{" "}
-                                {prettyLabel(report.source_type)}
-                            </p>
-                            <p className="text-sm text-gray-700 mb-1">
-                                <span className="font-semibold">Issue Type:</span>{" "}
-                                {prettyLabel(report.issue_type)}
-                            </p>
-                            {report.reservation_id && (
                                 <p className="text-sm text-gray-700 mb-1">
                                     <span className="font-semibold">
-                                        Reservation:
+                                        Source:
                                     </span>{" "}
-                                    {report.reservation_id}
+                                    {prettyLabel(report.source_type)}
                                 </p>
-                            )}
-                            {report.user_id && (
                                 <p className="text-sm text-gray-700 mb-1">
-                                    <span className="font-semibold">User ID:</span>{" "}
-                                    {report.user_id}
+                                    <span className="font-semibold">
+                                        Issue Type:
+                                    </span>{" "}
+                                    {prettyLabel(report.issue_type)}
                                 </p>
-                            )}
-                            <p className="text-sm text-gray-700 mb-2">
-                                <span className="font-semibold">Reported:</span>{" "}
-                                {new Date(report.created_at).toLocaleString()}
-                            </p>
+                                {report.reservation_id && (
+                                    <p className="text-sm text-gray-700 mb-1">
+                                        <span className="font-semibold">
+                                            Reservation:
+                                        </span>{" "}
+                                        {report.reservation_id}
+                                    </p>
+                                )}
+                                {report.user_id && (
+                                    <p className="text-sm text-gray-700 mb-1">
+                                        <span className="font-semibold">
+                                            User ID:
+                                        </span>{" "}
+                                        {report.user_id}
+                                    </p>
+                                )}
+                                <p className="text-sm text-gray-700 mb-2">
+                                    <span className="font-semibold">
+                                        Reported:
+                                    </span>{" "}
+                                    {new Date(
+                                        report.created_at,
+                                    ).toLocaleString()}
+                                </p>
 
-                            <p className="text-sm text-gray-800 whitespace-pre-line">
-                                {report.description}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            )}
+                                <p className="text-sm text-gray-800 whitespace-pre-line">
+                                    {report.description}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
         </Card>
     );
 
@@ -634,7 +653,8 @@ export default function DeveloperProfile() {
                                 {user.role === "seller" && (
                                     <span
                                         className={`text-xs font-semibold px-2 py-1 rounded ${
-                                            user.verification_status === "verified"
+                                            user.verification_status ===
+                                            "verified"
                                                 ? "bg-green-100 text-green-800"
                                                 : "bg-yellow-100 text-yellow-800"
                                         }`}
@@ -661,7 +681,9 @@ export default function DeveloperProfile() {
                                 {new Date(user.created_at).toLocaleString()}
                             </p>
                             <p className="text-sm text-gray-700">
-                                <span className="font-semibold">Last Login:</span>{" "}
+                                <span className="font-semibold">
+                                    Last Login:
+                                </span>{" "}
                                 {new Date(user.last_login).toLocaleString()}
                             </p>
                         </div>

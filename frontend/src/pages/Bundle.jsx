@@ -266,19 +266,20 @@ export default function Bundle() {
                                             </p>
                                         )}
 
-                                    {!isCollected && reservation?.reservation_id && (
-                                        <div className="mt-4">
-                                            <Button
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
-                                                    )
-                                                }
-                                            >
-                                                Report This Reservation
-                                            </Button>
-                                        </div>
-                                    )}
+                                    {!isCollected &&
+                                        reservation?.reservation_id && (
+                                            <div className="mt-4">
+                                                <Button
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
+                                                        )
+                                                    }
+                                                >
+                                                    Report This Reservation
+                                                </Button>
+                                            </div>
+                                        )}
                                 </div>
                             );
                         })()

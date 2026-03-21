@@ -47,8 +47,12 @@ export default function useAdminUsers() {
                 ]);
 
                 if (!consumersRes.ok || !sellersRes.ok) {
-                    const consumersErr = await consumersRes.json().catch(() => null);
-                    const sellersErr = await sellersRes.json().catch(() => null);
+                    const consumersErr = await consumersRes
+                        .json()
+                        .catch(() => null);
+                    const sellersErr = await sellersRes
+                        .json()
+                        .catch(() => null);
                     throw new Error(
                         consumersErr?.detail ||
                             sellersErr?.detail ||

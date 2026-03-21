@@ -74,7 +74,9 @@ export default function SellerIssues() {
     }, [issueReports]);
 
     const sourceOptions = useMemo(() => {
-        const sources = new Set(issueReports.map((report) => report.source_type));
+        const sources = new Set(
+            issueReports.map((report) => report.source_type),
+        );
         return [
             { value: "all", label: "All sources" },
             ...Array.from(sources).map((source) => ({
@@ -122,10 +124,13 @@ export default function SellerIssues() {
                     <h1 className="text-3xl font-bold text-green-700">
                         Seller Issue Reports
                     </h1>
-                    <Button onClick={() => navigate("/dashboard")}>Back to Dashboard</Button>
+                    <Button onClick={() => navigate("/dashboard")}>
+                        Back to Dashboard
+                    </Button>
                 </div>
                 <p className="text-gray-600">
-                    These issues are derived from your bundle and reservation data.
+                    These issues are derived from your bundle and reservation
+                    data.
                 </p>
             </Card>
 
@@ -163,7 +168,9 @@ export default function SellerIssues() {
                     Reported Issues
                 </h2>
 
-                {loading && <p className="text-gray-600">Loading issue reports...</p>}
+                {loading && (
+                    <p className="text-gray-600">Loading issue reports...</p>
+                )}
 
                 {!loading && error && (
                     <div className="text-center font-semibold bg-red-100 text-red-800 p-3 mb-4 rounded">
@@ -172,7 +179,9 @@ export default function SellerIssues() {
                 )}
 
                 {!loading && !error && filteredReports.length === 0 && (
-                    <p className="text-gray-600">No matching issue reports found.</p>
+                    <p className="text-gray-600">
+                        No matching issue reports found.
+                    </p>
                 )}
 
                 {!loading && !error && filteredReports.length > 0 && (
@@ -196,23 +205,33 @@ export default function SellerIssues() {
                                 </div>
 
                                 <p className="text-sm text-gray-700 mb-1">
-                                    <span className="font-semibold">Source:</span>{" "}
+                                    <span className="font-semibold">
+                                        Source:
+                                    </span>{" "}
                                     {prettyLabel(report.source_type)}
                                 </p>
                                 <p className="text-sm text-gray-700 mb-1">
-                                    <span className="font-semibold">Bundle:</span>{" "}
+                                    <span className="font-semibold">
+                                        Bundle:
+                                    </span>{" "}
                                     {report.bundle_name} (#{report.bundle_id})
                                 </p>
                                 <p className="text-sm text-gray-700 mb-1">
-                                    <span className="font-semibold">Reservation:</span>{" "}
+                                    <span className="font-semibold">
+                                        Reservation:
+                                    </span>{" "}
                                     {report.reservation_id ?? "N/A"}
                                 </p>
                                 <p className="text-sm text-gray-700 mb-1">
-                                    <span className="font-semibold">Issue Type:</span>{" "}
+                                    <span className="font-semibold">
+                                        Issue Type:
+                                    </span>{" "}
                                     {prettyLabel(report.issue_type)}
                                 </p>
                                 <p className="text-sm text-gray-700 mb-2">
-                                    <span className="font-semibold">Reported:</span>{" "}
+                                    <span className="font-semibold">
+                                        Reported:
+                                    </span>{" "}
                                     {formatDate(report.created_at)}
                                 </p>
 

@@ -22,7 +22,9 @@ export default function RoleSelect({ label, value, onChange, options }) {
     return (
         <div>
             {/* Label */}
-            <label className="block font-semibold text-gray-700 mb-1">{label}</label>
+            <label className="block font-semibold text-gray-700 mb-1">
+                {label}
+            </label>
             <select
                 required
                 value={value}

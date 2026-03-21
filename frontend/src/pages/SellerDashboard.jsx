@@ -393,7 +393,9 @@ export default function SellerDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                         type="button"
-                        onClick={() => navigate("/dashboard/issues?status=open")}
+                        onClick={() =>
+                            navigate("/dashboard/issues?status=open")
+                        }
                         className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-left hover:bg-amber-100 transition"
                     >
                         <p className="text-sm font-medium text-amber-800">

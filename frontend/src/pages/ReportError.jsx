@@ -96,7 +96,9 @@ export default function ReportError() {
         }
 
         if (userRole !== "consumer" && userRole !== "seller") {
-            throw new Error("Only consumers and sellers can submit issue reports.");
+            throw new Error(
+                "Only consumers and sellers can submit issue reports.",
+            );
         }
 
         if (!issueType) {
@@ -120,17 +122,14 @@ export default function ReportError() {
                     ? `${API_BASE_URL}/sellers/me/reservations/${form.reservation_id}/report`
                     : `${API_BASE_URL}/consumers/me/reservations/${form.reservation_id}/report`;
 
-            const response = await fetch(
-                reservationEndpoint,
-                {
-                    method: "POST",
-                    headers: commonHeaders,
-                    body: JSON.stringify({
-                        issue_type: "OTHER",
-                        description: buildDescription(),
-                    }),
-                },
-            );
+            const response = await fetch(reservationEndpoint, {
+                method: "POST",
+                headers: commonHeaders,
+                body: JSON.stringify({
+                    issue_type: "OTHER",
+                    description: buildDescription(),
+                }),
+            });
 
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
@@ -148,17 +147,14 @@ export default function ReportError() {
                 ? `${API_BASE_URL}/sellers/me/reports/admin`
                 : `${API_BASE_URL}/consumers/me/reports/admin`;
 
-        const response = await fetch(
-            adminEndpoint,
-            {
-                method: "POST",
-                headers: commonHeaders,
-                body: JSON.stringify({
-                    issue_type: "OTHER",
-                    description: buildDescription(),
-                }),
-            },
-        );
+        const response = await fetch(adminEndpoint, {
+            method: "POST",
+            headers: commonHeaders,
+            body: JSON.stringify({
+                issue_type: "OTHER",
+                description: buildDescription(),
+            }),
+        });
 
         if (!response.ok) {
             const data = await response.json().catch(() => null);

@@ -45,7 +45,9 @@ export default function useAdminIssueReports() {
                 ]);
 
                 if (!sellerRes.ok || !adminRes.ok) {
-                    const sellerError = await sellerRes.json().catch(() => null);
+                    const sellerError = await sellerRes
+                        .json()
+                        .catch(() => null);
                     const adminError = await adminRes.json().catch(() => null);
                     throw new Error(
                         sellerError?.detail ||
@@ -65,11 +67,13 @@ export default function useAdminIssueReports() {
                     reservation_id: null,
                 }));
 
-                const combined = [...sellerIssues, ...adminIssues].sort((a, b) => {
-                    const first = new Date(a.created_at).getTime();
-                    const second = new Date(b.created_at).getTime();
-                    return second - first;
-                });
+                const combined = [...sellerIssues, ...adminIssues].sort(
+                    (a, b) => {
+                        const first = new Date(a.created_at).getTime();
+                        const second = new Date(b.created_at).getTime();
+                        return second - first;
+                    },
+                );
 
                 setIssueReports(combined);
             } catch (err) {
