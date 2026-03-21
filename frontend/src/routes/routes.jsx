@@ -31,6 +31,7 @@ import AdminPage from "../pages/AdminPage";
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRoute";
+import AdminRoute from "./AdminRoute";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -135,9 +136,9 @@ export const ROUTES = [
     {
         path: "/admin",
         element: (
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminRoute>
                 <AdminPage />
-            </ProtectedRoute>
+            </AdminRoute>
         ),
     },
     {
