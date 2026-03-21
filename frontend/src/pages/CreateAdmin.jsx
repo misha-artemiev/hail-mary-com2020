@@ -10,15 +10,16 @@ import Card from "../components/Card";
 import Button from "../components/forms/Button";
 import FormInput from "../components/forms/FormInput";
 import SubmitButton from "../components/forms/SubmitButton";
+import { ROOT_AUTH_FIELDS } from "../config/rootAuthFields";
 import useCreateAdmin from "../hooks/useCreateAdmin";
 
 export default function CreateAdmin() {
     const navigate = useNavigate();
     const { creating, createAdmin } = useCreateAdmin();
 
+    const [rootCredentials, setRootCredentials] = useState({ username: "", password: "" });
+
     const [form, setFormData] = useState({
-        rootUsername: "",
-        rootPassword: "",
         username: "",
         email: "",
         password: "",
@@ -29,9 +30,12 @@ export default function CreateAdmin() {
 
     const [error, setError] = useState(null);
 
+    const handleRootChange = (e) => {
+        setRootCredentials((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSubmit = async (e) => {
@@ -52,8 +56,8 @@ export default function CreateAdmin() {
         };
 
         try {
-            await createAdmin(adminData, form.rootUsername, form.rootPassword);
-            navigate("/");
+            await createAdmin(adminData, rootCredentials.username, rootCredentials.password);
+            navigate("/admin/manage");
         } catch (err) {
             setError(err.message);
         }
@@ -78,95 +82,41 @@ export default function CreateAdmin() {
                             Root Authentication
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormInput
-                                label="Root Username"
-                                name="rootUsername"
-                                type="text"
-                                value={form.rootUsername}
-                                onChange={handleChange}
-                                required
-                                placeholder="Enter root username"
-                            />
-                            <FormInput
-                                label="Root Password"
-                                name="rootPassword"
-                                type="password"
-                                value={form.rootPassword}
-                                onChange={handleChange}
-                                required
-                                placeholder="Enter root password"
-                            />
+                            {ROOT_AUTH_FIELDS.map((field) => (
+                                <FormInput
+                                    key={field.name}
+                                    label={field.label}
+                                    name={field.name}
+                                    type={field.type}
+                                    value={rootCredentials[field.name]}
+                                    onChange={handleRootChange}
+                                    required
+                                    placeholder={field.placeholder}
+                                />
+                            ))}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput
-                            label="Username"
-                            name="username"
-                            type="text"
-                            value={form.username}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter username"
-                        />
-                        <FormInput
-                            label="Email"
-                            name="email"
-                            type="email"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter email"
-                        />
+                        <FormInput label="Username" name="username" type="text" value={form.username} onChange={handleChange} required placeholder="Enter username" />
+                        <FormInput label="Email" name="email" type="email" value={form.email} onChange={handleChange} required placeholder="Enter email" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput
-                            label="First Name"
-                            name="first_name"
-                            type="text"
-                            value={form.first_name}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter first name"
-                        />
-                        <FormInput
-                            label="Last Name"
-                            name="last_name"
-                            type="text"
-                            value={form.last_name}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter last name"
-                        />
+                        <FormInput label="First Name" name="first_name" type="text" value={form.first_name} onChange={handleChange} required placeholder="Enter first name" />
+                        <FormInput label="Last Name" name="last_name" type="text" value={form.last_name} onChange={handleChange} required placeholder="Enter last name" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormInput
-                            label="Password"
-                            name="password"
-                            type="password"
-                            value={form.password}
-                            onChange={handleChange}
-                            required
-                            placeholder="Enter password"
-                        />
-                        <FormInput
-                            label="Confirm Password"
-                            name="confirmPassword"
-                            type="password"
-                            value={form.confirmPassword}
-                            onChange={handleChange}
-                            required
-                            placeholder="Confirm password"
-                        />
+                        <FormInput label="Password" name="password" type="password" value={form.password} onChange={handleChange} required placeholder="Enter password" />
+                        <FormInput label="Confirm Password" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} required placeholder="Confirm password" />
                     </div>
 
                     <div className="flex gap-4 pt-4">
                         <SubmitButton disabled={creating}>
                             {creating ? "Creating Admin..." : "Create Admin"}
                         </SubmitButton>
-                        <Button onClick={() => navigate("/")}>Cancel</Button>
+                        <Button type="button" onClick={() => navigate("/admin/manage")}>Cancel</Button>
                     </div>
                 </form>
             </Card>
