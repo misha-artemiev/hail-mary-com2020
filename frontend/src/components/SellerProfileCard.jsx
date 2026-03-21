@@ -125,11 +125,16 @@ export default function SellerProfileCard({ onLogout }) {
 
                 <div className="flex-1 flex justify-end items-center gap-2">
                     <div className="flex gap-2 w-fit">
-                        {!isEditing && (
-                            <Button onClick={() => setIsEditing(true)}>
-                                Edit
-                            </Button>
-                        )}
+                        <Button
+                            onClick={() =>
+                                isEditing
+                                    ? setIsEditing(false)
+                                    : setIsEditing(true)
+                            }
+                            variant={isEditing ? "danger" : undefined}
+                        >
+                            {isEditing ? "Cancel" : "Edit"}
+                        </Button>
                         <Button onClick={onLogout} variant="danger">
                             Logout
                         </Button>

@@ -168,14 +168,6 @@ export default function SellerProfileEditForm({
             </div>
 
             <div className="flex justify-end items-center gap-2 pt-2">
-                <Button
-                    type="button"
-                    onClick={onCancel}
-                    disabled={saving}
-                    className="px-6 py-2.5 w-auto h-11"
-                >
-                    Cancel
-                </Button>
                 <SubmitButton
                     disabled={saving}
                     className="px-6 py-2.5 w-auto mt-0 h-11"
