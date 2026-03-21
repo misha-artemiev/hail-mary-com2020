@@ -3,7 +3,7 @@ import { getAuthToken } from "../services/authService";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
-export default function useSellerProfile() {
+export default function useConsumerProfile() {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -20,7 +20,7 @@ export default function useSellerProfile() {
         setError(null);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/sellers/me`, {
+            const response = await fetch(`${API_BASE_URL}/consumers/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -45,7 +45,7 @@ export default function useSellerProfile() {
             throw new Error("Not authenticated");
         }
 
-        const response = await fetch(`${API_BASE_URL}/sellers/me`, {
+        const response = await fetch(`${API_BASE_URL}/consumers/me`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",

@@ -164,9 +164,12 @@ export default function Navbar() {
                             >
                                 <span>Profile</span>
                                 <img
-                                    src={user.profilePic}
-                                    alt={`${user.displayName}'s profile`}
-                                    className="w-10 h-10 rounded-full"
+                                    src={imageUrl || defaultProfile}
+                                    alt="Profile"
+                                    className="w-10 h-10 rounded-full object-cover"
+                                    onError={(e) => {
+                                        e.target.src = defaultProfile;
+                                    }}
                                 />
                             </NavLink>
                         ) : (

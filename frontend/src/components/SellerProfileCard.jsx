@@ -20,10 +20,26 @@ const markerIcon = L.icon({
 });
 
 export default function SellerProfileCard({ onLogout }) {
-    const { profile, loading, error, refetch, updateProfile, updateImage } =
-        useSellerProfile();
+    const {
+        profile,
+        loading,
+        error,
+        refetch,
+        updateProfile,
+        updateImage,
+        updateEmail,
+        updatePassword,
+    } = useSellerProfile();
     const { imageUrl } = useUserImage();
     const [isEditing, setIsEditing] = useState(false);
+
+    const [emailForm, setEmailForm] = useState("");
+    const [oldPassword, setOldPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [emailSuccess, setEmailSuccess] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [passwordSuccess, setPasswordSuccess] = useState("");
+    const [passwordError, setPasswordError] = useState("");
 
     const handleSave = async (formData, newImage) => {
         await updateProfile(formData);
@@ -32,6 +48,36 @@ export default function SellerProfileCard({ onLogout }) {
         }
         setIsEditing(false);
         refetch();
+    };
+
+    const handleEmailSubmit = async (e) => {
+        e.preventDefault();
+        setEmailError("");
+        setEmailSuccess("");
+
+        try {
+            await updateEmail(emailForm);
+            setEmailSuccess("Email updated");
+            setEmailForm("");
+            refetch();
+        } catch (err) {
+            setEmailError(err.message || "Failed to update email");
+        }
+    };
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        setPasswordError("");
+        setPasswordSuccess("");
+
+        try {
+            await updatePassword(oldPassword, newPassword);
+            setPasswordSuccess("Password updated");
+            setOldPassword("");
+            setNewPassword("");
+        } catch (err) {
+            setPasswordError(err.message || "Failed to update password");
+        }
     };
 
     if (loading) {
@@ -158,12 +204,111 @@ export default function SellerProfileCard({ onLogout }) {
             )}
 
             {isEditing && (
-                <SellerProfileEditForm
-                    profile={profile}
-                    imageUrl={imageUrl}
-                    defaultProfile={defaultProfile}
-                    onSave={handleSave}
-                />
+                <>
+                    <SellerProfileEditForm
+                        profile={profile}
+                        imageUrl={imageUrl}
+                        defaultProfile={defaultProfile}
+                        onSave={handleSave}
+                    />
+
+                    <hr className="my-6 border-gray-200" />
+
+                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                            Change Email
+                        </h3>
+
+                        {emailError && (
+                            <div className="p-3 rounded bg-red-100 text-red-700 font-semibold">
+                                {emailError}
+                            </div>
+                        )}
+
+                        {emailSuccess && (
+                            <div className="p-3 rounded bg-green-100 text-green-700 font-semibold">
+                                {emailSuccess}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                New Email
+                            </label>
+                            <input
+                                type="email"
+                                value={emailForm}
+                                onChange={(e) => setEmailForm(e.target.value)}
+                                required
+                                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            >
+                                Update Email
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr className="my-6 border-gray-200" />
+
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                        <h3 className="text-lg font-semibold text-gray-800">
+                            Change Password
+                        </h3>
+
+                        {passwordError && (
+                            <div className="p-3 rounded bg-red-100 text-red-700 font-semibold">
+                                {passwordError}
+                            </div>
+                        )}
+
+                        {passwordSuccess && (
+                            <div className="p-3 rounded bg-green-100 text-green-700 font-semibold">
+                                {passwordSuccess}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Old Password
+                            </label>
+                            <input
+                                type="password"
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                                required
+                                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                New Password
+                            </label>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                required
+                                className="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-green-500"
+                            />
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                            >
+                                Update Password
+                            </button>
+                        </div>
+                    </form>
+                </>
             )}
         </Card>
     );
