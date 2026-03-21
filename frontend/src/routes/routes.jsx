@@ -14,18 +14,25 @@ import Analytics from "../pages/Analytics";
 import Profile from "../pages/Profile";
 import NotFound from "../pages/NotFound";
 import Login from "../pages/Login";
+import AdminLogin from "../pages/AdminLogin";
 import Signup from "../pages/Signup";
 import User from "../pages/User";
 import EditProfile from "../pages/EditProfile";
 import Bundle from "../pages/Bundle";
 import Collect from "../pages/Collect";
 import CreateBundle from "../pages/CreateBundle";
+import CreateAdmin from "../pages/CreateAdmin";
+import ManageAdmins from "../pages/ManageAdmins";
 import SellerDashboard from "../pages/SellerDashboard";
+import SellerIssues from "../pages/SellerIssues";
+import ConsumerDashboard from "../pages/ConsumerDashboard";
 import ReportError from "../pages/ReportError";
+import AdminPage from "../pages/AdminPage";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRoute";
+import AdminRoute from "./AdminRoute";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -120,8 +127,48 @@ export const ROUTES = [
         ),
     },
     {
+        path: "/dashboard/issues",
+        element: (
+            <ProtectedRoute>
+                <SellerIssues />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/reservations",
+        element: (
+            <ProtectedRoute>
+                <ConsumerDashboard />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/admin",
+        element: (
+            <AdminRoute>
+                <AdminPage />
+            </AdminRoute>
+        ),
+    },
+    {
         path: "/report-error",
         element: <ReportError />,
+    },
+    {
+        path: "/admin/login",
+        element: (
+            <GuestRoute>
+                <AdminLogin />
+            </GuestRoute>
+        ),
+    },
+    {
+        path: "/admin/create",
+        element: <CreateAdmin />,
+    },
+    {
+        path: "/admin/manage",
+        element: <ManageAdmins />,
     },
     // Catch-all (i.e. 404)
     {

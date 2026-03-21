@@ -60,13 +60,41 @@ export default function HamburgerMenu({ isOpen, onClose }) {
             )}
 
             {userRole === "seller" && (
-                <NavLink
-                    to="/dashboard"
-                    className="text-bold text-lg"
-                    onClick={onClose}
-                >
-                    Seller Dashboard
-                </NavLink>
+                <>
+                    <NavLink
+                        to="/dashboard"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        Seller Dashboard
+                    </NavLink>
+                    <NavLink
+                        to="/dashboard/issues"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        Issue Reports
+                    </NavLink>
+                </>
+            )}
+
+            {userRole === "admin" && (
+                <>
+                    <NavLink
+                        to="/admin/create"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        Create Admin
+                    </NavLink>
+                    <NavLink
+                        to="/admin/manage"
+                        className="text-bold text-lg"
+                        onClick={onClose}
+                    >
+                        Manage Admins
+                    </NavLink>
+                </>
             )}
 
             <NavLink
