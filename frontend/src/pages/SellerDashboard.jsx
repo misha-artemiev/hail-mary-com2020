@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -20,11 +20,13 @@ import {
 } from "recharts";
 
 import { useAuth } from "../context/AuthContext";
-
 import useSellerBundles from "../hooks/useSellerBundles";
 import useSellerIssueReports from "../hooks/useSellerIssueReports";
+
+import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
+import { useSellerAllReservations } from "../hooks/useSellerAllReservations";
 
 import Card from "../components/Card";
 import Modal from "../components/Modal";
@@ -32,55 +34,6 @@ import Button from "../components/forms/Button";
 import FormInput from "../components/forms/FormInput";
 import SubmitButton from "../components/forms/SubmitButton";
 import Reservation from "../components/Reservation";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-
-function useAllSellerReservations(bundles) {
-    const [allReservations, setAllReservations] = useState([]);
-
-    useEffect(() => {
-        async function fetchAllReservations() {
-            if (!bundles || bundles.length === 0) {
-                return;
-            }
-
-            const token = localStorage.getItem("authToken");
-            if (!token) {
-                return;
-            }
-
-            const allRes = [];
-            try {
-                for (const bundle of bundles) {
-                    const response = await fetch(
-                        `${API_BASE_URL}/sellers/me/bundles/${bundle.bundle_id}/reservations`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        },
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        allRes.push(
-                            ...data.map((r) => ({
-                                ...r,
-                                bundle_name: bundle.bundle_name,
-                            })),
-                        );
-                    }
-                }
-                setAllReservations(allRes);
-            } catch (err) {
-                console.error(err.message);
-            }
-        }
-
-        fetchAllReservations();
-    }, [bundles]);
-
-    return allReservations;
-}
 
 function CollectModal({ bundles, onClose }) {
     const [selectedBundleId, setSelectedBundleId] = useState("");
@@ -345,15 +298,15 @@ function BundleRow({ bundle }) {
 }
 
 export default function SellerDashboard() {
-    const { userRole } = useAuth();
+    const { userRole, logout } = useAuth();
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
     const { issueReports, loading: issuesLoading } = useSellerIssueReports();
-    const [showCollectModal, setShowCollectModal] = useState(false);
-    const allReservations = useAllSellerReservations(bundles);
     const openIssuesCount = issueReports.filter(
         (issue) => issue.status === "open",
     ).length;
+    const [showCollectModal, setShowCollectModal] = useState(false);
+    const allReservations = useSellerAllReservations(bundles);
 
     if (userRole !== "seller") {
         return (
@@ -378,15 +331,20 @@ export default function SellerDashboard() {
                     <h1 className="text-3xl font-bold text-green-700">
                         Seller Dashboard
                     </h1>
-                    <Button onClick={() => navigate("/bundles/create")}>
-                        Create Bundle
-                    </Button>
-                </div>
-
-                <div className="mb-6">
-                    <Button onClick={() => setShowCollectModal(true)}>
-                        Enter Claim Code
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setShowCollectModal(true)}
+                            className="!w-auto"
+                        >
+                            Enter Claim Code
+                        </Button>
+                        <Button
+                            onClick={() => navigate("/bundles/create")}
+                            className="!w-auto"
+                        >
+                            Create Bundle
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -418,6 +376,8 @@ export default function SellerDashboard() {
                     </button>
                 </div>
             </Card>
+
+            <SellerProfileCard onLogout={logout} />
 
             {showCollectModal && (
                 <CollectModal

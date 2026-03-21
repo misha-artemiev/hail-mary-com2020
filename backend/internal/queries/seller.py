@@ -64,7 +64,7 @@ GET_SELLER_BY_LOCATION = """-- name: get_seller_by_location \\:many
 SELECT u.user_id, u.username, u.email, s.seller_name, s.address_line1, s.address_line2, s.city, s.post_code, s.region, s.country, s.verified_by, s.verification_date, u.last_login, u.created_at, s.latitude, s.longitude
 FROM sellers s
 INNER JOIN users u ON s.user_id=u.user_id
-WHERE s.latitude < :p1 AND s.latitude > :p2 AND s.longitude < :p3 AND s.longitude > :p4
+WHERE s.latitude IS NOT NULL AND s.longitude IS NOT NULL AND s.latitude < :p1 AND s.latitude > :p2 AND s.longitude < :p3 AND s.longitude > :p4
 """
 
 

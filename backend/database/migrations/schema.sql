@@ -289,12 +289,9 @@ CREATE TABLE IF NOT EXISTS analytics_points (
 CREATE TABLE IF NOT EXISTS activity_log (
     activity_id SERIAL PRIMARY KEY,
     user_id INT,
-    user_role user_role,
-    action VARCHAR(50) NOT NULL,
-    resource_type VARCHAR(50),
-    resource_id INT,
+    action VARCHAR(255) NOT NULL,
     details JSONB,
-    ip_address VARCHAR(45),
+    ip_address VARCHAR(45) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );

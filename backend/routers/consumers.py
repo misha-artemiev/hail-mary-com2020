@@ -196,7 +196,7 @@ async def get_reservations(
       consumer: consumer session
 
     Returns:
-        list of consumers reservations
+        list of consumer reservations
 
     Raises:
         HTTPException: if failed to get reservations
@@ -213,6 +213,29 @@ async def get_reservations(
             detail="Failed to get reservations",
         )
     return list(reservations)
+
+
+@router.get(
+    "/me/rescued",
+    tags=["reservations"],
+    status_code=status.HTTP_200_OK,
+    summary="Get number of consumer rescued reservations",
+    description="Retrieves number of rescued (collected) reservations.",
+)
+async def get_rescued(conn: database_dependency, consumer: ConsumerAuthDep) -> int:
+    """Get count of rescued (collected) reservations for the authenticated consumer.
+
+    Args:
+      conn: database connection
+      consumer: consumer session
+
+    Returns:
+        number of rescued (collected) reservations
+    """
+    result = await ReservationsQuerier(conn).count_consumer_collected_reservations(
+        consumer_id=consumer.user_id
+    )
+    return result.collected_count if result else 0
 
 
 class UpdateConsumerForm(BaseModel):
