@@ -3,7 +3,7 @@
  */
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { storeAuthToken } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
@@ -17,6 +17,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 export default function AdminLogin() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || "/admin";
 
     const [form, setForm] = useState({
         username: "",
@@ -62,7 +65,7 @@ export default function AdminLogin() {
             await storeAuthToken(tokenData);
             login(tokenData);
 
-            navigate("/");
+            navigate(from, { replace: true });
         } catch (err) {
             setError(err.message);
         } finally {
