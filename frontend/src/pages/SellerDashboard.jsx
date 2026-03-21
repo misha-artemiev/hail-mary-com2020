@@ -26,6 +26,7 @@ import { useSellerBundleReservations } from "../hooks/useSellerBundleReservation
 import { useCollectReservation } from "../hooks/useCollectReservation";
 
 import Card from "../components/Card";
+import Modal from "../components/Modal";
 import Button from "../components/forms/Button";
 import FormInput from "../components/forms/FormInput";
 import SubmitButton from "../components/forms/SubmitButton";
@@ -100,78 +101,71 @@ function CollectModal({ bundles, onClose }) {
 
     if (collectSuccess) {
         return (
-            <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-                <Card className="w-full max-w-md">
-                    <div className="text-center py-6">
-                        <p className="text-green-600 font-semibold text-lg">
-                            Bundle successfully collected!
-                        </p>
-                        <Button onClick={handleClose} className="mt-4">
-                            Close
-                        </Button>
-                    </div>
-                </Card>
-            </div>
+            <Modal isOpen={true} onClose={handleClose}>
+                <div className="text-center py-6">
+                    <p className="text-green-600 font-semibold text-lg">
+                        Bundle successfully collected!
+                    </p>
+                    <Button onClick={handleClose} className="mt-4">
+                        Close
+                    </Button>
+                </div>
+            </Modal>
         );
     }
 
     return (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
-                <h2 className="text-xl font-bold text-green-700 mb-4">
-                    Collect Bundle
-                </h2>
-                <p className="text-gray-600 mb-4">
-                    Enter the claim code from the customer to mark this bundle
-                    as collected.
-                </p>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Select Bundle
-                        </label>
-                        <select
-                            value={selectedBundleId}
-                            onChange={(e) =>
-                                setSelectedBundleId(e.target.value)
-                            }
-                            className="w-full p-2 border border-gray-300 rounded"
-                            required
-                        >
-                            <option value="">Select a bundle...</option>
-                            {bundles.map((bundle) => (
-                                <option
-                                    key={bundle.bundle_id}
-                                    value={bundle.bundle_id}
-                                >
-                                    {bundle.bundle_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <FormInput
-                        label="Claim Code"
-                        name="claimCode"
-                        value={claimCode}
-                        onChange={(e) => setClaimCode(e.target.value)}
-                        placeholder="Enter the claim code"
+        <Modal isOpen={true} onClose={handleClose} title="Collect Bundle">
+            <p className="text-gray-600 mb-4">
+                Enter the claim code from the customer to mark this bundle
+                as collected.
+            </p>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Select Bundle
+                    </label>
+                    <select
+                        value={selectedBundleId}
+                        onChange={(e) =>
+                            setSelectedBundleId(e.target.value)
+                        }
+                        className="w-full p-2 border border-gray-300 rounded"
                         required
-                    />
-                    <div className="flex gap-2 mt-4">
-                        <SubmitButton
-                            disabled={collecting || !selectedBundleId}
-                        >
-                            {collecting
-                                ? "Collecting..."
-                                : "Confirm Collection"}
-                        </SubmitButton>
-                        <Button type="button" onClick={handleClose}>
-                            Cancel
-                        </Button>
-                    </div>
-                </form>
-            </Card>
-        </div>
+                    >
+                        <option value="">Select a bundle...</option>
+                        {bundles.map((bundle) => (
+                            <option
+                                key={bundle.bundle_id}
+                                value={bundle.bundle_id}
+                            >
+                                {bundle.bundle_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <FormInput
+                    label="Claim Code"
+                    name="claimCode"
+                    value={claimCode}
+                    onChange={(e) => setClaimCode(e.target.value)}
+                    placeholder="Enter the claim code"
+                    required
+                />
+                <div className="flex gap-2 mt-4">
+                    <SubmitButton
+                        disabled={collecting || !selectedBundleId}
+                    >
+                        {collecting
+                            ? "Collecting..."
+                            : "Confirm Collection"}
+                    </SubmitButton>
+                    <Button type="button" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 }
 
