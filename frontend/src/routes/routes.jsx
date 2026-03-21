@@ -29,7 +29,6 @@ import ReportError from "../pages/ReportError";
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
 import GuestRoute from "./GuestRoute";
-import AdminRoute from "./AdminRoute";
 
 /**
  * Dynamically maps routes (i.e. pages) to their paths.
@@ -137,11 +136,7 @@ export const ROUTES = [
     },
     {
         path: "/admin/create",
-        element: (
-            <AdminRoute>
-                <CreateAdmin />
-            </AdminRoute>
-        ),
+        element: <CreateAdmin />,
     },
     {
         path: "/admin/manage",
