@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import FormInput from "./forms/FormInput";
 import SubmitButton from "./forms/SubmitButton";
-import Button from "./forms/Button";
 import LocationPicker from "./LocationPicker";
 
 export default function SellerProfileEditForm({
@@ -9,7 +8,6 @@ export default function SellerProfileEditForm({
     imageUrl,
     defaultProfile,
     onSave,
-    onCancel,
 }) {
     const [formData, setFormData] = useState({
         address_line1: profile.address_line1 ?? "",

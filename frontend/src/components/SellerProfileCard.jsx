@@ -34,10 +34,6 @@ export default function SellerProfileCard({ onLogout }) {
         refetch();
     };
 
-    const handleCancel = () => {
-        setIsEditing(false);
-    };
-
     if (loading) {
         return (
             <Card className="mb-6">
@@ -167,7 +163,6 @@ export default function SellerProfileCard({ onLogout }) {
                     imageUrl={imageUrl}
                     defaultProfile={defaultProfile}
                     onSave={handleSave}
-                    onCancel={handleCancel}
                 />
             )}
         </Card>
