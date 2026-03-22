@@ -1,4 +1,4 @@
-FROM python:3.14-alpine as builder
+FROM python:3.14-slim as builder
 ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
@@ -13,7 +13,9 @@ RUN pip install --upgrade pip
 RUN pip install -U build
 RUN python -m build --wheel
 
-FROM python:3.14-alpine
+
+FROM python:3.14-slim
+ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
 COPY --from=builder /app/backend/dist/*.whl .
