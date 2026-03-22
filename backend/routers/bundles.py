@@ -20,9 +20,11 @@ from internal.queries.seller import GetSellerByLocationParams
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
+from math import ceil
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
+BUNDLES_PER_PAGE = 30
 
 @router.get(
     "/",
@@ -150,6 +152,7 @@ class SearchBundlesForm(BaseModel):
     seller_name: str | None
     allergens: list[int] | None
     categories: list[int] | None
+    page: int = Field(gt=0, default=1)
 
 
 class SearchBundlesResponse(BaseModel):
@@ -176,7 +179,7 @@ class SearchBundlesResponse(BaseModel):
 )
 async def search_bundles(
     form: SearchBundlesForm, conn: database_dependency
-) -> list[SearchBundlesResponse]:
+) -> tuple[int, list[SearchBundlesResponse]]:
     """Bundle search with parameters endpoint.
 
     Args:
@@ -271,7 +274,9 @@ async def search_bundles(
                     dist=round(dist, 2),
                 )
             )
-    return filtered_bundles
+    pages = ceil(len(filtered_bundles) / BUNDLES_PER_PAGE)
+    page_bundles = filtered_bundles[form.page:form.page + BUNDLES_PER_PAGE]
+    return (pages, page_bundles)
 
 
 @router.get(
