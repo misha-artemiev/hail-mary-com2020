@@ -11,7 +11,6 @@ later, remember for CW2 we have to make changes to almost every aspect of the ap
 so we can make improvements and get more realistic data therefore more marks for CW2.
 """
 
-import asyncio
 import io
 import pathlib
 import random
@@ -575,7 +574,7 @@ if __name__ == "__main__":
     ]
 
     print(f"   Uploading {len(df_bundles)} bundle images...")
-  #  asyncio.run(_upload_images())
+    #  asyncio.run(_upload_images())
     print()
 
     # Junction Tables
