@@ -53,8 +53,8 @@ class ForecastQuery(BaseModel):
     # single int. See generate_forecast() for how the averaging works.
     category_ids: list[int]
     day_of_week: DayOfWeek
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     is_holiday: bool
     temperature: Decimal
     weather_flag: WeatherFlag
@@ -66,8 +66,7 @@ class ForecastResult(BaseModel):
 
     bundle_id: int
     seller_id: int
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
     predicted_sales: int
     posted_qty: int
     predicted_no_show_prob: Decimal
@@ -86,8 +85,8 @@ class _HasFeatures(Protocol):
     """
 
     day_of_week: DayOfWeek
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     is_holiday: bool
     temperature: Decimal
     weather_flag: WeatherFlag
@@ -108,10 +107,10 @@ def _encode(obj: _HasFeatures) -> list[float]:
     """
     return [
         float(_DAY_INDEX[obj.day_of_week]),
-        # Convert time to a decimal hour so 9:30 becomes 9.5, 14:15 becomes
+        # Convert datetime to decimal hour so 9:30 becomes 9.5, 14:15 becomes
         # 14.25, etc.
-        obj.window_start_hour.hour + obj.window_start_hour.minute / 60.0,
-        obj.window_end_hour.hour + obj.window_end_hour.minute / 60.0,
+        obj.window_start.hour + obj.window_start.minute / 60.0,
+        obj.window_end.hour + obj.window_end.minute / 60.0,
         # bool must be cast to float LightGBM expects all
         # features to be the same numeric type.
         float(obj.is_holiday),
@@ -165,8 +164,7 @@ def _build_rationale(
     holiday_note = " (public holiday)" if query.is_holiday else ""
 
     window = (
-        f"{query.window_start_hour.strftime('%H:%M')}"
-        f"-{query.window_end_hour.strftime('%H:%M')}"
+        f"{query.window_start.strftime('%H:%M')}-{query.window_end.strftime('%H:%M')}"
     )
 
     # Grammatically correct singular/plural so the output reads naturally.
@@ -207,8 +205,7 @@ def _forecast_single_category(
         return ForecastResult(
             bundle_id=bundle_id,
             seller_id=query.seller_id,
-            window_start_hour=query.window_start_hour,
-            window_end_hour=query.window_end_hour,
+            window_start=query.window_start,
             predicted_sales=_COLD_RESERVATIONS,
             posted_qty=query.posted_qty,
             predicted_no_show_prob=_COLD_NO_SHOW_PROB,
@@ -245,8 +242,7 @@ def _forecast_single_category(
     return ForecastResult(
         bundle_id=bundle_id,
         seller_id=query.seller_id,
-        window_start_hour=query.window_start_hour,
-        window_end_hour=query.window_end_hour,
+        window_start=query.window_start,
         predicted_sales=predicted_sales,
         posted_qty=query.posted_qty,
         # Convert via string to avoid floating point not being precise
@@ -290,8 +286,7 @@ def _average_category_results(
     return ForecastResult(
         bundle_id=bundle_id,
         seller_id=first.seller_id,
-        window_start_hour=first.window_start_hour,
-        window_end_hour=first.window_end_hour,
+        window_start=first.window_start,
         # Round to the nearest integer, fractional reservations are meaningless.
         # max(0, ...) prevents a negative average.
         predicted_sales=max(0, round(avg_reservations)),
@@ -473,7 +468,7 @@ def _predict_weighted_avg(
     """
     # Pre-compute the query's start time and temperature as plain floats once
     # so we don't repeat the same conversion inside the loop on every row.
-    q_start = query.window_start_hour.hour + query.window_start_hour.minute / 60.0
+    q_start = query.window_start.hour + query.window_start.minute / 60.0
     q_temp = float(query.temperature)
 
     weights: list[float] = []
@@ -491,7 +486,7 @@ def _predict_weighted_avg(
         # Proximity score for time of day higher weight for closeness rather than
         # requiring an exact match. Drops to 0 at 2 hours difference.
         hour_diff = abs(
-            (row.window_start_hour.hour + row.window_start_hour.minute / 60.0) - q_start
+            (row.window_start.hour + row.window_start.minute / 60.0) - q_start
         )
         score += max(0.0, 1.5 * (1.0 - hour_diff / 2.0))
 

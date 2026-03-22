@@ -14,9 +14,9 @@ from internal.queries import models
 
 
 CREATE_FORECAST_INPUT = """-- name: create_forecast_input \\:one
-INSERT INTO forecast_input (bundle_id, seller_id, category_id, day_of_week, window_start_hour, window_end_hour, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows)
+INSERT INTO forecast_input (bundle_id, seller_id, category_id, day_of_week, window_start, window_end, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows)
 VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9, :p10, :p11)
-RETURNING input_id, bundle_id, seller_id, category_id, day_of_week, window_start_hour, window_end_hour, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
+RETURNING input_id, bundle_id, seller_id, category_id, day_of_week, window_start, window_end, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
 """
 
 
@@ -25,8 +25,8 @@ class CreateForecastInputParams(pydantic.BaseModel):
     seller_id: int
     category_id: int
     day_of_week: models.DayOfWeek
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     is_holiday: bool
     temperature: decimal.Decimal
     weather_flag: models.WeatherFlag
@@ -35,7 +35,7 @@ class CreateForecastInputParams(pydantic.BaseModel):
 
 
 GET_FORECAST_INPUTS_BY_SELLER = """-- name: get_forecast_inputs_by_seller \\:many
-SELECT input_id, bundle_id, seller_id, category_id, day_of_week, window_start_hour, window_end_hour, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
+SELECT input_id, bundle_id, seller_id, category_id, day_of_week, window_start, window_end, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
 FROM forecast_input
 WHERE seller_id = :p1
 """
@@ -92,8 +92,8 @@ class AsyncQuerier:
             "p2": arg.seller_id,
             "p3": arg.category_id,
             "p4": arg.day_of_week,
-            "p5": arg.window_start_hour,
-            "p6": arg.window_end_hour,
+            "p5": arg.window_start,
+            "p6": arg.window_end,
             "p7": arg.is_holiday,
             "p8": arg.temperature,
             "p9": arg.weather_flag,
@@ -108,8 +108,8 @@ class AsyncQuerier:
             seller_id=row[2],
             category_id=row[3],
             day_of_week=row[4],
-            window_start_hour=row[5],
-            window_end_hour=row[6],
+            window_start=row[5],
+            window_end=row[6],
             is_holiday=row[7],
             temperature=row[8],
             weather_flag=row[9],
@@ -126,8 +126,8 @@ class AsyncQuerier:
                 seller_id=row[2],
                 category_id=row[3],
                 day_of_week=row[4],
-                window_start_hour=row[5],
-                window_end_hour=row[6],
+                window_start=row[5],
+                window_end=row[6],
                 is_holiday=row[7],
                 temperature=row[8],
                 weather_flag=row[9],

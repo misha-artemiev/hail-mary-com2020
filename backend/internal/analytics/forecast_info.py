@@ -44,12 +44,12 @@ class BundleDetails(BaseModel):
 
     bundle_id: int
     bundle_date: datetime.date
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     seller_id: int
     category_ids: list[int]
-    latitude: float
-    longitude: float
+    latitude: float | None
+    longitude: float | None
     posted_qty: int
 
 
@@ -82,7 +82,10 @@ def _wmo_to_flag(code: int) -> WeatherFlag:
 
 
 def _fetch_weather(
-    url: str, bundle_date: datetime.date, latitude: float, longitude: float
+    url: str,
+    bundle_date: datetime.date,
+    latitude: float | None,
+    longitude: float | None,
 ) -> tuple[Decimal, WeatherFlag]:
     """Pull max temperature and weather for the given date and location.
 
@@ -92,6 +95,9 @@ def _fetch_weather(
     Raises:
         ValueError: Open-Meteo returned no data for the date.
     """
+    if latitude is None or longitude is None:
+        raise ValueError("Seller has no location data for weather lookup.")
+
     date_str = bundle_date.isoformat()
 
     response = requests.get(
@@ -157,8 +163,8 @@ def build_forecast_query(bundle: BundleDetails) -> ForecastQuery:
         seller_id=bundle.seller_id,
         category_ids=bundle.category_ids,
         day_of_week=day_of_week,
-        window_start_hour=bundle.window_start_hour,
-        window_end_hour=bundle.window_end_hour,
+        window_start=bundle.window_start,
+        window_end=bundle.window_end,
         is_holiday=is_holiday,
         temperature=temperature,
         weather_flag=weather_flag,

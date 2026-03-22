@@ -97,6 +97,7 @@ from internal.queries.models import (
     AnalyticsPoint,
     AnalyticsSeries,
     Bundle,
+    ForecastOutput,
     Reservation,
 )
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier

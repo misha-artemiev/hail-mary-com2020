@@ -198,8 +198,8 @@ class ForecastInput(pydantic.BaseModel):
     seller_id: int
     category_id: int
     day_of_week: DayOfWeek
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     is_holiday: bool
     temperature: decimal.Decimal
     weather_flag: WeatherFlag

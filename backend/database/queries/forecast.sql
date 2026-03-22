@@ -1,10 +1,10 @@
 -- name: GetForecastInputsBySeller :many
-SELECT input_id, bundle_id, seller_id, category_id, day_of_week, window_start_hour, window_end_hour, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
+SELECT input_id, bundle_id, seller_id, category_id, day_of_week, window_start, window_end, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows
 FROM forecast_input
 WHERE seller_id = $1;
 
 -- name: CreateForecastInput :one
-INSERT INTO forecast_input (bundle_id, seller_id, category_id, day_of_week, window_start_hour, window_end_hour, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows)
+INSERT INTO forecast_input (bundle_id, seller_id, category_id, day_of_week, window_start, window_end, is_holiday, temperature, weather_flag, observed_reservations, observed_no_shows)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING *;
 
