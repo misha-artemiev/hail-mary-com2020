@@ -17,18 +17,26 @@ TEST_QTY = 5
 TEST_CO2 = 100.0
 
 
+class FakeRes:
+    """Fake reservation object to bypass MagicMock hashing quirks."""
+
+    def __init__(self, cat_id: int, sel_id: int) -> None:
+        """Init with required values."""
+        self.collected_at = datetime.now(tz=UTC)
+        self.window_start = datetime.now(tz=UTC)
+        self.window_end = datetime.now(tz=UTC)
+        self.category_id = cat_id
+        self.category_ids = [cat_id]  # Added for diversity_goal loop compatibility
+        self.seller_id = sel_id
+        self.carbon_dioxide = TEST_CO2
+
+
 class TestBadgeEngine(IsolatedAsyncioTestCase):
     """Test suite for the BadgeEngine rules and background runner."""
 
     def setUp(self) -> None:
         """Initialize mock data used across badge tests."""
-        # Create a collected reservation mock
-        self.mock_res_collected = MagicMock()
-        self.mock_res_collected.collected_at = datetime.now(tz=UTC)
-        self.mock_res_collected.category_id = 1
-        self.mock_res_collected.seller_id = 1
-        self.mock_res_collected.carbon_dioxide = TEST_CO2
-        self.mock_res_collected.window_start = datetime.now(tz=UTC)
+        self.mock_res_collected = FakeRes(1, 1)
 
     def test_quantity_goal_success(self) -> None:
         """Test that the quantity goal returns true when met."""
@@ -68,18 +76,16 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         result = BadgeEngine.co2_goal(reservations, rule)
         assert result is True
 
-    def test_diversity_goal_success(self) -> None:
+    def test_diversity_goal_success(self) -> None:  # noqa: PLR6301
         """Test diversity goal over categories and sellers."""
-        mock_res_2 = MagicMock()
-        mock_res_2.collected_at = datetime.now(tz=UTC)
-        mock_res_2.category_id = 2  # Different Category
-        mock_res_2.seller_id = 2  # Different Seller
+        mock_res_1 = FakeRes(cat_id=1, sel_id=1)
+        mock_res_2 = FakeRes(cat_id=2, sel_id=2)
 
         rule = BadgesConfig.DiversityGoal(
             type="diversity", level=1, dif_categories=2, dif_sellers=0
         )
         reservations = cast(
-            list[GetConsumersReservationsFullRow], [self.mock_res_collected, mock_res_2]
+            list[GetConsumersReservationsFullRow], [mock_res_1, mock_res_2]
         )
 
         result = BadgeEngine.diversity_goal(reservations, rule)
@@ -90,7 +96,7 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         window_start = datetime.now(tz=UTC)
 
         # Setup today's reservation to count as an active streak
-        mock_res_today = MagicMock()
+        mock_res_today = FakeRes(1, 1)
         mock_res_today.collected_at = window_start
         mock_res_today.window_start = window_start
         mock_res_today.window_end = window_start
@@ -109,10 +115,14 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         result = BadgeEngine.streak_goal(reservations, rule, window_start)
         assert result is True
 
-    def test_run_background_task(self) -> None:  # noqa: PLR6301
+    @patch("internal.badges.engine.badges_config")
+    def test_run_background_task(self, mock_badges_config: MagicMock) -> None:  # noqa: PLR6301
         """Test the engine successfully schedules the background job."""
         mock_bg_tasks = MagicMock(spec=BackgroundTasks)
         engine = BadgeEngine(mock_bg_tasks)
+
+        mock_badges_config.badges_rules = MagicMock()
+        mock_badges_config.badges_rules.badges_rules = []
 
         engine.run(consumer_id=1, bundle_window_start=datetime.now(tz=UTC))
 
@@ -122,8 +132,12 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
 
     def test_to_acquire_logic(self) -> None:  # noqa: PLR6301
         """Test logic that maps acquired badges to their next available tier."""
-        mock_rule_lvl1 = MagicMock(level=1)
-        mock_rule_lvl2 = MagicMock(level=2)
+        mock_rule_lvl1 = BadgesConfig.QuantityGoal(
+            type="quantity", level=1, quantity=1, category_id=None, seller_id=None
+        )
+        mock_rule_lvl2 = BadgesConfig.QuantityGoal(
+            type="quantity", level=2, quantity=5, category_id=None, seller_id=None
+        )
         mock_badge_def = MagicMock()
         mock_badge_def.badge_id = 99
         mock_badge_def.rules = [mock_rule_lvl1, mock_rule_lvl2]
@@ -170,7 +184,7 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
     @patch("internal.badges.engine.ReservationQuerier")
     @patch.object(BadgeEngine, "to_acquire")
     @patch.object(BadgeEngine, "quantity_goal")
-    @patch.object(BadgeEngine, "update_badge")
+    @patch("internal.badges.engine.BadgeEngine.update_badge", new_callable=MagicMock)
     async def test_process_badges_success(  # noqa: PLR0913, PLR0917, PLR6301
         self,
         mock_update_badge: MagicMock,

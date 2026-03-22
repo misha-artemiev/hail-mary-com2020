@@ -90,6 +90,12 @@ def get_mock_bundle() -> MagicMock:
     bundle.discount_percentage = TEST_DISCOUNT
     bundle.window_start = datetime.now()  # noqa: DTZ005
     bundle.window_end = datetime.now()  # noqa: DTZ005
+
+    bundle.carbon_dioxide = 10
+    bundle.status = "ACTIVE"
+    bundle.created_at = datetime.now()  # noqa: DTZ005
+    bundle.updated_at = datetime.now()  # noqa: DTZ005
+
     return bundle
 
 
@@ -204,63 +210,115 @@ class TestSellers(TestCase):
 
         response = self.client.post("/sellers", json=payload)
 
-        # This will print the exact missing field to your console if it fails again!
-        if response.status_code != status.HTTP_201_CREATED:
-            print("FASTAPI VALIDATION ERROR:", response.json())
-
         assert response.status_code == status.HTTP_201_CREATED
         mock_create.assert_called_once()
 
+    @patch("routers.sellers.AllergenQuerier")
+    @patch("routers.sellers.CategoryQuerier")
     @patch("routers.sellers.BundleQuerier")
-    def test_create_bundle(self, mock_querier: MagicMock) -> None:
+    def test_create_bundle(
+        self,
+        mock_bundle_querier: MagicMock,
+        mock_category_querier: MagicMock,
+        mock_allergen_querier: MagicMock,
+    ) -> None:
         """Test creating a bundle for the authenticated seller."""
         app.dependency_overrides[seller_auth] = override_seller_auth
 
-        mock_instance = mock_querier.return_value
-        mock_instance.create_bundle = AsyncMock(return_value=get_mock_bundle())
+        # Mock bundle creation
+        mock_bundle_inst = mock_bundle_querier.return_value
+        mock_bundle_inst.create_bundle = AsyncMock(return_value=get_mock_bundle())
+
+        # Mock category queries
+        mock_cat_inst = mock_category_querier.return_value
+        mock_cat_record = MagicMock()
+        mock_cat_record.category_coefficient = 1.0
+        mock_cat_inst.get_category = AsyncMock(return_value=mock_cat_record)
+        mock_cat_inst.add_bundles_category = AsyncMock(return_value=MagicMock())
+
+        # Mock allergen queries
+        mock_all_inst = mock_allergen_querier.return_value
+        mock_all_inst.add_bundles_allergen = AsyncMock(return_value=MagicMock())
 
         payload = {
             "bundle_name": "Test Bundle",
             "description": "A nice bundle",
             "total_qty": TEST_QTY,
-            "price": TEST_PRICE,
+            "price": "10.00",
             "discount_percentage": TEST_DISCOUNT,
+            "weight": 10,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "weight": 10,
+            "categories": [1],
+            "allergens": [1],
         }
 
         response = self.client.post("/sellers/me/bundles", json=payload)
 
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED, response.text
         assert response.json()["bundle_name"] == "Test Bundle"
 
         del app.dependency_overrides[seller_auth]
 
+    @patch("routers.sellers.AllergenQuerier")
+    @patch("routers.sellers.CategoryQuerier")
     @patch("routers.sellers.BundleQuerier")
-    def test_update_bundle(self, mock_querier: MagicMock) -> None:
+    def test_update_bundle(
+        self,
+        mock_bundle_querier: MagicMock,
+        mock_category_querier: MagicMock,
+        mock_allergen_querier: MagicMock,
+    ) -> None:
         """Test updating an existing bundle."""
         app.dependency_overrides[seller_auth] = override_seller_auth
 
-        mock_instance = mock_querier.return_value
-        mock_instance.update_bundle = AsyncMock(return_value=get_mock_bundle())
+        # Mock bundle update
+        mock_bundle_inst = mock_bundle_querier.return_value
+        mock_bundle_inst.update_bundle = AsyncMock(return_value=get_mock_bundle())
+
+        # Mock category queries
+        mock_cat_inst = mock_category_querier.return_value
+        mock_cat_record = MagicMock()
+        mock_cat_record.category_coefficient = 1.0
+        mock_cat_inst.get_category = AsyncMock(return_value=mock_cat_record)
+
+        async def mock_cat_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield 1
+
+        mock_cat_inst.get_bundle_categories.side_effect = mock_cat_gen
+        mock_cat_inst.add_bundles_category = AsyncMock(return_value=MagicMock())
+        mock_cat_inst.delete_bundle_category = AsyncMock(return_value=MagicMock())
+
+        # Mock allergen queries
+        mock_all_inst = mock_allergen_querier.return_value
+
+        async def mock_all_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield 1
+
+        mock_all_inst.get_bundle_allergens.side_effect = mock_all_gen
+        mock_all_inst.add_bundles_allergen = AsyncMock(return_value=MagicMock())
+        mock_all_inst.delete_bundle_allergen = AsyncMock(return_value=MagicMock())
 
         payload = {
             "bundle_name": "Updated Bundle",
             "description": "Updated nice bundle",
             "total_qty": TEST_QTY,
-            "price": TEST_PRICE,
+            "price": "10.00",
             "discount_percentage": TEST_DISCOUNT,
+            "weight": 10,
             "window_start": "2024-01-01T10:00:00",
             "window_end": "2024-01-01T12:00:00",
-            "weight": 10,
+            "categories": [1],
+            "allergens": [1],
         }
 
         response = self.client.patch(
             f"/sellers/me/bundles/{TEST_BUNDLE_ID}", json=payload
         )
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_200_OK, response.text
         assert response.json()["bundle_name"] == "Test Bundle"
 
         del app.dependency_overrides[seller_auth]
