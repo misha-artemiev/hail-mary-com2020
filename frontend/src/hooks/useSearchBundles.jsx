@@ -60,7 +60,8 @@ export default function useSearchBundles() {
                 }
 
                 const data = await response.json();
-                setListings(data);
+                const bundles_list = Array.isArray(data) ? data[1] : data;
+                setListings(bundles_list || []);
             } catch (err) {
                 console.error(err);
                 setError(err.message);
