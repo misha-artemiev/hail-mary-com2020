@@ -178,8 +178,7 @@ async def dismiss_inbox_message(
     ]
     if all(msg.message_id != message_id for msg in user_messages):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Inbox message not found",
+            status_code=status.HTTP_404_NOT_FOUND, detail="Inbox message not found"
         )
 
     deleted_message = await inbox_querier.delete_inbox_message(message_id=message_id)
@@ -345,10 +344,7 @@ async def create_seller_issue_report_endpoint(
 ) -> SellerIssueReport:
     """Create seller issue report endpoint wrapper."""
     return await create_seller_issue_report(
-        reservation_id=reservation_id,
-        form=form,
-        conn=conn,
-        user=user,
+        reservation_id=reservation_id, form=form, conn=conn, user=user
     )
 
 
@@ -400,9 +396,7 @@ async def create_admin_issue_report(
         user_id=user.user_id,
         sender_id=user.user_id,
         subject="Issue report submitted",
-        text=(
-            "Your issue report was submitted successfully and is awaiting review."
-        ),
+        text=("Your issue report was submitted successfully and is awaiting review."),
     )
 
     return report

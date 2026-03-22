@@ -7,12 +7,7 @@ from internal.queries.inbox import CreateInboxMessageParams
 
 
 async def send_notification(
-    conn: AsyncConnection,
-    *,
-    user_id: int,
-    sender_id: int,
-    subject: str,
-    text: str,
+    conn: AsyncConnection, *, user_id: int, sender_id: int, subject: str, text: str
 ) -> None:
     """Send an inbox notification."""
     await InboxQuerier(conn).create_inbox_message(
