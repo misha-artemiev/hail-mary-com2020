@@ -1,6 +1,7 @@
 """Endpoints for bundles."""
 
 from datetime import datetime
+from math import ceil
 
 from fastapi import APIRouter, HTTPException, Response, status
 from internal.auth.middleware import ConsumerAuthDep
@@ -20,11 +21,11 @@ from internal.queries.seller import GetSellerByLocationParams
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
-from math import ceil
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
 
 BUNDLES_PER_PAGE = 30
+
 
 @router.get(
     "/",
@@ -275,7 +276,7 @@ async def search_bundles(
                 )
             )
     pages = ceil(len(filtered_bundles) / BUNDLES_PER_PAGE)
-    page_bundles = filtered_bundles[form.page:form.page + BUNDLES_PER_PAGE]
+    page_bundles = filtered_bundles[form.page : form.page + BUNDLES_PER_PAGE]
     return (pages, page_bundles)
 
 
