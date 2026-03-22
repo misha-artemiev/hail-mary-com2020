@@ -342,7 +342,11 @@ async def create_seller_issue_report_endpoint(
     conn: database_dependency,
     user: BearerAuthDep,
 ) -> SellerIssueReport:
-    """Create seller issue report endpoint wrapper."""
+    """Create seller issue report endpoint wrapper.
+
+    Returns:
+        The created seller issue report.
+    """
     return await create_seller_issue_report(
         reservation_id=reservation_id, form=form, conn=conn, user=user
     )

@@ -661,7 +661,8 @@ async def reservation_collection(
         sender_id=seller.user_id,
         subject="Bundle collected",
         text=(
-            f"A reservation for bundle '{bundle.bundle_name}' has been collected successfully."
+            f"A reservation for bundle '{bundle.bundle_name}' has been collected "
+            "successfully."
         ),
     )
     await send_notification(

@@ -230,8 +230,9 @@ async def get_reservations(
                 sender_id=consumer.user_id,
                 subject="Reservation timed out",
                 text=(
-                    f"Your reservation for '{bundle.bundle_name}' has timed out because the pickup "
-                    f"window ended at {bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+                    f"Your reservation for '{bundle.bundle_name}' has timed out because"
+                    "the pickup window ended at "
+                    f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
                 ),
             )
 
