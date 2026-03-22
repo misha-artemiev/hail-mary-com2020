@@ -12,20 +12,17 @@ from internal.queries import models
 
 
 CREATE_ACTIVITY_LOG = """-- name: create_activity_log \\:one
-INSERT INTO activity_log (user_id, user_role, action, resource_type, resource_id, details, ip_address)
-VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7)
-RETURNING activity_id, user_id, user_role, action, resource_type, resource_id, details, ip_address, created_at
+INSERT INTO activity_log (user_id, action, details, ip_address)
+VALUES (:p1, :p2, :p3, :p4)
+RETURNING activity_id, user_id, action, details, ip_address, created_at
 """
 
 
 class CreateActivityLogParams(pydantic.BaseModel):
     user_id: Optional[int]
-    user_role: Optional[models.UserRole]
     action: str
-    resource_type: Optional[str]
-    resource_id: Optional[int]
     details: Optional[Any]
-    ip_address: Optional[str]
+    ip_address: str
 
 
 class AsyncQuerier:
@@ -35,23 +32,17 @@ class AsyncQuerier:
     async def create_activity_log(self, arg: CreateActivityLogParams) -> Optional[models.ActivityLog]:
         row = (await self._conn.execute(sqlalchemy.text(CREATE_ACTIVITY_LOG), {
             "p1": arg.user_id,
-            "p2": arg.user_role,
-            "p3": arg.action,
-            "p4": arg.resource_type,
-            "p5": arg.resource_id,
-            "p6": arg.details,
-            "p7": arg.ip_address,
+            "p2": arg.action,
+            "p3": arg.details,
+            "p4": arg.ip_address,
         })).first()
         if row is None:
             return None
         return models.ActivityLog(
             activity_id=row[0],
             user_id=row[1],
-            user_role=row[2],
-            action=row[3],
-            resource_type=row[4],
-            resource_id=row[5],
-            details=row[6],
-            ip_address=row[7],
-            created_at=row[8],
+            action=row[2],
+            details=row[3],
+            ip_address=row[4],
+            created_at=row[5],
         )

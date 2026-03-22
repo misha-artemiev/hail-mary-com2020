@@ -62,7 +62,7 @@ export default function AdminLogin() {
             await storeAuthToken(tokenData);
             login(tokenData);
 
-            navigate("/");
+            navigate("/admin", { replace: true });
         } catch (err) {
             setError(err.message);
         } finally {
@@ -85,9 +85,9 @@ export default function AdminLogin() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <FormInput
-                        label="Username"
-                        name="username"
-                        type="text"
+                        label="Email"
+                        name="email"
+                        type="email"
                         value={form.username}
                         onChange={handleChange}
                         required
