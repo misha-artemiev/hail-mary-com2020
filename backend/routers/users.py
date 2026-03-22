@@ -280,7 +280,7 @@ class CreateSellerIssueReportForm(BaseModel):
     "/me/reports/seller/{reservation_id}",
     status_code=status.HTTP_201_CREATED,
     summary="Create seller issue report",
-    description="Creates a seller issue report for a reservation owned by the user.",
+    description="Creates a new seller issue report.",
     tags=["reports"],
 )
 async def create_seller_issue_report(
