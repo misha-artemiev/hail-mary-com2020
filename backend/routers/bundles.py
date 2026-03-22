@@ -10,10 +10,10 @@ from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
 from internal.queries.allergens import AsyncQuerier as AllergensQuerier
-from internal.queries.inbox import AsyncQuerier as InboxQuerier
-from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.category import AsyncQuerier as CategoriesQuerier
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import CreateReservationParams
@@ -145,7 +145,10 @@ async def reserve_bundle(
             user_id=consumer.user_id,
             sender_id=consumer.user_id,
             message_subject="Bundle reserved",
-            message_text=f"You reserved '{bundle.bundle_name}'. Your claim code is {reservation.claim_code}.",
+            message_text=(
+                f"You reserved '{bundle.bundle_name}'. "
+                f"Your claim code is {reservation.claim_code}."
+            ),
         )
     )
     await InboxQuerier(conn).create_inbox_message(
@@ -153,7 +156,10 @@ async def reserve_bundle(
             user_id=bundle.seller_id,
             sender_id=consumer.user_id,
             message_subject="Bundle reserved",
-            message_text=f"A reservation has been created for your bundle '{bundle.bundle_name}'.",
+            message_text=(
+                "A reservation has been created for your bundle "
+                f"'{bundle.bundle_name}'."
+            ),
         )
     )
 

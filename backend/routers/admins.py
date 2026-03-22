@@ -1252,9 +1252,7 @@ async def delete_inbox_message(
     Raises:
         HTTPException: if message not found
     """
-    deleted_message = await InboxQuerier(conn).delete_inbox_message(
-        message_id=message_id
-    )
+    deleted_message = await InboxQuerier(conn).read_inbox_message(message_id=message_id)
     if not deleted_message:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Message not found")
     return deleted_message

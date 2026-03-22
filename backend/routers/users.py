@@ -180,7 +180,7 @@ async def dismiss_inbox_message(
             status_code=status.HTTP_404_NOT_FOUND, detail="Inbox message not found"
         )
 
-    deleted_message = await inbox_querier.delete_inbox_message(message_id=message_id)
+    deleted_message = await inbox_querier.read_inbox_message(message_id=message_id)
     if not deleted_message:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -384,7 +384,10 @@ async def create_admin_issue_report(
             user_id=user.user_id,
             sender_id=user.user_id,
             message_subject="Issue report submitted",
-            message_text="Your issue report was submitted successfully and is awaiting review.",
+            message_text=(
+                "Your issue report was submitted successfully and is "
+                "awaiting review."
+            ),
         )
     )
 

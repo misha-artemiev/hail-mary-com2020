@@ -68,8 +68,6 @@ from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import ConsumerAuthDep
 from internal.database.dependency import database_dependency
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
-from internal.queries.inbox import AsyncQuerier as InboxQuerier
-from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.badge import GetConsumerBadgesRow
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
@@ -78,6 +76,8 @@ from internal.queries.consumer import (
     GetConsumersRow,
     UpdateConsumerParams,
 )
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
@@ -231,7 +231,8 @@ async def get_reservations(
                     sender_id=consumer.user_id,
                     message_subject="Reservation timed out",
                     message_text=(
-                        f"Your reservation for '{bundle.bundle_name}' has timed out because"
+                        f"Your reservation for '{bundle.bundle_name}' has "
+                        "timed out because "
                         "the pickup window ended at "
                         f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
                     ),
