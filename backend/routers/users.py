@@ -234,6 +234,13 @@ class CreateSellerIssueReportForm(BaseModel):
     description: str
 
 
+@router.post(
+    "/me/reports/seller/{reservation_id}",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create seller issue report",
+    description="Creates a new seller issue report.",
+    tags=["reports"],
+)
 async def create_seller_issue_report(
     reservation_id: int,
     form: CreateSellerIssueReportForm,
