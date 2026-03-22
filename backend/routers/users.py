@@ -385,8 +385,7 @@ async def create_admin_issue_report(
             sender_id=user.user_id,
             message_subject="Issue report submitted",
             message_text=(
-                "Your issue report was submitted successfully and is "
-                "awaiting review."
+                "Your issue report was submitted successfully and is awaiting review."
             ),
         )
     )
