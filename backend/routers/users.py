@@ -5,6 +5,7 @@ from internal.auth.middleware import BearerAuthDep, ConsumerAuthDep
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
+from internal.inbox.notifications import send_notification
 from internal.queries.admin_issue_reports import (
     AsyncQuerier as AdminIssueReportsQuerier,
 )
@@ -148,6 +149,48 @@ async def send_message(
     return message
 
 
+@router.delete(
+    "/me/inbox/{message_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Dismiss an inbox message",
+    description="Deletes a specific inbox message owned by the authenticated user.",
+    response_model=Inbox,
+)
+async def dismiss_inbox_message(
+    message_id: int, conn: database_dependency, session: BearerAuthDep
+) -> Inbox:
+    """Dismiss a single inbox message for the current user.
+
+    Args:
+      message_id: inbox message id
+      conn: database connection
+      session: users session
+
+    Returns:
+      The deleted inbox message.
+
+    Raises:
+      HTTPException: if message does not exist for user or delete fails
+    """
+    inbox_querier = InboxQuerier(conn)
+    user_messages = [
+        msg async for msg in inbox_querier.get_user_inbox(user_id=session.user_id)
+    ]
+    if all(msg.message_id != message_id for msg in user_messages):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Inbox message not found",
+        )
+
+    deleted_message = await inbox_querier.delete_inbox_message(message_id=message_id)
+    if not deleted_message:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to dismiss inbox message",
+        )
+    return deleted_message
+
+
 @router.get(
     path="/id/{username}",
     summary="Get user ID by username",
@@ -275,7 +318,38 @@ async def create_seller_issue_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create seller issue report",
         )
+
+    await send_notification(
+        conn,
+        user_id=user.user_id,
+        sender_id=user.user_id,
+        subject="Issue report submitted",
+        text="Your reservation issue report was submitted successfully.",
+    )
+
     return report
+
+
+@router.post(
+    "/me/reports/seller/{reservation_id}",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create seller issue report",
+    description="Creates a seller issue report for a reservation owned by the user.",
+    tags=["reports"],
+)
+async def create_seller_issue_report_endpoint(
+    reservation_id: int,
+    form: CreateSellerIssueReportForm,
+    conn: database_dependency,
+    user: BearerAuthDep,
+) -> SellerIssueReport:
+    """Create seller issue report endpoint wrapper."""
+    return await create_seller_issue_report(
+        reservation_id=reservation_id,
+        form=form,
+        conn=conn,
+        user=user,
+    )
 
 
 class CreateAdminIssueReportForm(BaseModel):
@@ -320,6 +394,17 @@ async def create_admin_issue_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create admin issue report",
         )
+
+    await send_notification(
+        conn,
+        user_id=user.user_id,
+        sender_id=user.user_id,
+        subject="Issue report submitted",
+        text=(
+            "Your issue report was submitted successfully and is awaiting review."
+        ),
+    )
+
     return report
 
 

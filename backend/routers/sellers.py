@@ -61,7 +61,7 @@ sequenceDiagram
 ```
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Annotated
 
@@ -73,6 +73,7 @@ from internal.auth.middleware import SellerAuthDep
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
+from internal.inbox.notifications import send_notification
 from internal.queries.allergens import (
     AddBundlesAllergenParams,
     DeleteBundleAllergenParams,
@@ -283,6 +284,17 @@ async def create_bundle(
             raise HTTPException(
                 status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to add bundle allergen"
             )
+
+    await send_notification(
+        conn,
+        user_id=seller.user_id,
+        sender_id=seller.user_id,
+        subject="Bundle listed",
+        text=(
+            f"Your bundle '{bundle.bundle_name}' is now listed "
+            f"and available for reservations."
+        ),
+    )
     return bundle
 
 
@@ -463,6 +475,21 @@ async def get_bundles(conn: database_dependency, seller: SellerAuthDep) -> list[
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get bundles",
         )
+
+    now = datetime.now(tz=UTC)
+    for bundle in bundles:
+        if bundle.window_end <= now:
+            await send_notification(
+                conn,
+                user_id=seller.user_id,
+                sender_id=seller.user_id,
+                subject="Bundle expired",
+                text=(
+                    f"Your bundle '{bundle.bundle_name}' has expired at "
+                    f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+                ),
+            )
+
     return list(bundles)
 
 
@@ -568,6 +595,26 @@ async def reservation_collection(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update reservation status",
         )
+
+    await send_notification(
+        conn,
+        user_id=seller.user_id,
+        sender_id=seller.user_id,
+        subject="Bundle collected",
+        text=(
+            f"A reservation for bundle '{bundle.bundle_name}' has been collected successfully."
+        ),
+    )
+    await send_notification(
+        conn,
+        user_id=claimed_reservation.consumer_id,
+        sender_id=seller.user_id,
+        subject="Reservation collected",
+        text=(
+            f"Your reservation for '{bundle.bundle_name}' has been marked as collected."
+        ),
+    )
+
     await conn.commit()
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation

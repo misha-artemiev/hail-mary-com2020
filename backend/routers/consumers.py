@@ -67,8 +67,10 @@ from fastapi import APIRouter, HTTPException, status
 from internal.auth.creation import CreateConsumerForm, create_consumer
 from internal.auth.middleware import ConsumerAuthDep
 from internal.database.dependency import database_dependency
+from internal.inbox.notifications import send_notification
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
 from internal.queries.badge import GetConsumerBadgesRow
+from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import (
     GetConsumerRow,
@@ -212,6 +214,27 @@ async def get_reservations(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get reservations",
         )
+
+    now = datetime.now(tz=UTC)
+    bundle_querier = BundleQuerier(conn)
+    for reservation in reservations:
+        if reservation.collected_at is not None:
+            continue
+        bundle = await bundle_querier.get_bundle(bundle_id=reservation.bundle_id)
+        if bundle is None:
+            continue
+        if bundle.window_end <= now:
+            await send_notification(
+                conn,
+                user_id=consumer.user_id,
+                sender_id=consumer.user_id,
+                subject="Reservation timed out",
+                text=(
+                    f"Your reservation for '{bundle.bundle_name}' has timed out because the pickup "
+                    f"window ended at {bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+                ),
+            )
+
     return list(reservations)
 
 

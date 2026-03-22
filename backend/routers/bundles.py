@@ -9,6 +9,7 @@ from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
+from internal.inbox.notifications import send_notification
 from internal.queries.allergens import AsyncQuerier as AllergensQuerier
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.category import AsyncQuerier as CategoriesQuerier
@@ -137,6 +138,27 @@ async def reserve_bundle(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create reservation",
         )
+
+    await send_notification(
+        conn,
+        user_id=consumer.user_id,
+        sender_id=consumer.user_id,
+        subject="Bundle reserved",
+        text=(
+            f"You reserved '{bundle.bundle_name}'. "
+            f"Your claim code is {reservation.claim_code}."
+        ),
+    )
+    await send_notification(
+        conn,
+        user_id=bundle.seller_id,
+        sender_id=consumer.user_id,
+        subject="Bundle reserved",
+        text=(
+            f"A reservation has been created for your bundle '{bundle.bundle_name}'."
+        ),
+    )
+
     return reservation
 
 

@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // Components
 import Card from "../components/Card";
@@ -25,6 +25,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
  */
 export default function ReportError() {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const hiddenAutofillFields = new Set(["bundle_id", "reservation_id"]);
     const [issueType, setIssueType] = useState("");
 
     const [form, setForm] = useState({
@@ -112,15 +114,11 @@ export default function ReportError() {
 
         if (issueType === "reservation") {
             if (!form.reservation_id) {
-                throw new Error(
-                    "Reservation ID is required for reservation issues.",
-                );
+                throw new Error("Missing reservation context for this report.");
             }
 
             const reservationEndpoint =
-                userRole === "seller"
-                    ? `${API_BASE_URL}/sellers/me/reservations/${form.reservation_id}/report`
-                    : `${API_BASE_URL}/consumers/me/reservations/${form.reservation_id}/report`;
+                `${API_BASE_URL}/users/me/reports/seller/${form.reservation_id}`;
 
             const response = await fetch(reservationEndpoint, {
                 method: "POST",
@@ -198,7 +196,7 @@ export default function ReportError() {
 
         try {
             await submitReport();
-            setSuccess(true);
+            navigate("/");
         } catch (err) {
             setError(
                 err?.message || "Unable to submit report. Please try again.",
@@ -215,7 +213,9 @@ export default function ReportError() {
      * @returns {JSX.Element[]} a set of FormInput elements
      */
     const renderFields = (fields) =>
-        fields.map((field) => (
+        fields
+            .filter((field) => !hiddenAutofillFields.has(field.name))
+            .map((field) => (
             <FormInput
                 key={field.name}
                 label={field.label}
@@ -228,7 +228,7 @@ export default function ReportError() {
                 required={field.required}
                 placeholder={field.placeholder}
             />
-        ));
+            ));
 
     return (
         <div className="max-w-xl mx-auto p-4 md:p-6">
