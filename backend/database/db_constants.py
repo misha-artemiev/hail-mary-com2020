@@ -74,4 +74,11 @@ ANALYTICS_GRAPHS_TYPES = [
         "x_axis_label": None,
         "y_axis_label": "Reservations",
     },
+    {
+        "graph_type_id": 5,
+        "chart_type": ChartType.MULTI_LINE,
+        "graph_summary": "Forecast vs Posted",
+        "x_axis_label": "Bundle Date",
+        "y_axis_label": "Quantity",
+    },
 ]

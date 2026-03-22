@@ -278,6 +278,78 @@ class AnalyticsProcesser:
                 return
 
     @staticmethod
+    async def add_forecast_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        bundle_rows: list[BundleRow],
+        reservation_rows: list[ReservationRow],
+    ) -> None:
+        """Add forecast vs posted graph.
+
+        Args:
+            analytics_querier: async analytics queries
+            seller_id: seller id
+            bundle_rows: formatted bundle rows
+            reservation_rows: formatted reservation rows
+        """
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=5)
+            )
+        ) is None:
+            logger.exception("failed to get forecast graph")
+            return
+        if (
+            sales_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="sales", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create sales series for forecast")
+            return
+        if (
+            posted_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="posted", sort_index=1
+                )
+            )
+        ) is None:
+            logger.exception("failed to create posted series for forecast")
+            return
+        for i, point in enumerate(
+            SellerAnalytics.graph_weekly_sales_vs_posted(bundle_rows, reservation_rows)
+        ):
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=sales_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.sold_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception("failed to create point for sales series for forecast")
+                return
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=posted_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.posted_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception(
+                    "failed to create point for posted series for forecast"
+                )
+                return
+
+    @staticmethod
     async def process_analytics(seller_id: int) -> None:
         """Background graph processing.
 
@@ -339,4 +411,7 @@ class AnalyticsProcesser:
             )
             await AnalyticsProcesser.add_time_window_distribution_graph(
                 analytics_querier, seller_id, reservation_rows
+            )
+            await AnalyticsProcesser.add_forecast_graph(
+                analytics_querier, seller_id, bundle_rows, reservation_rows
             )
