@@ -42,6 +42,7 @@ class BundleDetails(BaseModel):
     easier to read.
     """
 
+    bundle_id: int
     bundle_date: datetime.date
     window_start_hour: datetime.time
     window_end_hour: datetime.time
@@ -49,6 +50,7 @@ class BundleDetails(BaseModel):
     category_ids: list[int]
     latitude: float
     longitude: float
+    posted_qty: int
 
 
 #  --- Private helpers ---
@@ -151,6 +153,7 @@ def build_forecast_query(bundle: BundleDetails) -> ForecastQuery:
     )
 
     return ForecastQuery(
+        bundle_id=bundle.bundle_id,
         seller_id=bundle.seller_id,
         category_ids=bundle.category_ids,
         day_of_week=day_of_week,
@@ -159,6 +162,7 @@ def build_forecast_query(bundle: BundleDetails) -> ForecastQuery:
         is_holiday=is_holiday,
         temperature=temperature,
         weather_flag=weather_flag,
+        posted_qty=bundle.posted_qty,
     )
 
 
