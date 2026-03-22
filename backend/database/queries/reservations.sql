@@ -49,6 +49,11 @@ GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_
 -- name: GetReservations :many
 SELECT * FROM reservations;
 
+-- name: CountConsumerCollectedReservations :one
+SELECT COUNT(*) AS collected_count, CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS has_collected
+FROM reservations
+WHERE consumer_id=$1 AND collected_at IS NOT NULL;
+
 -- name: DeleteReservation :one
 DELETE FROM reservations
 WHERE reservation_id = $1

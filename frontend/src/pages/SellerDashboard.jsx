@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -20,65 +20,20 @@ import {
 } from "recharts";
 
 import { useAuth } from "../context/AuthContext";
-
 import useSellerBundles from "../hooks/useSellerBundles";
+import useSellerIssueReports from "../hooks/useSellerIssueReports";
+
+import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
+import { useSellerAllReservations } from "../hooks/useSellerAllReservations";
 
 import Card from "../components/Card";
+import Modal from "../components/Modal";
 import Button from "../components/forms/Button";
 import FormInput from "../components/forms/FormInput";
 import SubmitButton from "../components/forms/SubmitButton";
 import Reservation from "../components/Reservation";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-
-function useAllSellerReservations(bundles) {
-    const [allReservations, setAllReservations] = useState([]);
-
-    useEffect(() => {
-        async function fetchAllReservations() {
-            if (!bundles || bundles.length === 0) {
-                return;
-            }
-
-            const token = localStorage.getItem("authToken");
-            if (!token) {
-                return;
-            }
-
-            const allRes = [];
-            try {
-                for (const bundle of bundles) {
-                    const response = await fetch(
-                        `${API_BASE_URL}/sellers/me/bundles/${bundle.bundle_id}/reservations`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        },
-                    );
-                    if (response.ok) {
-                        const data = await response.json();
-                        allRes.push(
-                            ...data.map((r) => ({
-                                ...r,
-                                bundle_name: bundle.bundle_name,
-                            })),
-                        );
-                    }
-                }
-                setAllReservations(allRes);
-            } catch (err) {
-                console.error(err.message);
-            }
-        }
-
-        fetchAllReservations();
-    }, [bundles]);
-
-    return allReservations;
-}
 
 function CollectModal({ bundles, onClose }) {
     const [selectedBundleId, setSelectedBundleId] = useState("");
@@ -100,78 +55,65 @@ function CollectModal({ bundles, onClose }) {
 
     if (collectSuccess) {
         return (
-            <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-                <Card className="w-full max-w-md">
-                    <div className="text-center py-6">
-                        <p className="text-green-600 font-semibold text-lg">
-                            Bundle successfully collected!
-                        </p>
-                        <Button onClick={handleClose} className="mt-4">
-                            Close
-                        </Button>
-                    </div>
-                </Card>
-            </div>
+            <Modal isOpen={true} onClose={handleClose}>
+                <div className="text-center py-6">
+                    <p className="text-green-600 font-semibold text-lg">
+                        Bundle successfully collected!
+                    </p>
+                    <Button onClick={handleClose} className="mt-4">
+                        Close
+                    </Button>
+                </div>
+            </Modal>
         );
     }
 
     return (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md">
-                <h2 className="text-xl font-bold text-green-700 mb-4">
-                    Collect Bundle
-                </h2>
-                <p className="text-gray-600 mb-4">
-                    Enter the claim code from the customer to mark this bundle
-                    as collected.
-                </p>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Select Bundle
-                        </label>
-                        <select
-                            value={selectedBundleId}
-                            onChange={(e) =>
-                                setSelectedBundleId(e.target.value)
-                            }
-                            className="w-full p-2 border border-gray-300 rounded"
-                            required
-                        >
-                            <option value="">Select a bundle...</option>
-                            {bundles.map((bundle) => (
-                                <option
-                                    key={bundle.bundle_id}
-                                    value={bundle.bundle_id}
-                                >
-                                    {bundle.bundle_name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <FormInput
-                        label="Claim Code"
-                        name="claimCode"
-                        value={claimCode}
-                        onChange={(e) => setClaimCode(e.target.value)}
-                        placeholder="Enter the claim code"
+        <Modal isOpen={true} onClose={handleClose} title="Collect Bundle">
+            <p className="text-gray-600 mb-4">
+                Enter the claim code from the customer to mark this bundle as
+                collected.
+            </p>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Select Bundle
+                    </label>
+                    <select
+                        value={selectedBundleId}
+                        onChange={(e) => setSelectedBundleId(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded"
                         required
-                    />
-                    <div className="flex gap-2 mt-4">
-                        <SubmitButton
-                            disabled={collecting || !selectedBundleId}
-                        >
-                            {collecting
-                                ? "Collecting..."
-                                : "Confirm Collection"}
-                        </SubmitButton>
-                        <Button type="button" onClick={handleClose}>
-                            Cancel
-                        </Button>
-                    </div>
-                </form>
-            </Card>
-        </div>
+                    >
+                        <option value="">Select a bundle...</option>
+                        {bundles.map((bundle) => (
+                            <option
+                                key={bundle.bundle_id}
+                                value={bundle.bundle_id}
+                            >
+                                {bundle.bundle_name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <FormInput
+                    label="Claim Code"
+                    name="claimCode"
+                    value={claimCode}
+                    onChange={(e) => setClaimCode(e.target.value)}
+                    placeholder="Enter the claim code"
+                    required
+                />
+                <div className="flex gap-2 mt-4">
+                    <SubmitButton disabled={collecting || !selectedBundleId}>
+                        {collecting ? "Collecting..." : "Confirm Collection"}
+                    </SubmitButton>
+                    <Button type="button" onClick={handleClose}>
+                        Cancel
+                    </Button>
+                </div>
+            </form>
+        </Modal>
     );
 }
 
@@ -284,6 +226,7 @@ function StatsSection({ bundles, reservations }) {
 }
 
 function BundleRow({ bundle }) {
+    const navigate = useNavigate();
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
 
@@ -299,7 +242,6 @@ function BundleRow({ bundle }) {
             >
                 <td className="py-3 px-4">{bundle.bundle_name}</td>
                 <td className="py-3 px-4">£{bundle.price}</td>
-                <td className="py-3 px-4">{bundle.total_qty}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
                     {reservedCount} / {bundle.total_qty}
@@ -310,13 +252,23 @@ function BundleRow({ bundle }) {
                 <td className="py-3 px-4">
                     {new Date(bundle.window_end).toLocaleString()}
                 </td>
+                <td className="py-3 px-4">
+                    <Button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/bundles/${bundle.bundle_id}`);
+                        }}
+                    >
+                        Open Listing
+                    </Button>
+                </td>
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
                     <td colSpan={7} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
-                                Reservations ({reservations.length})
+                                Reservations
                             </h4>
                             {reservations.length === 0 ? (
                                 <p className="text-gray-500 text-sm">
@@ -346,11 +298,15 @@ function BundleRow({ bundle }) {
 }
 
 export default function SellerDashboard() {
-    const { userRole } = useAuth();
+    const { userRole, logout } = useAuth();
     const navigate = useNavigate();
     const { bundles, loading } = useSellerBundles();
+    const { issueReports, loading: issuesLoading } = useSellerIssueReports();
+    const openIssuesCount = issueReports.filter(
+        (issue) => issue.status === "open",
+    ).length;
     const [showCollectModal, setShowCollectModal] = useState(false);
-    const allReservations = useAllSellerReservations(bundles);
+    const allReservations = useSellerAllReservations(bundles);
 
     if (userRole !== "seller") {
         return (
@@ -375,17 +331,53 @@ export default function SellerDashboard() {
                     <h1 className="text-3xl font-bold text-green-700">
                         Seller Dashboard
                     </h1>
-                    <Button onClick={() => navigate("/bundles/create")}>
-                        Create Bundle
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => setShowCollectModal(true)}
+                            className="!w-auto"
+                        >
+                            Enter Claim Code
+                        </Button>
+                        <Button
+                            onClick={() => navigate("/bundles/create")}
+                            className="!w-auto"
+                        >
+                            Create Bundle
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="mb-6">
-                    <Button onClick={() => setShowCollectModal(true)}>
-                        Enter Claim Code
-                    </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate("/dashboard/issues?status=open")
+                        }
+                        className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-left hover:bg-amber-100 transition"
+                    >
+                        <p className="text-sm font-medium text-amber-800">
+                            Open Issues
+                        </p>
+                        <p className="text-3xl font-bold text-amber-900">
+                            {issuesLoading ? "..." : openIssuesCount}
+                        </p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate("/dashboard/issues")}
+                        className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-left hover:bg-gray-100 transition"
+                    >
+                        <p className="text-sm font-medium text-gray-700">
+                            Total Derived Issues
+                        </p>
+                        <p className="text-3xl font-bold text-gray-900">
+                            {issuesLoading ? "..." : issueReports.length}
+                        </p>
+                    </button>
                 </div>
             </Card>
+
+            <SellerProfileCard onLogout={logout} />
 
             {showCollectModal && (
                 <CollectModal
@@ -424,9 +416,6 @@ export default function SellerDashboard() {
                                         Price
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Total Qty
-                                    </th>
-                                    <th className="py-3 px-4 text-green-700 font-semibold">
                                         Discount
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
@@ -437,6 +426,9 @@ export default function SellerDashboard() {
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Window End
+                                    </th>
+                                    <th className="py-3 px-4 text-green-700 font-semibold">
+                                        Listing
                                     </th>
                                 </tr>
                             </thead>

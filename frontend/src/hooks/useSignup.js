@@ -48,6 +48,8 @@ const buildRequest = (role, form) => {
                 post_code: form.postCode,
                 region: form.county,
                 country: form.country,
+                latitude: form.location.lat,
+                longitude: form.location.lng,
             },
         };
     }
@@ -77,6 +79,7 @@ export function useSignup() {
         postCode: "",
         county: "",
         country: "",
+        location: null,
     });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -89,6 +92,16 @@ export function useSignup() {
         setForm((prev) => ({
             ...prev,
             [name]: type === "checkbox" ? checked : value,
+        }));
+    };
+
+    /**
+     * Handles location changes from the map picker.
+     */
+    const handleLocationChange = (location) => {
+        setForm((prev) => ({
+            ...prev,
+            location,
         }));
     };
 
@@ -115,6 +128,11 @@ export function useSignup() {
         // Ensure terms are accepted
         if (!form.terms) {
             setError("You must accept the terms and conditions.");
+            return;
+        }
+
+        if (role === "seller" && !form.location) {
+            setError("Please select a location on the map.");
             return;
         }
 
@@ -147,7 +165,7 @@ export function useSignup() {
 
             // Auto-login with new user
             const tokenData = await createSession(form.email, form.password);
-            storeAuthToken(tokenData);
+            await storeAuthToken(tokenData);
             authContext.login(tokenData);
 
             // Redirect to home page
@@ -159,5 +177,14 @@ export function useSignup() {
         }
     };
 
-    return { form, handleChange, role, setRole, error, loading, handleSubmit };
+    return {
+        form,
+        handleChange,
+        handleLocationChange,
+        role,
+        setRole,
+        error,
+        loading,
+        handleSubmit,
+    };
 }

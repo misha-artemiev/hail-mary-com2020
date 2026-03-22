@@ -6,8 +6,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 
-// Authentication
 import { useAuth } from "../context/AuthContext";
+import { useUserImage } from "../hooks/useUserImage";
 
 // Images
 import logoFull from "../assets/logos/logo-full-512.png";
@@ -25,20 +25,17 @@ export default function Navbar() {
     const { isAuthenticated, userRole } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAboutDropdownOpen, setIsAboutDropdownOpen] = useState(false);
+    const { imageUrl } = useUserImage();
 
-    // Reference object to the the dropdown
     const aboutDropdownRef = useRef(null);
 
-    // TODO: get correct user information
     const user = {
         displayName: "User0001",
         profilePic: defaultProfile,
     };
 
-    // State object: if the dropdown is open
     const closeMenu = () => setIsMenuOpen(false);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (
@@ -134,41 +131,74 @@ export default function Navbar() {
 
                 {userRole === "seller" && (
                     <>
-                        <NavLink
-                            to="/seller-dashboard"
-                            className="text-bold text-lg"
-                        >
-                            Seller Dashboard
+                        <NavLink to="/bundles/create">
+                            <button className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition">
+                                Create new listing
+                            </button>
                         </NavLink>
                         <NavLink
-                            to="/bundles/create"
-                            className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition"
+                            to="/dashboard"
+                            className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition flex items-center gap-2"
                         >
-                            Create new listing
+                            <span>Seller Dashboard</span>
+                            <img
+                                src={imageUrl || user.profilePic}
+                                alt={`${user.displayName}'s profile`}
+                                className="w-8 h-8 rounded-full"
+                                onError={(e) => {
+                                    e.target.src = defaultProfile;
+                                }}
+                            />
+                        </NavLink>
+                    </>
+                )}
+
+                {userRole === "admin" && (
+                    <>
+                        <NavLink
+                            to="/admin/create"
+                            className="text-bold text-lg"
+                        >
+                            Create Admin
+                        </NavLink>
+                        <NavLink
+                            to="/admin/manage"
+                            className="text-bold text-lg"
+                        >
+                            Manage Admins
                         </NavLink>
                     </>
                 )}
 
                 {/* If signed in, show profile picture (link to profile page) */}
                 {/* Otherwise, show login/signup link */}
-                <div className="hover:scale-110 transition">
-                    {isAuthenticated ? (
-                        <NavLink to="/profile">
-                            <img
-                                src={user.profilePic}
-                                alt={`${user.displayName}'s profile`}
-                                className="w-10 h-10 rounded-full"
-                            />
-                        </NavLink>
-                    ) : (
-                        <div className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold">
-                            <NavLink to="/login">
-                                Log In /<br />
-                                Sign Up
+                {userRole !== "seller" && (
+                    <div>
+                        {isAuthenticated ? (
+                            <NavLink
+                                to="/profile"
+                                className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold hover:scale-102 transition flex items-center gap-2"
+                            >
+                                <span>Profile</span>
+                                <img
+                                    src={imageUrl || defaultProfile}
+                                    alt="Profile"
+                                    className="w-10 h-10 rounded-full object-cover"
+                                    onError={(e) => {
+                                        e.target.src = defaultProfile;
+                                    }}
+                                />
                             </NavLink>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="px-2 py-1.5 rounded-md bg-green-100 text-green-700 text-md font-bold">
+                                <NavLink to="/login">
+                                    Log In /<br />
+                                    Sign Up
+                                </NavLink>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Mobile: Logo only */}

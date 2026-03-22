@@ -1,13 +1,29 @@
 """Endpoints for users."""
 
 from fastapi import APIRouter, HTTPException, Response, UploadFile, status
-from internal.auth.middleware import BearerAuthDep, ConsumerAuthDep
+from internal.auth.middleware import BearerAuthDep
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
+from internal.queries.admin_issue_reports import (
+    AsyncQuerier as AdminIssueReportsQuerier,
+)
+from internal.queries.admin_issue_reports import CreateAdminIssueReportParams
 from internal.queries.inbox import AsyncQuerier as InboxQuerier
 from internal.queries.inbox import CreateInboxMessageParams
-from internal.queries.models import Inbox, UserRole
+from internal.queries.models import (
+    AdminIssueReport,
+    AdminIssueType,
+    Inbox,
+    SellerIssueReport,
+    SellerIssueType,
+    UserRole,
+)
+from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
+from internal.queries.seller_issue_reports import (
+    AsyncQuerier as SellerIssueReportsQuerier,
+)
+from internal.queries.seller_issue_reports import CreateSellerIssueReportParams
 from internal.queries.user import AsyncQuerier as UserQuerier
 from internal.queries.user import UpdateUserEmailParams
 from pydantic import BaseModel, EmailStr
@@ -156,29 +172,49 @@ async def get_user_id(username: str, conn: database_dependency) -> tuple[int, Us
 
 
 @router.patch(
-    path="/me/profile",
+    path="/me/image",
     status_code=status.HTTP_202_ACCEPTED,
     summary="Change profile image",
     description="Updates the profile image for the authenticated user.",
 )
-async def change_profile_image(file: UploadFile, consumer: ConsumerAuthDep) -> None:
+async def change_profile_image(file: UploadFile, session: BearerAuthDep) -> None:
     """Change user profile image.
 
     Args:
         file: profile image
-        consumer: consumer session
+        session: user session
     """
-    await block_management.upload_profile_image(consumer.user_id, file)
+    await block_management.upload_profile_image(session.user_id, file)
 
 
 @router.get(
-    path="/{user_id}/profile",
+    path="/me/image",
+    status_code=status.HTTP_200_OK,
+    summary="Get own profile image",
+    description="Retrieves the profile image for the authenticated user.",
+)
+async def get_profile_image_me(session: BearerAuthDep) -> Response:
+    """Get own profile image.
+
+    Args:
+        session: user session
+
+    Returns:
+        user profile image
+    """
+    return Response(
+        block_management.get_profile_image(session.user_id), media_type="image/jpeg"
+    )
+
+
+@router.get(
+    path="/{user_id}/image",
     status_code=status.HTTP_200_OK,
     summary="Get user profile image",
     description="Retrieves the profile image for a specific user by their ID.",
 )
-async def get_profile_image(user_id: int) -> Response:
-    """Get user profile image.
+async def get_profile_image_by_id(user_id: int) -> Response:
+    """Get user profile image by ID.
 
     Args:
         user_id: user id
@@ -191,21 +227,151 @@ async def get_profile_image(user_id: int) -> Response:
     )
 
 
-@router.get(
-    path="/me/profile",
-    status_code=status.HTTP_200_OK,
-    summary="Get own profile image",
-    description="Retrieves the profile image for the authenticated user.",
-)
-async def get_profile_image_me(consumer: ConsumerAuthDep) -> Response:
-    """Get user profile image.
+class CreateSellerIssueReportForm(BaseModel):
+    """Seller issue report creation form."""
+
+    issue_type: SellerIssueType
+    description: str
+
+
+async def create_seller_issue_report(
+    reservation_id: int,
+    form: CreateSellerIssueReportForm,
+    conn: database_dependency,
+    user: BearerAuthDep,
+) -> SellerIssueReport:
+    """Create seller issue report.
 
     Args:
-        consumer: consumer session
+        reservation_id: reservation id from path
+        form: seller issue report creation form
+        conn: database connection
+        user: user session
 
     Returns:
-        user profile image
+        created seller issue report
+
+    Raises:
+        HTTPException: if failed to create report or reservation not owned by consumer
     """
-    return Response(
-        block_management.get_profile_image(consumer.user_id), media_type="image/jpeg"
+    reservation = await ReservationsQuerier(conn).get_reservation(
+        reservation_id=reservation_id
     )
+    if not reservation or reservation.consumer_id != user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reservation not found or not owned by consumer",
+        )
+
+    report = await SellerIssueReportsQuerier(conn).create_seller_issue_report(
+        CreateSellerIssueReportParams(
+            reservation_id=reservation_id,
+            issue_type=form.issue_type,
+            description=form.description,
+        )
+    )
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create seller issue report",
+        )
+    return report
+
+
+class CreateAdminIssueReportForm(BaseModel):
+    """Admin issue report creation form."""
+
+    issue_type: AdminIssueType
+    description: str
+
+
+@router.post(
+    "/me/reports/admin",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create admin issue report",
+    description="Creates a new admin issue report.",
+    tags=["reports"],
+)
+async def create_admin_issue_report(
+    form: CreateAdminIssueReportForm, conn: database_dependency, user: BearerAuthDep
+) -> AdminIssueReport:
+    """Create admin issue report.
+
+    Args:
+        form: admin issue report creation form
+        conn: database connection
+        user: user session
+
+    Returns:
+        created admin issue report
+
+    Raises:
+        HTTPException: if failed to create report
+    """
+    report = await AdminIssueReportsQuerier(conn).create_admin_issue_report(
+        CreateAdminIssueReportParams(
+            user_id=user.user_id,
+            issue_type=form.issue_type,
+            description=form.description,
+        )
+    )
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create admin issue report",
+        )
+    return report
+
+
+@router.get(
+    "/me/reports/admin",
+    status_code=status.HTTP_200_OK,
+    summary="Get admin issue reports",
+    description="Retrieves a list of admin issue reports created by the user.",
+    tags=["reports"],
+)
+async def get_admin_issue_reports(
+    conn: database_dependency, user: BearerAuthDep
+) -> list[AdminIssueReport]:
+    """Get admin issue reports.
+
+    Args:
+        conn: database connection
+        user: user session
+
+    Returns:
+        list of admin issue reports
+    """
+    return [
+        r
+        async for r in AdminIssueReportsQuerier(conn).get_admin_issue_reports_by_user(
+            user_id=user.user_id
+        )
+    ]
+
+
+@router.get(
+    "/me/reports/seller",
+    status_code=status.HTTP_200_OK,
+    summary="Get seller issue reports",
+    description="Retrieves a list of seller issue reports created by the user.",
+    tags=["reports"],
+)
+async def get_seller_issue_reports(
+    conn: database_dependency, user: BearerAuthDep
+) -> list[SellerIssueReport]:
+    """Get seller issue reports.
+
+    Args:
+        conn: database connection
+        user: user session
+
+    Returns:
+        list of seller issue reports
+    """
+    return [
+        r
+        async for r in SellerIssueReportsQuerier(conn).get_seller_issue_reports_by_user(
+            consumer_id=user.user_id
+        )
+    ]

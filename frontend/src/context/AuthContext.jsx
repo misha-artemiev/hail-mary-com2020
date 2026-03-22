@@ -4,7 +4,11 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAuthToken, logout as logoutService } from "../services/authService";
+import {
+    getAuthToken,
+    fetchUsername,
+    logout as logoutService,
+} from "../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -24,14 +28,27 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = getAuthToken();
-        const role = localStorage.getItem("userRole");
+        const initAuth = async () => {
+            const token = getAuthToken();
+            const role = localStorage.getItem("userRole");
+            const storedUsername = localStorage.getItem("username");
 
-        if (token) {
-            setIsAuthenticated(true);
-            setUserRole(role);
-        }
-        setLoading(false);
+            if (token) {
+                setIsAuthenticated(true);
+                setUserRole(role);
+
+                // Fetch username if not already stored
+                if (!storedUsername && role) {
+                    const username = await fetchUsername(role, token);
+                    if (username) {
+                        localStorage.setItem("username", username);
+                    }
+                }
+            }
+            setLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     /**
