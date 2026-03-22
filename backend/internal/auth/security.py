@@ -83,12 +83,9 @@ async def log_to_db(log_data: LogData) -> None:
             await ActivityLogQuerier(conn).create_activity_log(
                 CreateActivityLogParams(
                     user_id=log_data.user_id,
-                    user_role=log_data.user_role,
                     action=f"{log_data.method} {log_data.path}",
-                    resource_type=None,
-                    resource_id=None,
                     details=details,
-                    ip_address=log_data.ip_address,
+                    ip_address=log_data.ip_address or "",
                 )
             )
             await conn.commit()
@@ -100,13 +97,17 @@ async def log_to_db(log_data: LogData) -> None:
 async def log_request(request: Request) -> None:
     """Log request details to activity_log table."""
     body = None
-    if request.method in {"POST", "PATCH", "PUT"}:
+    content_type = request.headers.get("content-type", "")
+    if (
+        request.method in {"POST", "PATCH", "PUT"}
+        and "application/json" in content_type
+    ):
         try:
             raw_body = await request.json()
             if isinstance(raw_body, dict):
                 body = sanitize_body(raw_body)
         except json.JSONDecodeError, KeyError:
-            pass  # No body or invalid JSON - expected for some requests
+            pass  # no body or invalid json
 
     user_id: int | None = None
     user_role: UserRole | None = None

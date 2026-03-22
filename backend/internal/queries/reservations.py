@@ -20,6 +20,18 @@ RETURNING reservation_id, bundle_id, consumer_id, reserved_at, claim_code, colle
 """
 
 
+COUNT_CONSUMER_COLLECTED_RESERVATIONS = """-- name: count_consumer_collected_reservations \\:one
+SELECT COUNT(*) AS collected_count, CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS has_collected
+FROM reservations
+WHERE consumer_id=:p1 AND collected_at IS NOT NULL
+"""
+
+
+class CountConsumerCollectedReservationsRow(pydantic.BaseModel):
+    collected_count: int
+    has_collected: int
+
+
 CREATE_RESERVATION = """-- name: create_reservation \\:one
 INSERT INTO reservations (bundle_id, consumer_id, claim_code)
 VALUES (:p1,:p2,:p3)
@@ -137,6 +149,15 @@ class AsyncQuerier:
             reserved_at=row[3],
             claim_code=row[4],
             collected_at=row[5],
+        )
+
+    async def count_consumer_collected_reservations(self, *, consumer_id: int) -> Optional[CountConsumerCollectedReservationsRow]:
+        row = (await self._conn.execute(sqlalchemy.text(COUNT_CONSUMER_COLLECTED_RESERVATIONS), {"p1": consumer_id})).first()
+        if row is None:
+            return None
+        return CountConsumerCollectedReservationsRow(
+            collected_count=row[0],
+            has_collected=row[1],
         )
 
     async def create_reservation(self, arg: CreateReservationParams) -> Optional[models.Reservation]:

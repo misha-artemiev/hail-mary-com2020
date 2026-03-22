@@ -207,9 +207,6 @@ async def search_bundles(
 
     Returns:
       found bundles card information
-
-    Raises:
-        HTTPException: if failed to find item
     """
     distance_box = dist_safe_box(
         LocationModel(lat=form.lat, lon=form.lon), form.max_dist
@@ -225,11 +222,6 @@ async def search_bundles(
             )
         )
     ]
-    if not sellers:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get sellers",
-        )
     filtered_bundles: list[SearchBundlesResponse] = []
     for seller in sellers:
         dist = get_distance(
