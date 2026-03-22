@@ -11,7 +11,6 @@ later, remember for CW2 we have to make changes to almost every aspect of the ap
 so we can make improvements and get more realistic data therefore more marks for CW2.
 """
 
-import io
 import pathlib
 import random
 from datetime import UTC, datetime, timedelta
@@ -21,10 +20,7 @@ from typing import Any
 import pandas as pd
 from database.db_constants import ALLERGENS, BADGES, CATEGORIES
 from faker import Faker
-from fastapi import UploadFile
-from fastapi.datastructures import Headers
 from internal.auth.security import generate_claim_code, generate_token
-from internal.block.management import BlockManagement
 
 # setting the Faker library to use UK countries
 fake = Faker("en_GB")
@@ -534,19 +530,6 @@ def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(tokens)
 
 
-async def _upload_images() -> None:
-    total = len(df_bundles)
-    for i, bundle_id in enumerate(df_bundles["bundle_id"], start=1):
-        name, content = secure_rng.choice(image_data)
-        file = UploadFile(
-            filename=name,
-            file=io.BytesIO(content),
-            headers=Headers({"content-type": "image/jpeg"}),
-        )
-        await block_management.upload_bundle_image(bundle_id, file)
-        print(f"   Uploading images: {i}/{total}", end="\r")
-
-
 # main execution
 if __name__ == "__main__":
     print("Starting Data Gen...")
@@ -556,11 +539,6 @@ if __name__ == "__main__":
         pathlib.Path(OUTPUT_FOLDER).mkdir(parents=True)
         print(f"Created folder: {OUTPUT_FOLDER}")
 
-    bundle_images_path = pathlib.Path(__file__).parent / "bundle_images"
-    bundle_images = list(bundle_images_path.glob("*.jpeg"))
-    block_management = BlockManagement()
-    block_management.initialise()
-
     df_users = generate_users()
     df_sellers, df_consumers, df_admins = generate_profiles(df_users)
     print(f"   Generated {len(df_users)} users")
@@ -568,14 +546,6 @@ if __name__ == "__main__":
     df_windows = generate_pickup_windows()
 
     df_bundles = generate_inventory(df_sellers["user_id"].tolist(), df_windows)
-
-    image_data: list[tuple[str, bytes]] = [
-        (img.name, img.read_bytes()) for img in bundle_images
-    ]
-
-    print(f"   Uploading {len(df_bundles)} bundle images...")
-    #  asyncio.run(_upload_images())
-    print()
 
     # Junction Tables
     df_bundle_cats = generate_bundle_categories(df_bundles)
