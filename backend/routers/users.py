@@ -276,6 +276,13 @@ class CreateSellerIssueReportForm(BaseModel):
     description: str
 
 
+@router.post(
+    "/me/reports/seller/{reservation_id}",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create seller issue report",
+    description="Creates a seller issue report for a reservation owned by the user.",
+    tags=["reports"],
+)
 async def create_seller_issue_report(
     reservation_id: int,
     form: CreateSellerIssueReportForm,
@@ -327,29 +334,6 @@ async def create_seller_issue_report(
     )
 
     return report
-
-
-@router.post(
-    "/me/reports/seller/{reservation_id}",
-    status_code=status.HTTP_201_CREATED,
-    summary="Create seller issue report",
-    description="Creates a seller issue report for a reservation owned by the user.",
-    tags=["reports"],
-)
-async def create_seller_issue_report_endpoint(
-    reservation_id: int,
-    form: CreateSellerIssueReportForm,
-    conn: database_dependency,
-    user: BearerAuthDep,
-) -> SellerIssueReport:
-    """Create seller issue report endpoint wrapper.
-
-    Returns:
-        The created seller issue report.
-    """
-    return await create_seller_issue_report(
-        reservation_id=reservation_id, form=form, conn=conn, user=user
-    )
 
 
 class CreateAdminIssueReportForm(BaseModel):
