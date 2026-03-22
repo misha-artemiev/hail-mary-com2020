@@ -36,7 +36,8 @@ export default function User() {
     // Use custom hooks
     const { user, loading } = useUser(username);
     const listings = useUserListings(username);
-    const { imageUrl: profileImage, loading: imageLoading } = useUserProfileImage(username);
+    const { imageUrl: profileImage, loading: imageLoading } =
+        useUserProfileImage(username);
 
     // Display a temporary loading indicator
     if (loading || imageLoading) {

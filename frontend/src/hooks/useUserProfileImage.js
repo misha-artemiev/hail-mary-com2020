@@ -36,7 +36,7 @@ export function useUserProfileImage(username) {
                     return;
                 }
 
-                const [userId, role] = await idResponse.json();
+                const [userId] = await idResponse.json();
 
                 const imageResponse = await fetch(
                     `${import.meta.env.VITE_API_BASE_URL || "/api"}/users/${userId}/image`,
