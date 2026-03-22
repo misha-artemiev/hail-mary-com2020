@@ -233,6 +233,7 @@ class CreateSellerIssueReportForm(BaseModel):
     issue_type: SellerIssueType
     description: str
 
+
 @router.post(
     "/me/reports/seller/{reservation_id}",
     status_code=status.HTTP_201_CREATED,
