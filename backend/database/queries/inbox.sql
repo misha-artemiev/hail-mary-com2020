@@ -7,8 +7,9 @@ SELECT *
 FROM inbox
 WHERE user_id = $1;
 
--- name: DeleteInboxMessage :one
-DELETE FROM inbox
+-- name: ReadInboxMessage :one
+UPDATE inbox
+SET read_status = TRUE
 WHERE message_id = $1
 RETURNING *;
 

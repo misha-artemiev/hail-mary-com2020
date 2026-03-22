@@ -5,7 +5,6 @@ from internal.auth.middleware import BearerAuthDep
 from internal.auth.security import UpdatePasswordForm, update_pw
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
-from internal.inbox.notifications import send_notification
 from internal.queries.admin_issue_reports import (
     AsyncQuerier as AdminIssueReportsQuerier,
 )
@@ -325,12 +324,13 @@ async def create_seller_issue_report(
             detail="Failed to create seller issue report",
         )
 
-    await send_notification(
-        conn,
-        user_id=user.user_id,
-        sender_id=user.user_id,
-        subject="Issue report submitted",
-        text="Your reservation issue report was submitted successfully.",
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=user.user_id,
+            sender_id=user.user_id,
+            message_subject="Issue report submitted",
+            message_text="Your reservation issue report was submitted successfully.",
+        )
     )
 
     return report
@@ -379,12 +379,13 @@ async def create_admin_issue_report(
             detail="Failed to create admin issue report",
         )
 
-    await send_notification(
-        conn,
-        user_id=user.user_id,
-        sender_id=user.user_id,
-        subject="Issue report submitted",
-        text=("Your issue report was submitted successfully and is awaiting review."),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=user.user_id,
+            sender_id=user.user_id,
+            message_subject="Issue report submitted",
+            message_text="Your issue report was submitted successfully and is awaiting review.",
+        )
     )
 
     return report

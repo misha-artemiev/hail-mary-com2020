@@ -73,7 +73,8 @@ from internal.auth.middleware import SellerAuthDep
 from internal.badges.engine import BadgeEngine
 from internal.block.management import block_management
 from internal.database.dependency import database_dependency
-from internal.inbox.notifications import send_notification
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.allergens import (
     AddBundlesAllergenParams,
     DeleteBundleAllergenParams,
@@ -346,15 +347,13 @@ async def create_bundle(
                 status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to add bundle allergen"
             )
 
-    await send_notification(
-        conn,
-        user_id=seller.user_id,
-        sender_id=seller.user_id,
-        subject="Bundle listed",
-        text=(
-            f"Your bundle '{bundle.bundle_name}' is now listed "
-            f"and available for reservations."
-        ),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=seller.user_id,
+            sender_id=seller.user_id,
+            message_subject="Bundle listed",
+            message_text=f"Your bundle '{bundle.bundle_name}' is now listed and available for reservations.",
+        )
     )
     return bundle
 
@@ -540,15 +539,13 @@ async def get_bundles(conn: database_dependency, seller: SellerAuthDep) -> list[
     now = datetime.now(tz=UTC)
     for bundle in bundles:
         if bundle.window_end <= now:
-            await send_notification(
-                conn,
-                user_id=seller.user_id,
-                sender_id=seller.user_id,
-                subject="Bundle expired",
-                text=(
-                    f"Your bundle '{bundle.bundle_name}' has expired at "
-                    f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
-                ),
+            await InboxQuerier(conn).create_inbox_message(
+                CreateInboxMessageParams(
+                    user_id=seller.user_id,
+                    sender_id=seller.user_id,
+                    message_subject="Bundle expired",
+                    message_text=f"Your bundle '{bundle.bundle_name}' has expired at {bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}.",
+                )
             )
 
     return list(bundles)
@@ -657,24 +654,21 @@ async def reservation_collection(
             detail="Failed to update reservation status",
         )
 
-    await send_notification(
-        conn,
-        user_id=seller.user_id,
-        sender_id=seller.user_id,
-        subject="Bundle collected",
-        text=(
-            f"A reservation for bundle '{bundle.bundle_name}' has been collected "
-            "successfully."
-        ),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=seller.user_id,
+            sender_id=seller.user_id,
+            message_subject="Bundle collected",
+            message_text=f"A reservation for bundle '{bundle.bundle_name}' has been collected successfully.",
+        )
     )
-    await send_notification(
-        conn,
-        user_id=claimed_reservation.consumer_id,
-        sender_id=seller.user_id,
-        subject="Reservation collected",
-        text=(
-            f"Your reservation for '{bundle.bundle_name}' has been marked as collected."
-        ),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=claimed_reservation.consumer_id,
+            sender_id=seller.user_id,
+            message_subject="Reservation collected",
+            message_text=f"Your reservation for '{bundle.bundle_name}' has been marked as collected.",
+        )
     )
 
     await conn.commit()

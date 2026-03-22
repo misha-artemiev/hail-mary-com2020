@@ -8,7 +8,7 @@ import pydantic
 from typing import Any, Optional
 
 
-class AdminIssueType(str, enum.Enum):
+class AdminIssueType(enum.StrEnum):
     LOGIN_FAILED = "LOGIN_FAILED"
     ACCOUNT_LOCKED = "ACCOUNT_LOCKED"
     PASSWORD_RESET_FAILED = "PASSWORD_RESET_FAILED"
@@ -21,7 +21,7 @@ class AdminIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
-class ChartType(str, enum.Enum):
+class ChartType(enum.StrEnum):
     LINE = "line"
     MULTI_LINE = "multi_line"
     BAR = "bar"
@@ -30,7 +30,7 @@ class ChartType(str, enum.Enum):
     AREA = "area"
 
 
-class DayOfWeek(str, enum.Enum):
+class DayOfWeek(enum.StrEnum):
     MONDAY = "Monday"
     TUESDAY = "Tuesday"
     WEDNESDAY = "Wednesday"
@@ -40,19 +40,19 @@ class DayOfWeek(str, enum.Enum):
     SUNDAY = "Sunday"
 
 
-class IssueStatus(str, enum.Enum):
+class IssueStatus(enum.StrEnum):
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     CLOSED = "closed"
 
 
-class ReservationStatus(str, enum.Enum):
+class ReservationStatus(enum.StrEnum):
     RESERVED = "reserved"
     COLLECTED = "collected"
     NO_SHOW = "no_show"
 
 
-class SellerIssueType(str, enum.Enum):
+class SellerIssueType(enum.StrEnum):
     ITEM_MISSING = "ITEM_MISSING"
     ITEM_INCORRECT = "ITEM_INCORRECT"
     ITEM_DAMAGED = "ITEM_DAMAGED"
@@ -67,13 +67,13 @@ class SellerIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     SELLER = "seller"
     CONSUMER = "consumer"
     ADMIN = "admin"
 
 
-class WeatherFlag(str, enum.Enum):
+class WeatherFlag(enum.StrEnum):
     SUNNY = "sunny"
     CLOUDY = "cloudy"
     RAINY = "rainy"

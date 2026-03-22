@@ -9,8 +9,9 @@ from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
-from internal.inbox.notifications import send_notification
 from internal.queries.allergens import AsyncQuerier as AllergensQuerier
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.category import AsyncQuerier as CategoriesQuerier
 from internal.queries.models import Bundle, Reservation
@@ -139,24 +140,21 @@ async def reserve_bundle(
             detail="Failed to create reservation",
         )
 
-    await send_notification(
-        conn,
-        user_id=consumer.user_id,
-        sender_id=consumer.user_id,
-        subject="Bundle reserved",
-        text=(
-            f"You reserved '{bundle.bundle_name}'. "
-            f"Your claim code is {reservation.claim_code}."
-        ),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=consumer.user_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=f"You reserved '{bundle.bundle_name}'. Your claim code is {reservation.claim_code}.",
+        )
     )
-    await send_notification(
-        conn,
-        user_id=bundle.seller_id,
-        sender_id=consumer.user_id,
-        subject="Bundle reserved",
-        text=(
-            f"A reservation has been created for your bundle '{bundle.bundle_name}'."
-        ),
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=bundle.seller_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=f"A reservation has been created for your bundle '{bundle.bundle_name}'.",
+        )
     )
 
     return reservation

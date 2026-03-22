@@ -25,13 +25,6 @@ class CreateInboxMessageParams(pydantic.BaseModel):
     message_text: str
 
 
-DELETE_INBOX_MESSAGE = """-- name: delete_inbox_message \\:one
-DELETE FROM inbox
-WHERE message_id = :p1
-RETURNING message_id, user_id, sender_id, message_subject, message_text, sent_at, read_status
-"""
-
-
 GET_INBOXES = """-- name: get_inboxes \\:many
 SELECT message_id, user_id, sender_id, message_subject, message_text, sent_at, read_status
 FROM inbox
@@ -42,6 +35,14 @@ GET_USER_INBOX = """-- name: get_user_inbox \\:many
 SELECT message_id, user_id, sender_id, message_subject, message_text, sent_at, read_status
 FROM inbox
 WHERE user_id = :p1
+"""
+
+
+READ_INBOX_MESSAGE = """-- name: read_inbox_message \\:one
+UPDATE inbox
+SET read_status = TRUE
+WHERE message_id = :p1
+RETURNING message_id, user_id, sender_id, message_subject, message_text, sent_at, read_status
 """
 
 
@@ -56,20 +57,6 @@ class AsyncQuerier:
             "p3": arg.message_subject,
             "p4": arg.message_text,
         })).first()
-        if row is None:
-            return None
-        return models.Inbox(
-            message_id=row[0],
-            user_id=row[1],
-            sender_id=row[2],
-            message_subject=row[3],
-            message_text=row[4],
-            sent_at=row[5],
-            read_status=row[6],
-        )
-
-    async def delete_inbox_message(self, *, message_id: int) -> Optional[models.Inbox]:
-        row = (await self._conn.execute(sqlalchemy.text(DELETE_INBOX_MESSAGE), {"p1": message_id})).first()
         if row is None:
             return None
         return models.Inbox(
@@ -107,3 +94,17 @@ class AsyncQuerier:
                 sent_at=row[5],
                 read_status=row[6],
             )
+
+    async def read_inbox_message(self, *, message_id: int) -> Optional[models.Inbox]:
+        row = (await self._conn.execute(sqlalchemy.text(READ_INBOX_MESSAGE), {"p1": message_id})).first()
+        if row is None:
+            return None
+        return models.Inbox(
+            message_id=row[0],
+            user_id=row[1],
+            sender_id=row[2],
+            message_subject=row[3],
+            message_text=row[4],
+            sent_at=row[5],
+            read_status=row[6],
+        )
