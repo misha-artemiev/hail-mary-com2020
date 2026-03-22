@@ -1,8 +1,11 @@
 """Graph refreshing background processing."""
 
+import datetime
 from decimal import Decimal
 
 from fastapi import BackgroundTasks
+from internal.analytics.forecast import ForecastQuery, generate_seller_forecasts
+from internal.analytics.forecast_info import BundleDetails, build_forecast_query
 from internal.analytics.graphs import BundleRow, ReservationRow, SellerAnalytics
 from internal.database.manager import database_manager
 from internal.logger.logger import logger
@@ -15,7 +18,10 @@ from internal.queries.analytics import (
 )
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.category import AsyncQuerier as CategoryQuerier
+from internal.queries.forecast import AsyncQuerier as ForecastQuerier
+from internal.queries.forecast import UpsertForecastOutputParams
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
+from internal.queries.seller import AsyncQuerier as SellerQuerier
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 
@@ -278,6 +284,145 @@ class AnalyticsProcesser:
                 return
 
     @staticmethod
+    async def add_forecast_graph(
+        analytics_querier: AnalyticsQuerier,
+        seller_id: int,
+        bundle_rows: list[BundleRow],
+        reservation_rows: list[ReservationRow],
+    ) -> None:
+        """Add forecast vs posted graph.
+
+        Args:
+            analytics_querier: async analytics queries
+            seller_id: seller id
+            bundle_rows: formatted bundle rows
+            reservation_rows: formatted reservation rows
+        """
+        if (
+            graph := await analytics_querier.get_graph(
+                GetGraphParams(seller_id=seller_id, graph_type=5)
+            )
+        ) is None:
+            logger.exception("failed to get forecast graph")
+            return
+        if (
+            sales_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="sales", sort_index=0
+                )
+            )
+        ) is None:
+            logger.exception("failed to create sales series for forecast")
+            return
+        if (
+            posted_series := await analytics_querier.create_graph_series(
+                CreateGraphSeriesParams(
+                    graph_id=graph.graph_id, series_name="posted", sort_index=1
+                )
+            )
+        ) is None:
+            logger.exception("failed to create posted series for forecast")
+            return
+        for i, point in enumerate(
+            SellerAnalytics.graph_weekly_sales_vs_posted(bundle_rows, reservation_rows)
+        ):
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=sales_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.sold_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception("failed to create point for sales series for forecast")
+                return
+            if (
+                await analytics_querier.create_graph_point(
+                    CreateGraphPointParams(
+                        series_id=posted_series.series_id,
+                        sort_index=i,
+                        x=point.day.strftime("%Y-%m-%d"),
+                        y=Decimal(point.posted_qty),
+                    )
+                )
+                is None
+            ):
+                logger.exception(
+                    "failed to create point for posted series for forecast"
+                )
+                return
+
+    @staticmethod
+    async def add_forecast_outputs(
+        forecast_querier: ForecastQuerier,
+        category_querier: CategoryQuerier,
+        seller_querier: SellerQuerier,
+        seller_id: int,
+        conn: AsyncConnection,
+    ) -> None:
+        """Save forecasts for seller's future bundles to forecast_output table."""
+        history = [
+            row
+            async for row in forecast_querier.get_forecast_inputs_by_seller(
+                seller_id=seller_id
+            )
+        ]
+
+        seller = await seller_querier.get_seller(user_id=seller_id)
+        if seller is None:
+            logger.exception("failed to get seller for forecast")
+            return
+
+        bundles_querier = BundleQuerier(conn)
+        bundles = [
+            b async for b in bundles_querier.get_sellers_bundles(seller_id=seller_id)
+        ]
+        future_bundles = [
+            b for b in bundles if b.window_start > datetime.datetime.now(datetime.UTC)
+        ]
+
+        bundle_queries: list[tuple[int, ForecastQuery]] = []
+        for bundle in future_bundles:
+            categories = [
+                cat_id
+                async for cat_id in category_querier.get_bundle_categories(
+                    bundle_id=bundle.bundle_id
+                )
+            ]
+            details = BundleDetails(
+                bundle_id=bundle.bundle_id,
+                bundle_date=bundle.window_start.date(),
+                window_start=bundle.window_start,
+                window_end=bundle.window_end,
+                seller_id=bundle.seller_id,
+                category_ids=categories,
+                latitude=seller.latitude,
+                longitude=seller.longitude,
+                posted_qty=bundle.total_qty,
+            )
+            query = build_forecast_query(details)
+            bundle_queries.append((bundle.bundle_id, query))
+
+        forecasts = generate_seller_forecasts(history, bundle_queries)
+
+        for forecast in forecasts:
+            await forecast_querier.upsert_forecast_output(
+                UpsertForecastOutputParams(
+                    bundle_id=forecast.bundle_id,
+                    seller_id=forecast.seller_id,
+                    window_start=forecast.window_start,
+                    predicted_sales=forecast.predicted_sales,
+                    posted_qty=forecast.posted_qty,
+                    predicted_no_show_prob=forecast.predicted_no_show_prob,
+                    confidence=forecast.confidence,
+                    rationale=forecast.rationale,
+                )
+            )
+
+    @staticmethod
     async def process_analytics(seller_id: int) -> None:
         """Background graph processing.
 
@@ -339,4 +484,14 @@ class AnalyticsProcesser:
             )
             await AnalyticsProcesser.add_time_window_distribution_graph(
                 analytics_querier, seller_id, reservation_rows
+            )
+            await AnalyticsProcesser.add_forecast_graph(
+                analytics_querier, seller_id, bundle_rows, reservation_rows
+            )
+            await AnalyticsProcesser.add_forecast_outputs(
+                ForecastQuerier(conn),
+                CategoryQuerier(conn),
+                SellerQuerier(conn),
+                seller_id,
+                conn,
             )
