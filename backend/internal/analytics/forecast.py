@@ -46,6 +46,7 @@ _COLD_RATIONALE: str = (
 class ForecastQuery(BaseModel):
     """The conditions of an upcoming bundle to forecast demand for."""
 
+    bundle_id: int
     seller_id: int
     # A bundle can belong to more than one category. We forecast each category
     # separately and average the results, so this is a list rather than a
@@ -57,17 +58,20 @@ class ForecastQuery(BaseModel):
     is_holiday: bool
     temperature: Decimal
     weather_flag: WeatherFlag
+    posted_qty: int
 
 
 class ForecastResult(BaseModel):
     """Forecast prediction ready to be written to "forecast_output"."""
 
     bundle_id: int
-    predicted_reservations: int
+    seller_id: int
+    window_start_hour: datetime.time
+    window_end_hour: datetime.time
+    predicted_sales: int
+    posted_qty: int
     predicted_no_show_prob: Decimal
     confidence: Decimal
-    # Nullable, cold-start results use the shared _COLD_RATIONALE constant,
-    # but we allow None.
     rationale: str | None
 
 
@@ -202,7 +206,11 @@ def _forecast_single_category(
     if n == 0:
         return ForecastResult(
             bundle_id=bundle_id,
-            predicted_reservations=_COLD_RESERVATIONS,
+            seller_id=query.seller_id,
+            window_start_hour=query.window_start_hour,
+            window_end_hour=query.window_end_hour,
+            predicted_sales=_COLD_RESERVATIONS,
+            posted_qty=query.posted_qty,
             predicted_no_show_prob=_COLD_NO_SHOW_PROB,
             confidence=_COLD_CONFIDENCE,
             rationale=_COLD_RATIONALE,
@@ -221,7 +229,7 @@ def _forecast_single_category(
     # Round reservations to a whole number, you can't have half a reservation.
     # max(0, ...) prevents a negative prediction reaching the database if the
     # model produces one.
-    predicted_reservations = max(0, round(pred_res))
+    predicted_sales = max(0, round(pred_res))
 
     # Clip the no-show probability to a valid range.
     predicted_no_show_prob = float(np.clip(pred_ns, 0.0, 1.0))
@@ -236,7 +244,11 @@ def _forecast_single_category(
 
     return ForecastResult(
         bundle_id=bundle_id,
-        predicted_reservations=predicted_reservations,
+        seller_id=query.seller_id,
+        window_start_hour=query.window_start_hour,
+        window_end_hour=query.window_end_hour,
+        predicted_sales=predicted_sales,
+        posted_qty=query.posted_qty,
         # Convert via string to avoid floating point not being precise
         # round() pins it to 4 decimal places to
         # match the DECIMAL(5,4) column in forecast_output.
@@ -258,7 +270,7 @@ def _average_category_results(
     Returns:
         A single ForecastResult with averaged predictions.
     """
-    avg_reservations = mean(r.predicted_reservations for r in results)
+    avg_reservations = mean(r.predicted_sales for r in results)
     # float() is needed here because predicted_no_show_prob and confidence are
     # stored as Decimal on each result, converting to float first keeps things
     # consistent before we round and convert back to Decimal at the end.
@@ -268,22 +280,22 @@ def _average_category_results(
     n_categories = len(results)
 
     if n_categories == 1:
-        # Single category, pass through the full detailed rationale that
-        # _forecast_single_category already built. Output is identical to
-        # what the original single-category design produced.
         rationale = results[0].rationale
     else:
-        # Multiple categories, replace the per-category rationale with a
-        # short summary.
         rationale = (
             f"Multi-category forecast (averaged across {n_categories} categories)."
         )
 
+    first = results[0]
     return ForecastResult(
         bundle_id=bundle_id,
+        seller_id=first.seller_id,
+        window_start_hour=first.window_start_hour,
+        window_end_hour=first.window_end_hour,
         # Round to the nearest integer, fractional reservations are meaningless.
         # max(0, ...) prevents a negative average.
-        predicted_reservations=max(0, round(avg_reservations)),
+        predicted_sales=max(0, round(avg_reservations)),
+        posted_qty=first.posted_qty,
         predicted_no_show_prob=Decimal(str(round(avg_no_show_prob, 4))),
         confidence=Decimal(str(round(avg_confidence, 4))),
         rationale=rationale,

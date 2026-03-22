@@ -194,6 +194,7 @@ class Consumer(pydantic.BaseModel):
 
 class ForecastInput(pydantic.BaseModel):
     input_id: int
+    bundle_id: int
     seller_id: int
     category_id: int
     day_of_week: DayOfWeek
@@ -209,7 +210,10 @@ class ForecastInput(pydantic.BaseModel):
 class ForecastOutput(pydantic.BaseModel):
     output_id: int
     bundle_id: int
-    predicted_reservations: int
+    seller_id: int
+    window_start: datetime.datetime
+    predicted_sales: int
+    posted_qty: int
     predicted_no_show_prob: decimal.Decimal
     confidence: decimal.Decimal
     rationale: Optional[str]
