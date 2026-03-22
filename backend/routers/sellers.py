@@ -91,12 +91,14 @@ from internal.queries.category import (
     DeleteBundleCategoryParams,
 )
 from internal.queries.category import AsyncQuerier as CategoryQuerier
+from internal.queries.forecast import AsyncQuerier as ForecastQuerier
 from internal.queries.models import (
     AnalyticsGraph,
     AnalyticsGraphsType,
     AnalyticsPoint,
     AnalyticsSeries,
     Bundle,
+    ForecastOutput,
     Reservation,
 )
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
@@ -788,3 +790,36 @@ async def get_analytics_graph(
         ]
         series_and_points.append((single_series, single_series_points))
     return (graph, series_and_points)
+
+
+@router.get(
+    "/me/bundles/{bundle_id}/forecasting",
+    status_code=status.HTTP_200_OK,
+    tags=["forecasts"],
+    summary="Get bundle forecast",
+    description="Retrieves a forecast for a specific bundle.",
+)
+async def get_bundle_forecast(
+    bundle_id: int, conn: database_dependency, seller: SellerAuthDep
+) -> ForecastOutput:
+    """Get forecast for a specific bundle.
+
+    Args:
+        bundle_id: bundle id
+        conn: database connection
+        seller: seller session
+
+    Returns:
+        forecast for the bundle
+
+    Raises:
+        HTTPException: if forecast not found
+    """
+    forecast = await ForecastQuerier(conn).get_forecast_output_by_bundle(
+        bundle_id=bundle_id
+    )
+    if forecast is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "forecast not found")
+    if forecast.seller_id != seller.user_id:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "not your forecast")
+    return forecast
