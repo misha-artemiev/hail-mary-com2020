@@ -11,6 +11,8 @@ later, remember for CW2 we have to make changes to almost every aspect of the ap
 so we can make improvements and get more realistic data therefore more marks for CW2.
 """
 
+import asyncio
+import io
 import pathlib
 import random
 from datetime import UTC, datetime, timedelta
@@ -20,7 +22,9 @@ from typing import Any
 import pandas as pd
 from database.db_constants import ALLERGENS, BADGES, CATEGORIES
 from faker import Faker
+from fastapi import UploadFile
 from internal.auth.security import generate_claim_code, generate_token
+from internal.block.management import BlockManagement
 
 # setting the Faker library to use UK countries
 fake = Faker("en_GB")
@@ -534,23 +538,33 @@ def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
 if __name__ == "__main__":
     print("Starting Data Gen...")
 
-    # Define Output Folder
     OUTPUT_FOLDER = "synthetic_data"
-    # Create the folder if it doesn't exist
     if not pathlib.Path(OUTPUT_FOLDER).exists():
         pathlib.Path(OUTPUT_FOLDER).mkdir(parents=True)
         print(f"Created folder: {OUTPUT_FOLDER}")
 
-    # Users & Profiles
+    bundle_images_path = pathlib.Path(__file__).parent / "bundle_images"
+    bundle_images = list(bundle_images_path.glob("*"))
+    block_management = BlockManagement()
+    block_management.initialise()
+
     df_users = generate_users()
     df_sellers, df_consumers, df_admins = generate_profiles(df_users)
     print(f"   Generated {len(df_users)} users")
 
-    # categories, allergens, and pickup windows
     df_windows = generate_pickup_windows()
 
-    # Inventory
     df_bundles = generate_inventory(df_sellers["user_id"].tolist(), df_windows)
+
+    async def _upload_images() -> None:
+        for bundle_id in df_bundles["bundle_id"]:
+            image_path = secure_rng.choice(bundle_images)
+            file_content = pathlib.Path(image_path).read_bytes()  # noqa: ASYNC240
+            file = UploadFile(filename=image_path.name, file=io.BytesIO(file_content))
+            file.content_type = "image/jpeg"
+            await block_management.upload_bundle_image(bundle_id, file)
+
+    asyncio.run(_upload_images())
 
     # Junction Tables
     df_bundle_cats = generate_bundle_categories(df_bundles)
