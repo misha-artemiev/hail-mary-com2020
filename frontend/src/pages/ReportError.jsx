@@ -117,8 +117,7 @@ export default function ReportError() {
                 throw new Error("Missing reservation context for this report.");
             }
 
-            const reservationEndpoint =
-                `${API_BASE_URL}/users/me/reports/seller/${form.reservation_id}`;
+            const reservationEndpoint = `${API_BASE_URL}/users/me/reports/seller/${form.reservation_id}`;
 
             const response = await fetch(reservationEndpoint, {
                 method: "POST",
@@ -216,18 +215,18 @@ export default function ReportError() {
         fields
             .filter((field) => !hiddenAutofillFields.has(field.name))
             .map((field) => (
-            <FormInput
-                key={field.name}
-                label={field.label}
-                name={field.name}
-                type={field.type}
-                min={field.min}
-                step={field.step}
-                value={form[field.name]}
-                onChange={handleChange}
-                required={field.required}
-                placeholder={field.placeholder}
-            />
+                <FormInput
+                    key={field.name}
+                    label={field.label}
+                    name={field.name}
+                    type={field.type}
+                    min={field.min}
+                    step={field.step}
+                    value={form[field.name]}
+                    onChange={handleChange}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                />
             ));
 
     return (
