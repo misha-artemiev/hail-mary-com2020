@@ -10,6 +10,8 @@ COPY backend/README.md ./backend/README.md
 COPY backend/Makefile ./backend/Makefile
 COPY frontend/package.json ./frontend/package.json
 WORKDIR /app/backend
+RUN apk add --no-cache gcc musl-dev g++ libgomp
+ENV CC=gcc CXX=g++ CMAKE_BUILD_PARALLEL_LEVEL=1 
 RUN pip install --upgrade pip
 RUN pip install ".[dev]"
 
