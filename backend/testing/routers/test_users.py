@@ -1,5 +1,8 @@
 """Tests for user endpoints."""
 
+import asyncio
+from collections.abc import AsyncGenerator
+from typing import Any
 from unittest import TestCase
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -95,5 +98,54 @@ class TestUsers(TestCase):
 
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert "update users email" in response.json()["detail"].lower()
+
+        del app.dependency_overrides[bearer_auth]
+
+    @patch("routers.users.InboxQuerier")
+    def test_get_inbox(self, mock_querier: MagicMock) -> None:
+        """Test getting the user's inbox."""
+        app.dependency_overrides[bearer_auth] = override_bearer_auth
+        mock_instance = mock_querier.return_value
+
+        mock_inbox = MagicMock()
+        mock_inbox.message_id = 1
+        mock_inbox.user_id = TEST_USER_ID
+        mock_inbox.sender_id = 99
+        mock_inbox.message_subject = "Subject"
+        mock_inbox.message_text = "17"
+
+        async def mock_generator(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield mock_inbox
+
+        mock_instance.get_user_inbox.side_effect = mock_generator
+
+        response = self.client.get("/users/me/inbox")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()) == 1
+
+        del app.dependency_overrides[bearer_auth]
+
+    @patch("routers.users.InboxQuerier")
+    def test_send_message(self, mock_querier: MagicMock) -> None:
+        """Test sending an inbox message."""
+        app.dependency_overrides[bearer_auth] = override_bearer_auth
+        mock_instance = mock_querier.return_value
+
+        mock_inbox = MagicMock()
+        mock_inbox.message_id = 1
+        mock_inbox.user_id = 2
+        mock_inbox.sender_id = TEST_USER_ID
+        mock_inbox.message_subject = "Subject"
+        mock_inbox.message_text = "17"
+        mock_instance.create_inbox_message = AsyncMock(return_value=mock_inbox)
+
+        payload = {"user_id": 2, "message_subject": "Subject", "message_text": "17"}
+
+        response = self.client.post("/users/me/inbox", json=payload)
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["message_subject"] == "Subject"
 
         del app.dependency_overrides[bearer_auth]

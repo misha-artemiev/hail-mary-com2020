@@ -228,28 +228,35 @@ CREATE TABLE IF NOT EXISTS inbox (
 
 CREATE TABLE IF NOT EXISTS forecast_input (
     input_id SERIAL PRIMARY KEY,
+    bundle_id INT NOT NULL,
     seller_id INT NOT NULL,
     category_id INT NOT NULL,
     day_of_week day_of_week NOT NULL,
-    window_start_hour TIME NOT NULL,
-    window_end_hour TIME NOT NULL,
+    window_start TIMESTAMP NOT NULL,
+    window_end TIMESTAMP NOT NULL,
     is_holiday BOOLEAN NOT NULL,
     temperature DECIMAL(5,2) NOT NULL,
     weather_flag weather_flag NOT NULL,
     observed_reservations INT NOT NULL,
     observed_no_shows INT NOT NULL,
-    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
+    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS forecast_output (
     output_id SERIAL PRIMARY KEY,
-    bundle_id INT NOT NULL,
-    predicted_reservations INT NOT NULL,
+    bundle_id INT NOT NULL UNIQUE,
+    seller_id INT NOT NULL,
+    window_start TIMESTAMP NOT NULL,
+    predicted_sales INT NOT NULL,
+    posted_qty INT NOT NULL,
     predicted_no_show_prob DECIMAL(5,4) NOT NULL,
     confidence DECIMAL(5,4) NOT NULL,
     rationale VARCHAR(500),
     generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS analytics_graphs_types (

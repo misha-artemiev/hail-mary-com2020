@@ -19,14 +19,6 @@ services:
       - ./.env
     depends_on:
       - database
-  frontend:
-    build:
-      context: ../../
-      dockerfile: ./deployment/frontend.dockerfile
-    container_name: hail-mary-frontend
-    restart: always
-    expose:
-      - "80"
   block-storage:
     image: minio/minio
     container_name: hail-mary-block
@@ -36,6 +28,14 @@ services:
     environment:
       MINIO_ROOT_USER: ${BLOCK_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${BLOCK_SECRET_KEY}
+  frontend:
+    build:
+      context: ../../
+      dockerfile: ./deployment/frontend.dockerfile
+    container_name: hail-mary-frontend
+    restart: always
+    expose:
+      - "80"
   backend:
     build:
       context: ../../

@@ -5,7 +5,7 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
-.PHONY: default format lint install typecheck lint-fix init-db run docs check check-apply sql
+.PHONY: default format lint install typecheck lint-fix init-db run docs check check-apply sql data upload-db upload-images
 
 default: check
 
@@ -52,14 +52,20 @@ init-db:
 init-db-noninteractive:
 	@printf "1\ny\n" | python -m database.init_db
 
-UPLOAD_FILES = users admins sellers consumers bundles bundle_category bundle_allergens reservations seller_issue_reports admin_issue_reports inbox badges_acquired token
-upload-db:
+data:
 	@python -m database.data.dataGen
+
+UPLOAD_FILES = users admins sellers consumers bundles bundle_category bundle_allergens reservations seller_issue_reports admin_issue_reports inbox badges_acquired token
+upload-db: data
 	@for file in $(UPLOAD_FILES); do \
 		csvsql --db "postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST):$(DATABASE_PORT)/$(DATABASE_DATABASE)" --insert --no-create --no-inference "synthetic_data/$$file.csv"; \
 	done
 	@rm -r ./synthetic_data
 	@python -m database.data.fixSeq
+
+upload-images: data
+	@python -m database.data.image_uploader
+	@rm -r ./synthetic_data
 
 docs:
 	@mv .env .env.bak || true
