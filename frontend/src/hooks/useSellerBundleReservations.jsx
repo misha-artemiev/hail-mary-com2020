@@ -57,10 +57,8 @@ export function useSellerBundleReservations(bundleId) {
         fetchReservations();
     }, [bundleId]);
 
-    // Filter by reservations that are reserved
-    const sellerReservations = reservations.filter(
-        (res) => res.status === "reserved",
-    );
+    // Filter by reservations that are reserved (not collected, not no_show)
+    const sellerReservations = reservations.filter((res) => !res.collected_at);
 
     // Exit with all reservations and filtered active reservations
     return { reservations, sellerReservations };
