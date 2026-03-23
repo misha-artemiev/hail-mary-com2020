@@ -152,7 +152,9 @@ async def send_message(
     "/me/inbox/{message_id}",
     status_code=status.HTTP_200_OK,
     summary="Mark an inbox message as read",
-    description="Marks a specific inbox message owned by the authenticated user as read.",
+    description=(
+        "Marks a specific inbox message owned by the authenticated user as read."
+    ),
     response_model=Inbox,
 )
 async def mark_inbox_message_as_read(
