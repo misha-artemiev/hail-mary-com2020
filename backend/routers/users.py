@@ -151,14 +151,14 @@ async def send_message(
 @router.delete(
     "/me/inbox/{message_id}",
     status_code=status.HTTP_200_OK,
-    summary="Dismiss an inbox message",
-    description="Deletes a specific inbox message owned by the authenticated user.",
+    summary="Mark an inbox message as read",
+    description="Marks a specific inbox message owned by the authenticated user as read.",
     response_model=Inbox,
 )
-async def dismiss_inbox_message(
+async def mark_inbox_message_as_read(
     message_id: int, conn: database_dependency, session: BearerAuthDep
 ) -> Inbox:
-    """Dismiss a single inbox message for the current user.
+    """Mark a single inbox message as read for the current user.
 
     Args:
       message_id: inbox message id
@@ -166,10 +166,10 @@ async def dismiss_inbox_message(
       session: users session
 
     Returns:
-      The deleted inbox message.
+            The updated inbox message.
 
     Raises:
-      HTTPException: if message does not exist for user or delete fails
+    HTTPException: if message does not exist for user or update fails
     """
     inbox_querier = InboxQuerier(conn)
     user_messages = [
@@ -180,13 +180,13 @@ async def dismiss_inbox_message(
             status_code=status.HTTP_404_NOT_FOUND, detail="Inbox message not found"
         )
 
-    deleted_message = await inbox_querier.read_inbox_message(message_id=message_id)
-    if not deleted_message:
+    updated_message = await inbox_querier.read_inbox_message(message_id=message_id)
+    if not updated_message:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to dismiss inbox message",
+            detail="Failed to mark inbox message as read",
         )
-    return deleted_message
+    return updated_message
 
 
 @router.get(
