@@ -136,11 +136,11 @@ export default function CreateBundle() {
         setCategoryError("");
 
         const result = await createBundle(form);
-        
+
         if (result && result.bundle_id && newBundleImage) {
             await uploadImage(result.bundle_id, newBundleImage);
         }
-        
+
         navigate(`/bundles/${result.bundle_id}`);
     };
 

@@ -325,12 +325,20 @@ export default function Home() {
                                     pages.push("...");
                                 } else if (currentPage >= totalPages - 2) {
                                     pages.push("...");
-                                    for (let i = totalPages - 4; i <= totalPages; i++) {
+                                    for (
+                                        let i = totalPages - 4;
+                                        i <= totalPages;
+                                        i++
+                                    ) {
                                         pages.push(i);
                                     }
                                 } else {
                                     pages.push("...");
-                                    for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+                                    for (
+                                        let i = currentPage - 2;
+                                        i <= currentPage + 2;
+                                        i++
+                                    ) {
                                         pages.push(i);
                                     }
                                     pages.push("...");
@@ -339,7 +347,10 @@ export default function Home() {
                             }
                             return pages.map((page, idx) =>
                                 page === "..." ? (
-                                    <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">
+                                    <span
+                                        key={`ellipsis-${idx}`}
+                                        className="px-2 text-gray-500"
+                                    >
                                         ...
                                     </span>
                                 ) : (
