@@ -3,14 +3,18 @@
 from internal.queries.models import ChartType
 
 CATEGORIES = [
-    {"cat_id": 1, "name": "Bakery", "coefficient": 1},
-    {"cat_id": 2, "name": "Produce", "coefficient": 1},
-    {"cat_id": 3, "name": "Deli", "coefficient": 1},
-    {"cat_id": 4, "name": "Prepared Meals", "coefficient": 1},
-    {"cat_id": 5, "name": "Dairy", "coefficient": 1},
-    {"cat_id": 6, "name": "Drinks", "coefficient": 1},
-    {"cat_id": 7, "name": "Pantry", "coefficient": 1},
-    {"cat_id": 8, "name": "Snacks", "coefficient": 1},
+    {"cat_id": 1, "name": "Bakery", "coefficient": 1.5},
+    {"cat_id": 2, "name": "Produce", "coefficient": 0.9},
+    {"cat_id": 3, "name": "Deli", "coefficient": 6.5},
+    {
+        "cat_id": 4,
+        "name": "Prepared Meals",
+        "coefficient": 3.5,
+    },  # mixed ingredients, varies by meat content
+    {"cat_id": 5, "name": "Dairy", "coefficient": 5.0},
+    {"cat_id": 6, "name": "Drinks", "coefficient": 0.9},
+    {"cat_id": 7, "name": "Pantry", "coefficient": 2.5},
+    {"cat_id": 8, "name": "Snacks", "coefficient": 2.5},
 ]
 
 ALLERGENS = {1: "Gluten", 2: "Dairy", 3: "Nuts", 4: "Soy", 5: "Eggs", 6: "Sesame"}
