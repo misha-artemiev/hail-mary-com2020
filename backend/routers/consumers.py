@@ -251,10 +251,7 @@ async def get_reservations(
                     user_id=consumer.user_id,
                     sender_id=consumer.user_id,
                     message_subject="Reservation timed out",
-                    message_text=(
-                        f"{timeout_message_text} "
-                        f"{reservation_marker}"
-                    ),
+                    message_text=(f"{timeout_message_text} {reservation_marker}"),
                 )
             )
             if created_message:
