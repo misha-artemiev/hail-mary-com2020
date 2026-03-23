@@ -288,7 +288,7 @@ async def search_bundles(
                     bundle_id=int(bundle.bundle_id)
                 )
             ]
-            if not reservations or bundle.total_qty <= len(list(reservations)):
+            if bundle.total_qty <= len(list(reservations)):
                 continue
             filtered_bundles.append(
                 SearchBundlesResponse(
