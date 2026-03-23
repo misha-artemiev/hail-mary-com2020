@@ -45,14 +45,27 @@ export default function LeaderboardItem({
     };
 
     const generateLabel = () => {
-        if (category === "reservations") {
-            return <span>{count} reservations</span>;
-        } else {
-            return (
-                <span>
-                    {(count / 1000).toFixed(1)} kg CO<sub>2</sub> saved
-                </span>
-            );
+        switch (category) {
+            case "reservations":
+                return <span>{count} reservations</span>;
+            case "carbon_dioxide":
+                return (
+                    <span>
+                        {(count / 1000).toFixed(1)} kg CO<sub>2</sub> saved
+                    </span>
+                );
+            case "money_saved":
+                return (
+                    <span>${(count / 100).toFixed(2)} saved</span>
+                );
+            case "total_spent":
+                return (
+                    <span>${(count / 100).toFixed(2)} spent</span>
+                );
+            case "weekly_streak":
+                return <span>{count} week streak</span>;
+            default:
+                return <span>{count}</span>;
         }
     };
 

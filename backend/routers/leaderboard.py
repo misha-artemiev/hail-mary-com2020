@@ -1,6 +1,8 @@
 """Endpoints for leaderboard."""
 
+from collections.abc import AsyncIterator
 from enum import Enum
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from internal.database.dependency import database_dependency
@@ -14,6 +16,9 @@ class LeaderboardTypes(Enum):
 
     RESERVATIONS = "reservations"
     CARBON_DIOXIDE = "carbon_dioxide"
+    MONEY_SAVED = "money_saved"
+    TOTAL_SPENT = "total_spent"
+    WEEKLY_STREAK = "weekly_streak"
 
 
 @router.get(
@@ -28,6 +33,25 @@ async def get_leaderboard_types() -> list[str]:
         leaderboard types
     """
     return [leaderboard_type.value for leaderboard_type in LeaderboardTypes]
+
+
+def _check_leaderboard_data(data: AsyncIterator[Any] | None) -> AsyncIterator[Any]:
+    """Check that leaderboard data is not None.
+
+    Args:
+        data: The async iterator from the querier
+
+    Returns:
+        The async iterator if not None
+
+    Raises:
+        HTTPException: if data is None
+    """
+    if data is None:
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get leaderboard"
+        )
+    return data
 
 
 @router.get(
@@ -50,35 +74,33 @@ async def get_leaderboard(
 
     Returns:
         leaderboard of users for a type
-
-    Raises:
-        HTTPException: if failed to get leaderboard
     """
     user_querier = UserQuerier(conn)
     match leaderboard_type:
         case LeaderboardTypes.RESERVATIONS:
-            if (
-                leaderboard_reservations := user_querier.leaderboard_reservations(
-                    limit=limit
-                )
-            ) is None:
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get leaderboard"
-                )
-            return [
-                (user.username, user.reservation_count)
-                async for user in leaderboard_reservations
-            ]
+            data = _check_leaderboard_data(
+                user_querier.leaderboard_reservations(limit=limit)
+            )
+            return [(user.username, user.reservation_count) async for user in data]
         case LeaderboardTypes.CARBON_DIOXIDE:
-            if (
-                leaderboard_carbon_dioxide := user_querier.leaderboard_carbon_dioxide(
-                    limit=limit
-                )
-            ) is None:
-                raise HTTPException(
-                    status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get leaderboard"
-                )
+            data = _check_leaderboard_data(
+                user_querier.leaderboard_carbon_dioxide(limit=limit)
+            )
             return [
-                (user.username, int(user.total_carbon_dioxide))
-                async for user in leaderboard_carbon_dioxide
+                (user.username, int(user.total_carbon_dioxide)) async for user in data
             ]
+        case LeaderboardTypes.MONEY_SAVED:
+            data = _check_leaderboard_data(
+                user_querier.leaderboard_money_saved(limit=limit)
+            )
+            return [(user.username, int(user.total_money_saved)) async for user in data]
+        case LeaderboardTypes.TOTAL_SPENT:
+            data = _check_leaderboard_data(
+                user_querier.leaderboard_total_spent(limit=limit)
+            )
+            return [(user.username, int(user.total_spent)) async for user in data]
+        case LeaderboardTypes.WEEKLY_STREAK:
+            data = _check_leaderboard_data(
+                user_querier.leaderboard_weekly_streak(limit=limit)
+            )
+            return [(user.username, user.streak_weeks) async for user in data]

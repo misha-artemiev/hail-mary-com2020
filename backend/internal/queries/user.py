@@ -126,6 +126,22 @@ class LeaderboardCarbonDioxideRow(pydantic.BaseModel):
     total_carbon_dioxide: decimal.Decimal
 
 
+LEADERBOARD_MONEY_SAVED = """-- name: leaderboard_money_saved \\:many
+SELECT u.username, COALESCE(SUM(b.price * b.discount_percentage / (100.0 - b.discount_percentage)), 0)\\:\\:numeric AS total_money_saved
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_money_saved DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardMoneySavedRow(pydantic.BaseModel):
+    username: str
+    total_money_saved: decimal.Decimal
+
+
 LEADERBOARD_RESERVATIONS = """-- name: leaderboard_reservations \\:many
 SELECT u.username, COUNT(r.reservation_id) AS reservation_count
 FROM users u
@@ -139,6 +155,50 @@ LIMIT :p1
 class LeaderboardReservationsRow(pydantic.BaseModel):
     username: str
     reservation_count: int
+
+
+LEADERBOARD_TOTAL_SPENT = """-- name: leaderboard_total_spent \\:many
+SELECT u.username, COALESCE(SUM(b.price), 0)\\:\\:numeric AS total_spent
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_spent DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardTotalSpentRow(pydantic.BaseModel):
+    username: str
+    total_spent: decimal.Decimal
+
+
+LEADERBOARD_WEEKLY_STREAK = """-- name: leaderboard_weekly_streak \\:many
+WITH weekly_counts AS (
+    SELECT u.user_id, u.username,
+           DATE_TRUNC('week', r.reserved_at) AS week_start
+    FROM users u
+    LEFT JOIN reservations r ON r.consumer_id = u.user_id
+    WHERE r.reserved_at IS NOT NULL
+    GROUP BY u.user_id, u.username, week_start
+),
+streaks AS (
+    SELECT username,
+           week_start,
+           week_start - INTERVAL '1 week' * ROW_NUMBER() OVER (PARTITION BY username ORDER BY week_start) AS grp
+    FROM weekly_counts
+)
+SELECT username, COUNT(*)\\:\\:int AS streak_weeks
+FROM streaks
+GROUP BY username
+ORDER BY streak_weeks DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardWeeklyStreakRow(pydantic.BaseModel):
+    username: str
+    streak_weeks: int
 
 
 UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
@@ -269,12 +329,36 @@ class AsyncQuerier:
                 total_carbon_dioxide=row[1],
             )
 
+    async def leaderboard_money_saved(self, *, limit: int) -> AsyncIterator[LeaderboardMoneySavedRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_MONEY_SAVED), {"p1": limit})
+        async for row in result:
+            yield LeaderboardMoneySavedRow(
+                username=row[0],
+                total_money_saved=row[1],
+            )
+
     async def leaderboard_reservations(self, *, limit: int) -> AsyncIterator[LeaderboardReservationsRow]:
         result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_RESERVATIONS), {"p1": limit})
         async for row in result:
             yield LeaderboardReservationsRow(
                 username=row[0],
                 reservation_count=row[1],
+            )
+
+    async def leaderboard_total_spent(self, *, limit: int) -> AsyncIterator[LeaderboardTotalSpentRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_TOTAL_SPENT), {"p1": limit})
+        async for row in result:
+            yield LeaderboardTotalSpentRow(
+                username=row[0],
+                total_spent=row[1],
+            )
+
+    async def leaderboard_weekly_streak(self, *, limit: int) -> AsyncIterator[LeaderboardWeeklyStreakRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_WEEKLY_STREAK), {"p1": limit})
+        async for row in result:
+            yield LeaderboardWeeklyStreakRow(
+                username=row[0],
+                streak_weeks=row[1],
             )
 
     async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:
