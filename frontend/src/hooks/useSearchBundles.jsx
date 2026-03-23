@@ -17,23 +17,6 @@ export default function useSearchBundles() {
 
     const [userLocation, setUserLocation] = useState({ lat: 0, lon: 0 });
 
-    const goToPage = useCallback((page, filters = {}) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-            search(filters, page);
-        }
-    }, [totalPages, search]);
-
-    const resetFilters = useCallback((newFilters = {}) => {
-        setCurrentPage(1);
-        search(newFilters, 1);
-    }, [search]);
-
-    /**
-     * Search function
-     * Uses provided filters, but falls back to internal userLocation
-     * if specific coordinates aren't passed in the arguments.
-     */
     const search = useCallback(
         async (filters = {}, page = 1) => {
             setLoading(true);
@@ -89,6 +72,18 @@ export default function useSearchBundles() {
         },
         [userLocation],
     );
+
+    const goToPage = useCallback((page, filters = {}) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+            search(filters, page);
+        }
+    }, [totalPages, search]);
+
+    const resetFilters = useCallback((newFilters = {}) => {
+        setCurrentPage(1);
+        search(newFilters, 1);
+    }, [search]);
 
     /**
      * Geolocation Effect
