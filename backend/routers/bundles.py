@@ -150,7 +150,9 @@ async def reserve_bundle(
             message_subject="Bundle reserved",
             message_text=(
                 f"You reserved '{bundle.bundle_name}'. "
-                f"Your claim code is {reservation.claim_code}."
+                f"Your claim code is {reservation.claim_code}. "
+                "This reservation expires when the pickup window ends at "
+                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
             ),
         )
     )

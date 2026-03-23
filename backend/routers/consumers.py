@@ -69,15 +69,12 @@ from internal.auth.middleware import ConsumerAuthDep
 from internal.database.dependency import database_dependency
 from internal.queries.badge import AsyncQuerier as BadgeQuerier
 from internal.queries.badge import GetConsumerBadgesRow
-from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
 from internal.queries.consumer import (
     GetConsumerRow,
     GetConsumersRow,
     UpdateConsumerParams,
 )
-from internal.queries.inbox import AsyncQuerier as InboxQuerier
-from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationsQuerier
 from internal.queries.reservations import GetConsumersReservationsFullRow
@@ -215,47 +212,6 @@ async def get_reservations(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get reservations",
         )
-
-    now = datetime.now(tz=UTC)
-    bundle_querier = BundleQuerier(conn)
-    inbox_querier = InboxQuerier(conn)
-    existing_timeout_messages = [
-        msg
-        async for msg in inbox_querier.get_user_inbox(user_id=consumer.user_id)
-        if msg.message_subject == "Reservation timed out"
-    ]
-    for reservation in reservations:
-        if reservation.collected_at is not None:
-            continue
-        bundle = await bundle_querier.get_bundle(bundle_id=reservation.bundle_id)
-        if bundle is None:
-            continue
-        if bundle.window_end <= now:
-            timeout_message_text = (
-                f"Your reservation for '{bundle.bundle_name}' has "
-                "timed out because "
-                "the pickup window ended at "
-                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
-            )
-            reservation_marker = f"[reservation:{reservation.reservation_id}]"
-            has_timeout_notification = any(
-                reservation_marker in existing_message.message_text
-                or existing_message.message_text == timeout_message_text
-                for existing_message in existing_timeout_messages
-            )
-            if has_timeout_notification:
-                continue
-
-            created_message = await inbox_querier.create_inbox_message(
-                CreateInboxMessageParams(
-                    user_id=consumer.user_id,
-                    sender_id=consumer.user_id,
-                    message_subject="Reservation timed out",
-                    message_text=(f"{timeout_message_text} {reservation_marker}"),
-                )
-            )
-            if created_message:
-                existing_timeout_messages.append(created_message)
 
     return list(reservations)
 
