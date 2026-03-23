@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:1.4.11
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:1.4.12
           imagePullPolicy: Always
           ports:
             - containerPort: 80

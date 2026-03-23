@@ -86,7 +86,7 @@ export default function AdminLogin() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <FormInput
                         label="Email"
-                        name="email"
+                        name="username"
                         type="email"
                         value={form.username}
                         onChange={handleChange}
