@@ -12,7 +12,9 @@ import LeaderboardItem from "../components/LeaderboardItem";
 
 // Hooks
 import useLeaderboard from "../hooks/useLeaderboard";
-import useLeaderboardTypes, { CATEGORY_LABELS } from "../hooks/useLeaderboardTypes";
+import useLeaderboardTypes, {
+    CATEGORY_LABELS,
+} from "../hooks/useLeaderboardTypes";
 
 // Services
 import { getUsername } from "../services/authService";
@@ -26,8 +28,11 @@ import { getUsername } from "../services/authService";
 export default function Leaderboard() {
     const navigate = useNavigate();
 
-    const { types: leaderboardTypes, loading: typesLoading, error: typesError } =
-        useLeaderboardTypes();
+    const {
+        types: leaderboardTypes,
+        loading: typesLoading,
+        error: typesError,
+    } = useLeaderboardTypes();
 
     // Get current user's username
     const [currentUsername, setCurrentUsername] = useState(null);
@@ -78,7 +83,9 @@ export default function Leaderboard() {
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
                     <div className="flex flex-wrap justify-center gap-2">
                         {typesLoading ? (
-                            <span className="text-gray-500">Loading categories...</span>
+                            <span className="text-gray-500">
+                                Loading categories...
+                            </span>
                         ) : typesError ? (
                             <span className="text-red-500">{typesError}</span>
                         ) : (
@@ -103,7 +110,9 @@ export default function Leaderboard() {
                     <div className="relative">
                         <select
                             value={leaderboardLimit}
-                            onChange={(e) => setLeaderboardLimit(Number(e.target.value))}
+                            onChange={(e) =>
+                                setLeaderboardLimit(Number(e.target.value))
+                            }
                             className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 font-semibold text-gray-700 cursor-pointer hover:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
                         >
                             <option value={10}>Top 10</option>
@@ -112,8 +121,18 @@ export default function Leaderboard() {
                             <option value={100}>Top 100</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            <svg
+                                className="w-4 h-4 text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
                             </svg>
                         </div>
                     </div>

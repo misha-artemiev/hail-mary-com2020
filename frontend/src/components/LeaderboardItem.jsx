@@ -55,13 +55,9 @@ export default function LeaderboardItem({
                     </span>
                 );
             case "money_saved":
-                return (
-                    <span>${(count / 100).toFixed(2)} saved</span>
-                );
+                return <span>${(count / 100).toFixed(2)} saved</span>;
             case "total_spent":
-                return (
-                    <span>${(count / 100).toFixed(2)} spent</span>
-                );
+                return <span>${(count / 100).toFixed(2)} spent</span>;
             case "weekly_streak":
                 return <span>{count} week streak</span>;
             default:
