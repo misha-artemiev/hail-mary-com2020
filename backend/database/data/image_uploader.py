@@ -78,7 +78,7 @@ async def upload_bundle_images(
             headers=Headers({"content-type": "image/jpeg"}),
         )
         await block_management.upload_bundle_image(bundle_id, file)
-        print(f"   Uploading bundle images: {i}/{total}", end="\r")
+        print(f"   Uploading bundle images: {i}/{total}", flush=True)
     print()
 
 
@@ -103,7 +103,7 @@ async def upload_profile_images(
             headers=Headers({"content-type": "image/jpeg"}),
         )
         await block_management.upload_profile_image(user_id, file)
-        print(f"   Uploading profile images: {i}/{total}", end="\r")
+        print(f"   Uploading profile images: {i}/{total}", flush=True)
     print()
 
 
@@ -153,7 +153,7 @@ async def upload_images_for_users(users_csv_path: str = "synthetic_data") -> Non
             headers=Headers({"content-type": "image/jpeg"}),
         )
         await block_management.upload_profile_image(user_id, file)
-        print(f"   Uploading seller images: {i}/{len(seller_ids)}", end="\r")
+        print(f"   Uploading seller images: {i}/{len(seller_ids)}", flush=True)
     print()
 
     print(f"   Uploading {len(consumer_ids)} consumer profile images...")
@@ -165,7 +165,7 @@ async def upload_images_for_users(users_csv_path: str = "synthetic_data") -> Non
             headers=Headers({"content-type": "image/jpeg"}),
         )
         await block_management.upload_profile_image(user_id, file)
-        print(f"   Uploading consumer images: {i}/{len(consumer_ids)}", end="\r")
+        print(f"   Uploading consumer images: {i}/{len(consumer_ids)}", flush=True)
     print()
 
 

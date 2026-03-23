@@ -241,7 +241,7 @@ CREATE TABLE IF NOT EXISTS forecast_input (
     observed_no_shows INT NOT NULL,
     FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
     FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE
+    FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS forecast_output (
