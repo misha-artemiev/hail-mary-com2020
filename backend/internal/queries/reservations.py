@@ -67,7 +67,7 @@ WHERE consumer_id=:p1
 
 
 GET_CONSUMERS_RESERVATIONS_FULL = """-- name: get_consumers_reservations_full \\:many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, COALESCE(array_agg(bc.category_id) FILTER (WHERE bc.category_id IS NOT NULL), ARRAY[]\\:\\:integer[]) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
@@ -85,7 +85,7 @@ class GetConsumersReservationsFullRow(pydantic.BaseModel):
     carbon_dioxide: int
     window_start: datetime.datetime
     window_end: datetime.datetime
-    category_ids: Any
+    category_ids: Optional[Any]
 
 
 GET_RESERVATION = """-- name: get_reservation \\:one
@@ -114,7 +114,7 @@ SELECT reservation_id, bundle_id, consumer_id, reserved_at, claim_code, collecte
 
 
 GET_SELLER_RESERVATIONS_FULL = """-- name: get_seller_reservations_full \\:many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, COALESCE(array_agg(bc.category_id) FILTER (WHERE bc.category_id IS NOT NULL), ARRAY[]\\:\\:integer[]) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
@@ -131,7 +131,7 @@ class GetSellerReservationsFullRow(pydantic.BaseModel):
     carbon_dioxide: int
     window_start: datetime.datetime
     window_end: datetime.datetime
-    category_ids: Any
+    category_ids: Optional[Any]
 
 
 class AsyncQuerier:

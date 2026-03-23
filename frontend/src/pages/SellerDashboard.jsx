@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -17,16 +17,20 @@ import {
     PieChart,
     Pie,
     Cell,
+    LineChart,
+    Line,
+    Legend,
+    ReferenceLine,
 } from "recharts";
 
 import { useAuth } from "../context/AuthContext";
 import useSellerBundles from "../hooks/useSellerBundles";
 import useSellerIssueReports from "../hooks/useSellerIssueReports";
+import { useSellerAnalytics } from "../hooks/useSellerAnalytics";
 
 import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
-import { useSellerAllReservations } from "../hooks/useSellerAllReservations";
 
 import Card from "../components/Card";
 import Modal from "../components/Modal";
@@ -117,108 +121,269 @@ function CollectModal({ bundles, onClose }) {
     );
 }
 
-const COLORS = ["#22c55e", "#eab308", "#ef4444"];
+function AnalyticsSection({ analytics, onRefresh, refreshing }) {
+    const [timelineData, setTimelineData] = useState([]);
+    const [categoryData, setCategoryData] = useState([]);
+    const [timeWindowData, setTimeWindowData] = useState([]);
+    const [sellThroughData, setSellThroughData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-function StatsSection({ bundles, reservations }) {
-    const statsByBundle = bundles.map((bundle) => {
-        const bundleRes = reservations.filter(
-            (r) => r.bundle_name === bundle.bundle_name,
-        );
-        const total = bundleRes.length;
-        const collected = bundleRes.filter(
-            (r) => r.status === "collected",
-        ).length;
-        const reserved = bundleRes.filter(
-            (r) => r.status === "reserved",
-        ).length;
-        const noShow = bundleRes.filter((r) => r.status === "no_show").length;
-        return {
-            name: bundle.bundle_name.slice(0, 15),
-            total,
-            collected,
-            reserved,
-            noShow,
-        };
-    });
+    const loadAnalytics = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [
+                actualRes,
+                forecastRes,
+                categoryRes,
+                timeWindowRes,
+                sellThroughRes,
+            ] = await Promise.allSettled([
+                analytics.fetchGraph(1),
+                analytics.fetchGraph(5),
+                analytics.fetchGraph(3),
+                analytics.fetchGraph(4),
+                analytics.fetchGraph(2),
+            ]);
 
-    const statusData = [
-        {
-            name: "Collected",
-            value: reservations.filter((r) => r.status === "collected").length,
-        },
-        {
-            name: "Reserved",
-            value: reservations.filter((r) => r.status === "reserved").length,
-        },
-        {
-            name: "No Show",
-            value: reservations.filter((r) => r.status === "no_show").length,
-        },
-    ];
+            if (
+                actualRes.status === "fulfilled" &&
+                forecastRes.status === "fulfilled"
+            ) {
+                const combined = await analytics.getCombinedTimelineData();
+                setTimelineData(combined);
+            }
+
+            if (categoryRes.status === "fulfilled") {
+                const series = categoryRes.value[1];
+                const catSeries = series.find(
+                    (s) => s[0].series_name === "categories",
+                );
+                if (catSeries) {
+                    setCategoryData(
+                        catSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+
+            if (timeWindowRes.status === "fulfilled") {
+                const series = timeWindowRes.value[1];
+                const twSeries = series.find(
+                    (s) => s[0].series_name === "time_windows",
+                );
+                if (twSeries) {
+                    setTimeWindowData(
+                        twSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+
+            if (sellThroughRes.status === "fulfilled") {
+                const series = sellThroughRes.value[1];
+                const stSeries = series.find(
+                    (s) => s[0].series_name === "sell_rate",
+                );
+                if (stSeries) {
+                    setSellThroughData(
+                        stSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAnalytics();
+    }, [analytics]);
+
+    const today = new Date().toISOString().split("T")[0];
 
     return (
         <Card className="mb-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-4">
-                Statistics
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-green-700">Analytics</h2>
+                <Button
+                    onClick={() => {
+                        onRefresh();
+                        setTimeout(loadAnalytics, 500);
+                    }}
+                    disabled={refreshing || loading}
+                    className="!w-auto"
+                >
+                    {refreshing || loading ? "Loading..." : "Refresh Analytics"}
+                </Button>
+            </div>
+
+            {error && <p className="text-red-500 mb-4">Error: {error}</p>}
+
+            <div className="space-y-8">
                 <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Reservations by Bundle
+                        Sales vs Posted (Past & Forecast)
                     </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={statsByBundle}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar
-                                dataKey="collected"
-                                stackId="a"
-                                fill="#22c55e"
-                                name="Collected"
-                            />
-                            <Bar
-                                dataKey="reserved"
-                                stackId="a"
-                                fill="#eab308"
-                                name="Reserved"
-                            />
-                            <Bar
-                                dataKey="noShow"
-                                stackId="a"
-                                fill="#ef4444"
-                                name="No Show"
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
+                    {timelineData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={timelineData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <ReferenceLine
+                                    x={today}
+                                    stroke="#666"
+                                    strokeDasharray="5 5"
+                                    label={{
+                                        value: "Today",
+                                        position: "top",
+                                    }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="actualSales"
+                                    stroke="#22c55e"
+                                    strokeWidth={2}
+                                    name="Actual Sales"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="actualPosted"
+                                    stroke="#22c55e"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    name="Actual Posted"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="forecastSales"
+                                    stroke="#3b82f6"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    name="Forecast Sales"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="forecastPosted"
+                                    stroke="#3b82f6"
+                                    strokeWidth={2}
+                                    strokeDasharray="10 5"
+                                    name="Forecast Posted"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No sales data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
                 </div>
+
                 <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Reservation Status
+                        Category Distribution
                     </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie
-                                data={statusData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                label={({ name, value }) => `${name}: ${value}`}
-                            >
-                                {statusData.map((_, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={COLORS[index % COLORS.length]}
-                                    />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={categoryData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar
+                                    dataKey="value"
+                                    fill="#8b5cf6"
+                                    name="Reservations"
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No category data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Time Window Distribution
+                    </h3>
+                    {timeWindowData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={timeWindowData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar
+                                    dataKey="value"
+                                    fill="#f59e0b"
+                                    name="Reservations"
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No time window data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Sell Through Rate
+                    </h3>
+                    {sellThroughData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie
+                                    data={sellThroughData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={({ name, value }) =>
+                                        `${name}: ${value}%`
+                                    }
+                                >
+                                    <Cell fill="#22c55e" />
+                                    <Cell fill="#ef4444" />
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No sell through data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </Card>
@@ -230,9 +395,11 @@ function BundleRow({ bundle }) {
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
 
-    const reservedCount = reservations.filter(
-        (r) => r.status === "reserved",
-    ).length;
+    const reservationCount = reservations.length;
+
+    const getStatus = (reservation) => {
+        return reservation.collected_at ? "collected" : "reserved";
+    };
 
     return (
         <>
@@ -240,16 +407,26 @@ function BundleRow({ bundle }) {
                 className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
                 onClick={() => setShowReservations(!showReservations)}
             >
-                <td className="py-3 px-4">{bundle.bundle_name}</td>
+                <td className="py-3 px-4">
+                    <div>
+                        <p className="font-medium">{bundle.bundle_name}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                            {bundle.description}
+                        </p>
+                    </div>
+                </td>
                 <td className="py-3 px-4">£{bundle.price}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
-                    {reservedCount} / {bundle.total_qty}
+                    {(bundle.carbon_dioxide / 1000).toFixed(1)}kg
                 </td>
                 <td className="py-3 px-4">
+                    {reservationCount} / {bundle.total_qty}
+                </td>
+                <td className="py-3 px-4 text-sm">
                     {new Date(bundle.window_start).toLocaleString()}
                 </td>
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 text-sm">
                     {new Date(bundle.window_end).toLocaleString()}
                 </td>
                 <td className="py-3 px-4">
@@ -259,13 +436,13 @@ function BundleRow({ bundle }) {
                             navigate(`/bundles/${bundle.bundle_id}`);
                         }}
                     >
-                        Open Listing
+                        Open
                     </Button>
                 </td>
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
-                    <td colSpan={7} className="py-4 px-4 bg-gray-50">
+                    <td colSpan={8} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
                                 Reservations
@@ -283,8 +460,8 @@ function BundleRow({ bundle }) {
                                             reserved_at={
                                                 reservation.reserved_at
                                             }
-                                            claimCode={reservation.claim_code}
-                                            status={reservation.status}
+                                            claimCode="-"
+                                            status={getStatus(reservation)}
                                         />
                                     ))}
                                 </div>
@@ -306,7 +483,19 @@ export default function SellerDashboard() {
         (issue) => issue.status === "open",
     ).length;
     const [showCollectModal, setShowCollectModal] = useState(false);
-    const allReservations = useSellerAllReservations(bundles);
+    const analytics = useSellerAnalytics();
+    const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
+
+    const handleRefreshAnalytics = async () => {
+        setRefreshingAnalytics(true);
+        try {
+            await analytics.refreshAnalytics();
+        } catch (err) {
+            console.error("Failed to refresh analytics:", err);
+        } finally {
+            setRefreshingAnalytics(false);
+        }
+    };
 
     if (userRole !== "seller") {
         return (
@@ -379,17 +568,16 @@ export default function SellerDashboard() {
 
             <SellerProfileCard onLogout={logout} />
 
+            <AnalyticsSection
+                analytics={analytics}
+                onRefresh={handleRefreshAnalytics}
+                refreshing={refreshingAnalytics}
+            />
+
             {showCollectModal && (
                 <CollectModal
                     bundles={bundles}
                     onClose={() => setShowCollectModal(false)}
-                />
-            )}
-
-            {!loading && bundles && bundles.length > 0 && (
-                <StatsSection
-                    bundles={bundles}
-                    reservations={allReservations}
                 />
             )}
 
@@ -419,13 +607,16 @@ export default function SellerDashboard() {
                                         Discount
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Reservations
+                                        CO2 Saved
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Window Start
+                                        Reserved
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Window End
+                                        Start
+                                    </th>
+                                    <th className="py-3 px-4 text-green-700 font-semibold">
+                                        End
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Listing

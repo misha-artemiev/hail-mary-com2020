@@ -5,7 +5,7 @@ FROM inbox;
 -- name: GetUserInbox :many
 SELECT *
 FROM inbox
-WHERE user_id = $1;
+WHERE user_id = $1 AND read_status = FALSE;
 
 -- name: ReadInboxMessage :one
 UPDATE inbox
