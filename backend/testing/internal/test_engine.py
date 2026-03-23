@@ -26,7 +26,7 @@ class FakeRes:
         self.window_start = datetime.now(tz=UTC)
         self.window_end = datetime.now(tz=UTC)
         self.category_id = cat_id
-        self.category_ids = [cat_id]  # Added for diversity_goal loop compatibility
+        self.category_ids = [cat_id]
         self.seller_id = sel_id
         self.carbon_dioxide = TEST_CO2
 
@@ -76,6 +76,16 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         result = BadgeEngine.co2_goal(reservations, rule)
         assert result is True
 
+    def test_co2_goal_failure(self) -> None:
+        """Test that the CO2 goal evaluates false when requirement is not met."""
+        rule = BadgesConfig.CO2Goal(type="co2", level=1, carbon_dioxide=200.0)
+        reservations = cast(
+            list[GetConsumersReservationsFullRow], [self.mock_res_collected]
+        )
+
+        result = BadgeEngine.co2_goal(reservations, rule)
+        assert result is False
+
     def test_diversity_goal_success(self) -> None:  # noqa: PLR6301
         """Test diversity goal over categories and sellers."""
         mock_res_1 = FakeRes(cat_id=1, sel_id=1)
@@ -91,11 +101,25 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         result = BadgeEngine.diversity_goal(reservations, rule)
         assert result is True
 
+    def test_diversity_goal_failure(self) -> None:  # noqa: PLR6301
+        """Test diversity goal failure when variety targets are not met."""
+        mock_res_1 = FakeRes(cat_id=1, sel_id=1)
+        mock_res_2 = FakeRes(cat_id=1, sel_id=1)
+
+        rule = BadgesConfig.DiversityGoal(
+            type="diversity", level=1, dif_categories=2, dif_sellers=0
+        )
+        reservations = cast(
+            list[GetConsumersReservationsFullRow], [mock_res_1, mock_res_2]
+        )
+
+        result = BadgeEngine.diversity_goal(reservations, rule)
+        assert result is False
+
     def test_streak_goal_success(self) -> None:  # noqa: PLR6301
         """Test calculating consecutive daily streaks."""
         window_start = datetime.now(tz=UTC)
 
-        # Setup today's reservation to count as an active streak
         mock_res_today = FakeRes(1, 1)
         mock_res_today.collected_at = window_start
         mock_res_today.window_start = window_start
@@ -115,6 +139,29 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         result = BadgeEngine.streak_goal(reservations, rule, window_start)
         assert result is True
 
+    def test_streak_goal_failure(self) -> None:  # noqa: PLR6301
+        """Test calculating consecutive daily streaks failure."""
+        window_start = datetime.now(tz=UTC)
+
+        mock_res_today = FakeRes(1, 1)
+        mock_res_today.collected_at = window_start
+        mock_res_today.window_start = window_start
+        mock_res_today.window_end = window_start
+
+        rule = BadgesConfig.StreakGoal(
+            type="streak",
+            level=1,
+            streak_days=2,
+            streak_quantity=0,
+            category_id=None,
+            seller_id=None,
+        )
+
+        reservations = cast(list[GetConsumersReservationsFullRow], [mock_res_today])
+
+        result = BadgeEngine.streak_goal(reservations, rule, window_start)
+        assert result is False
+
     @patch("internal.badges.engine.badges_config")
     def test_run_background_task(self, mock_badges_config: MagicMock) -> None:  # noqa: PLR6301
         """Test the engine successfully schedules the background job."""
@@ -126,7 +173,6 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
 
         engine.run(consumer_id=1, bundle_window_start=datetime.now(tz=UTC))
 
-        # Assert process_badges was attached to the background task manager
         mock_bg_tasks.add_task.assert_called_once()
         assert mock_bg_tasks.add_task.call_args[0][0] == engine.process_badges
 
@@ -142,7 +188,6 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
         mock_badge_def.badge_id = 99
         mock_badge_def.rules = [mock_rule_lvl1, mock_rule_lvl2]
 
-        # Setup User DB State: User currently has Level 1 acquired.
         mock_acquired = MagicMock()
         mock_acquired.badge_id = 99
         mock_acquired.level = 1
@@ -184,7 +229,7 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
     @patch("internal.badges.engine.ReservationQuerier")
     @patch.object(BadgeEngine, "to_acquire")
     @patch.object(BadgeEngine, "quantity_goal")
-    @patch("internal.badges.engine.BadgeEngine.update_badge", new_callable=MagicMock)
+    @patch.object(BadgeEngine, "update_badge")
     async def test_process_badges_success(  # noqa: PLR0913, PLR0917, PLR6301
         self,
         mock_update_badge: MagicMock,
@@ -211,22 +256,73 @@ class TestBadgeEngine(IsolatedAsyncioTestCase):
             mock_empty_gen
         )
 
-        # Fake a Badge needing processing
         mock_rule = BadgesConfig.QuantityGoal(
             type="quantity", level=1, quantity=1, category_id=None, seller_id=None
         )
         mock_to_acquire.return_value = [
             BadgeEngine.AcquireBadgeRule(badge_id=99, rule=mock_rule)
         ]
-
-        # Fake it passing the criteria
         mock_q_goal.return_value = True
 
-        # Fake successful db update
-        mock_update_badge.return_value = MagicMock()
+        async def dummy_update(*args: Any, **kwargs: Any) -> MagicMock:  # noqa: ANN401, RUF029
+            return MagicMock()
+
+        mock_update_badge.side_effect = dummy_update
 
         await BadgeEngine.process_badges(
             consumer_id=1, badges_rules=[], bundle_window_start=datetime.now(tz=UTC)
         )
 
         mock_update_badge.assert_called_once()
+
+    @patch("internal.badges.engine.database_manager")
+    @patch("internal.badges.engine.BadgeQuerier")
+    @patch("internal.badges.engine.ReservationQuerier")
+    @patch.object(BadgeEngine, "to_acquire")
+    @patch.object(BadgeEngine, "quantity_goal")
+    @patch.object(BadgeEngine, "update_badge")
+    async def test_process_badges_failure(  # noqa: PLR0913, PLR0917
+        self,
+        mock_update_badge: MagicMock,
+        mock_q_goal: MagicMock,
+        mock_to_acquire: MagicMock,
+        mock_res_q: MagicMock,
+        mock_badge_q: MagicMock,
+        mock_db_manager: MagicMock,
+    ) -> None:
+        """Test ValueError is raised if database insert fails."""
+
+        async def mock_conn_gen() -> AsyncGenerator[Any]:  # noqa: RUF029
+            yield MagicMock()
+
+        async def mock_empty_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            items: list[Any] = []
+            for item in items:
+                yield item
+
+        mock_db_manager.get_connection.side_effect = mock_conn_gen
+        mock_badge_q.return_value.get_consumer_badges.side_effect = mock_empty_gen
+        mock_res_q.return_value.get_consumers_reservations_full.side_effect = (
+            mock_empty_gen
+        )
+
+        mock_rule = BadgesConfig.QuantityGoal(
+            type="quantity", level=1, quantity=1, category_id=None, seller_id=None
+        )
+        mock_to_acquire.return_value = [
+            BadgeEngine.AcquireBadgeRule(badge_id=99, rule=mock_rule)
+        ]
+        mock_q_goal.return_value = True
+
+        async def dummy_update_fail(*args: Any, **kwargs: Any) -> None:  # noqa: ANN401, RUF029
+            return None
+
+        mock_update_badge.side_effect = dummy_update_fail
+
+        with self.assertRaises(ValueError) as context:
+            await BadgeEngine.process_badges(
+                consumer_id=1, badges_rules=[], bundle_window_start=datetime.now(tz=UTC)
+            )
+
+        assert "Failed to insert" in str(context.exception)

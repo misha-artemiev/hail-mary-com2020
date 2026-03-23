@@ -311,7 +311,7 @@ async def get_bundle_image(bundle_id: int, conn: database_dependency) -> Respons
     Raises:
         HTTPException: if failed to get image
     """
-    if BundleQuerier(conn).get_bundle(bundle_id=bundle_id) is None:
+    if await BundleQuerier(conn).get_bundle(bundle_id=bundle_id) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
     return Response(
         block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
