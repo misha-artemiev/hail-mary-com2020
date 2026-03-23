@@ -154,8 +154,11 @@ def build_forecast_query(bundle: BundleDetails) -> ForecastQuery:
     """
     day_of_week = _WEEKDAY_TO_ENUM[bundle.bundle_date.weekday()]
     is_holiday = _is_uk_holiday(bundle.bundle_date)
+
+    today = datetime.date.today()
+    weather_url = _PAST_URL if bundle.bundle_date < today else _FORECAST_URL
     temperature, weather_flag = _fetch_weather(
-        _FORECAST_URL, bundle.bundle_date, bundle.latitude, bundle.longitude
+        weather_url, bundle.bundle_date, bundle.latitude, bundle.longitude
     )
 
     return ForecastQuery(
