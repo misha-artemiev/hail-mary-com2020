@@ -36,7 +36,7 @@ export default function FormInput({
             {/* Label */}
             {label && (
                 <label
-                    htmlFor="{name}"
+                    htmlFor={name}
                     className="block font-semibold text-gray-700 mb-1"
                 >
                     {label}
