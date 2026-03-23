@@ -47,6 +47,7 @@ export default function Home() {
         currentPage,
         goToPage,
         resetFilters,
+        locationRequired,
     } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
@@ -276,9 +277,21 @@ export default function Home() {
                 )}
 
                 {!loading && (!listings || listings.length === 0) && (
-                    <p className="text-gray-600 text-center py-8">
-                        No listings found!
-                    </p>
+                    <div className="text-center py-8">
+                        {locationRequired ? (
+                            <div>
+                                <p className="text-gray-700 font-medium mb-2">
+                                    Location access is required to view listings
+                                </p>
+                                <p className="text-gray-500 text-sm">
+                                    Please enable location services in your
+                                    browser settings
+                                </p>
+                            </div>
+                        ) : (
+                            <p className="text-gray-600">No listings found!</p>
+                        )}
+                    </div>
                 )}
 
                 {!loading && listings && listings.length > 0 && (

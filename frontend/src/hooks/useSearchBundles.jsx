@@ -14,6 +14,7 @@ export default function useSearchBundles() {
     const [error, setError] = useState(null);
     const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
+    const [locationRequired, setLocationRequired] = useState(false);
 
     const [userLocation, setUserLocation] = useState({ lat: 0, lon: 0 });
 
@@ -114,7 +115,7 @@ export default function useSearchBundles() {
             },
             (err) => {
                 console.warn("Location access denied or failed:", err.message);
-                search({});
+                setLocationRequired(true);
             },
             {
                 enableHighAccuracy: true,
@@ -134,5 +135,6 @@ export default function useSearchBundles() {
         currentPage,
         goToPage,
         resetFilters,
+        locationRequired,
     };
 }
