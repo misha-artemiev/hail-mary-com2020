@@ -257,34 +257,6 @@ async def search_bundles(
                 conn, bundle, form.allergens, form.categories, form.max_price
             ):
                 continue
-<<<<<<< Updated upstream
-            categories = [
-                item
-                async for item in CategoriesQuerier(conn).get_bundle_categories(
-                    bundle_id=bundle.bundle_id
-                )
-            ]
-            if (
-                categories
-                and form.categories
-                and set(categories).isdisjoint(set(form.categories))
-            ):
-                continue
-            if (
-                form.max_price
-                and (bundle.price * bundle.discount_percentage / 100) > form.max_price
-            ):
-                continue
-            reservations = [
-                item
-                async for item in ReservationQuerier(conn).get_bundle_reservations(
-                    bundle_id=int(bundle.bundle_id)
-                )
-            ]
-            if bundle.total_qty <= len(list(reservations)):
-                continue
-=======
->>>>>>> Stashed changes
             filtered_bundles.append(
                 SearchBundlesResponse(
                     bundle_id=bundle.bundle_id,
