@@ -133,8 +133,8 @@ class TestBundles(TestCase):
 
     @patch("routers.bundles.get_distance")
     @patch("routers.bundles.ReservationQuerier")
-    @patch("routers.bundles.CategoriesQuerier")
-    @patch("routers.bundles.AllergensQuerier")
+    @patch("internal.search.bundle_search.CategoriesQuerier")
+    @patch("internal.search.bundle_search.AllergensQuerier")
     @patch("routers.bundles.BundleQuerier")
     @patch("routers.bundles.SellerQuerier")
     def test_search_bundles_success(  # noqa: PLR0913, PLR0917
