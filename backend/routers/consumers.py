@@ -324,11 +324,31 @@ async def get_streaks(conn: database_dependency, consumer: ConsumerAuthDep) -> i
     Returns:
         number of weeks
     """
+    return await calculate_streak(conn, consumer.user_id)
+
+
+class ConsumerImpact(BaseModel):
+    """Consumer impact data."""
+
+    meals_saved: int
+    co2e_saved: int
+
+
+async def calculate_streak(conn: database_dependency, consumer_id: int) -> int:
+    """Calculate consumer collection streak in number of weeks.
+
+    Args:
+        conn: database connection
+        consumer_id: consumer user ID
+
+    Returns:
+        number of weeks
+    """
     reservations: list[GetConsumersReservationsFullRow] = [
         reservation
         async for reservation in ReservationsQuerier(
             conn
-        ).get_consumers_reservations_full(consumer_id=consumer.user_id)
+        ).get_consumers_reservations_full(consumer_id=consumer_id)
     ]
     if len(reservations) == 0:
         return 0
@@ -356,3 +376,112 @@ async def get_streaks(conn: database_dependency, consumer: ConsumerAuthDep) -> i
             break
 
     return streak_count
+
+
+async def calculate_impact(
+    conn: database_dependency, consumer_id: int
+) -> ConsumerImpact:
+    """Calculate consumer impact data.
+
+    Args:
+        conn: database connection
+        consumer_id: consumer user ID
+
+    Returns:
+        impact data (meals_saved, co2e_saved)
+    """
+    reservations: list[GetConsumersReservationsFullRow] = [
+        reservation
+        async for reservation in ReservationsQuerier(
+            conn
+        ).get_consumers_reservations_full(consumer_id=consumer_id)
+    ]
+
+    meals_saved = sum(1 for r in reservations if r.collected_at is not None)
+    co2e_saved = sum(
+        r.carbon_dioxide for r in reservations if r.collected_at is not None
+    )
+
+    return ConsumerImpact(meals_saved=meals_saved, co2e_saved=co2e_saved)
+
+
+@router.get(
+    "/{consumer_id}/streaks",
+    status_code=status.HTTP_200_OK,
+    summary="Get consumer streak by ID",
+    description="Get consumer streak in number of weeks by their consumer ID.",
+    tags=["analytics"],
+)
+async def get_streak_by_id(consumer_id: int, conn: database_dependency) -> int:
+    """Get consumer collection streak by consumer ID.
+
+    Args:
+        consumer_id: consumer user ID
+        conn: database connection
+
+    Returns:
+        number of weeks
+    """
+    consumer = await ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
+    if not consumer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Consumer not found"
+        )
+    return await calculate_streak(conn, consumer_id)
+
+
+@router.get(
+    "/{consumer_id}/badges",
+    status_code=status.HTTP_200_OK,
+    summary="Get consumer badges by ID",
+    description="Get all acquired badges by consumer ID.",
+    tags=["badges"],
+)
+async def get_consumer_badges_by_id(
+    consumer_id: int, conn: database_dependency
+) -> list[GetConsumerBadgesRow]:
+    """Get badges acquired by consumer by consumer ID.
+
+    Args:
+        consumer_id: consumer user ID
+        conn: database connection
+
+    Returns:
+        list of acquired badges
+    """
+    consumer = await ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
+    if not consumer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Consumer not found"
+        )
+    return [
+        badge
+        async for badge in BadgeQuerier(conn).get_consumer_badges(user_id=consumer_id)
+    ]
+
+
+@router.get(
+    "/{consumer_id}/impact",
+    status_code=status.HTTP_200_OK,
+    summary="Get consumer impact by ID",
+    description="Get consumer impact data (meals saved, CO2e prevented) by their consumer ID.",
+    tags=["analytics"],
+)
+async def get_impact_by_id(
+    consumer_id: int, conn: database_dependency
+) -> ConsumerImpact:
+    """Get consumer impact by consumer ID.
+
+    Args:
+        consumer_id: consumer user ID
+        conn: database connection
+
+    Returns:
+        impact data
+    """
+    consumer = await ConsumerQuerier(conn).get_consumer(user_id=consumer_id)
+    if not consumer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Consumer not found"
+        )
+    return await calculate_impact(conn, consumer_id)
