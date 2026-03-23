@@ -51,6 +51,46 @@ class TestMiddleware(IsolatedAsyncioTestCase):
     @patch("internal.auth.middleware.AdminQuerier")
     @patch("internal.auth.middleware.check_password")
     @patch("internal.auth.middleware.UserQuerier")
+    async def test_basic_auth_user_not_found(
+        self, mock_querier: MagicMock, mock_check: MagicMock, mock_admin_q: MagicMock
+    ) -> None:
+        """Test basic auth raises 401 when user does not exist in the database."""
+        mock_conn = MagicMock()
+        mock_creds = HTTPBasicCredentials(
+            username="nobody@test.com", password=DUMMY_PASSWORD
+        )
+        mock_querier.return_value.get_user_login = AsyncMock(return_value=None)
+
+        with self.assertRaises(HTTPException) as context:
+            await basic_auth(mock_conn, mock_creds)
+
+        assert context.exception.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @patch("internal.auth.middleware.check_password")
+    @patch("internal.auth.middleware.UserQuerier")
+    async def test_basic_auth_wrong_password(
+        self, mock_querier: MagicMock, mock_check: MagicMock
+    ) -> None:
+        """Test basic auth raises 401 when the password is incorrect."""
+        mock_conn = MagicMock()
+        mock_creds = HTTPBasicCredentials(
+            username="test@test.com",
+            password="wrongpassword",  # noqa: S106
+        )
+        mock_user = MagicMock()
+        mock_user.user_id = TEST_USER_ID
+        mock_user.role = UserRole.CONSUMER
+        mock_querier.return_value.get_user_login = AsyncMock(return_value=mock_user)
+        mock_check.return_value = False  # password mismatch
+
+        with self.assertRaises(HTTPException) as context:
+            await basic_auth(mock_conn, mock_creds)
+
+        assert context.exception.status_code == status.HTTP_401_UNAUTHORIZED
+
+    @patch("internal.auth.middleware.AdminQuerier")
+    @patch("internal.auth.middleware.check_password")
+    @patch("internal.auth.middleware.UserQuerier")
     async def test_basic_auth_admin_deactivated(
         self, mock_user_q: MagicMock, mock_check: MagicMock, mock_admin_q: MagicMock
     ) -> None:
@@ -119,6 +159,43 @@ class TestMiddleware(IsolatedAsyncioTestCase):
 
         session = seller_auth(mock_session)
         assert session == mock_session
+
+    @patch("internal.auth.middleware.TokenQuerier")
+    async def test_bearer_auth_invalid_token(self, mock_querier: MagicMock) -> None:
+        """Test bearer auth raises 401 when the token is not found in the database."""
+        mock_conn = MagicMock()
+        mock_creds = HTTPAuthorizationCredentials(
+            scheme="Bearer", credentials="invalid_token"
+        )
+        mock_querier.return_value.get_session_by_token = AsyncMock(return_value=None)
+
+        with self.assertRaises(HTTPException) as context:
+            await bearer_auth(mock_conn, mock_creds)
+
+        assert context.exception.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_seller_auth_failure(self) -> None:
+        """Test seller auth raises 403 for a non-seller role."""
+        mock_session = MagicMock()
+        mock_session.role = UserRole.CONSUMER
+
+        with self.assertRaises(HTTPException) as context:
+            seller_auth(mock_session)
+
+        assert context.exception.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("internal.auth.middleware.AdminQuerier")
+    async def test_admin_auth_non_admin_role(self, mock_querier: MagicMock) -> None:
+        """Test admin auth raises 403 when session role is not admin."""
+        mock_conn = MagicMock()
+        mock_session = MagicMock()
+        mock_session.role = UserRole.CONSUMER
+        mock_session.user_id = TEST_USER_ID
+
+        with self.assertRaises(HTTPException) as context:
+            await admin_auth(mock_conn, mock_session)
+
+        assert context.exception.status_code == status.HTTP_403_FORBIDDEN
 
     @patch("internal.auth.middleware.AdminQuerier")
     async def test_admin_auth_success(self, mock_querier: MagicMock) -> None:  # noqa: PLR6301

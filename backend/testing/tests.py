@@ -2,7 +2,7 @@
 
 import unittest
 
-from testing.internal.test_creation import TestCreation as Test_Creation  # noqa: F401
+from testing.internal.test_creation import TestMiddleware as Test_Creation  # noqa: F401
 from testing.internal.test_distance import TestDistance as Test_Distance  # noqa: F401
 from testing.internal.test_engine import TestBadgeEngine as Test_Engine  # noqa: F401
 from testing.internal.test_graphs import TestGraphs as Test_Graphs  # noqa: F401

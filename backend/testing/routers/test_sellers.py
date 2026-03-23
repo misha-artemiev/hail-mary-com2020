@@ -374,28 +374,34 @@ class TestSellers(TestCase):
 
         del app.dependency_overrides[seller_auth]
 
+    @patch("routers.sellers.InboxQuerier")
     @patch("routers.sellers.ReservationsQuerier")
     @patch("routers.sellers.BundleQuerier")
     def test_reservation_collection_success(
-        self, mock_bundle_querier: MagicMock, mock_res_querier: MagicMock
+        self,
+        mock_bundle_querier: MagicMock,
+        mock_res_querier: MagicMock,
+        mock_inbox_querier: MagicMock,
     ) -> None:
         """Test confirming the collection of a reservation."""
         app.dependency_overrides[seller_auth] = override_seller_auth
         app.dependency_overrides[BadgeEngine] = override_badge_engine
 
-        # Mock finding the reservation
         mock_res_inst = mock_res_querier.return_value
         mock_res_inst.get_reservation_collection = AsyncMock(
             return_value=get_mock_reservation()
         )
 
-        # Mock validating the bundle ownership
         mock_bundle_inst = mock_bundle_querier.return_value
         mock_bundle_inst.get_bundle = AsyncMock(return_value=get_mock_bundle())
 
-        # Mock the successful collection
         mock_res_inst.collect_reservation = AsyncMock(
             return_value=get_mock_reservation()
+        )
+
+        # Add this mock to prevent database errors during inbox creation
+        mock_inbox_querier.return_value.create_inbox_message = AsyncMock(
+            return_value=MagicMock()
         )
 
         response = self.client.patch(
@@ -406,4 +412,3 @@ class TestSellers(TestCase):
         assert response.json()["reservation_id"] == TEST_RESERVATION_ID
 
         del app.dependency_overrides[seller_auth]
-        del app.dependency_overrides[BadgeEngine]
