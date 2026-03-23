@@ -25,6 +25,9 @@ import Divider from "../components/Divider";
 // Config
 import { CREATE_BUNDLE_FORM_FIELDS } from "../config/createBundleFormFields";
 
+// Resources
+import defaultListing from "../assets/default-listing.jpg";
+
 /**
  * The bundle creation page of the site.
  * Allows sellers to create new bundles.
@@ -40,7 +43,7 @@ export default function CreateBundle() {
     const { categoryOptions, loading: categoriesLoading } = useCategories();
     const { allergenOptions, loading: allergensLoading } = useAllergens();
 
-    const { creating, createBundle } = useCreateBundle();
+    const { creating, createBundle, uploadImage } = useCreateBundle();
 
     const [categoryError, setCategoryError] = useState("");
 
@@ -57,6 +60,10 @@ export default function CreateBundle() {
         categories: [],
         allergens: [],
     });
+
+    // Image state
+    const [newBundleImage, setNewBundleImage] = useState(null);
+    const [displayImage, setDisplayImage] = useState(defaultListing);
 
     // Not accessible if the user is a consumer
     if (userRole !== "seller") {
@@ -103,6 +110,17 @@ export default function CreateBundle() {
     };
 
     /**
+     * Handles image file selection.
+     */
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setNewBundleImage(file);
+        setDisplayImage(URL.createObjectURL(file));
+    };
+
+    /**
      * Handles submitting the form.
      * Uses the `createBundle` custom hook.
      * Redirects to the new bundle page.
@@ -118,6 +136,11 @@ export default function CreateBundle() {
         setCategoryError("");
 
         const result = await createBundle(form);
+
+        if (result && result.bundle_id && newBundleImage) {
+            await uploadImage(result.bundle_id, newBundleImage);
+        }
+
         navigate(`/bundles/${result.bundle_id}`);
     };
 
@@ -154,6 +177,34 @@ export default function CreateBundle() {
 
                 {/* Login form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Bundle image upload */}
+                    <div>
+                        <label className="block font-semibold text-gray-700 mb-1">
+                            Bundle Image
+                        </label>
+                        <label className="cursor-pointer relative block w-full">
+                            <img
+                                src={displayImage}
+                                alt="Bundle preview"
+                                className="w-full h-48 object-cover rounded-lg border-2 border-green-600"
+                                onError={(e) => {
+                                    e.target.src = defaultListing;
+                                }}
+                            />
+                            <div className="absolute inset-0 rounded-lg bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                <span className="text-white font-medium">
+                                    Change Image
+                                </span>
+                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                        </label>
+                    </div>
+
                     {renderFields(CREATE_BUNDLE_FORM_FIELDS.top)}
 
                     {/* Larger description container */}

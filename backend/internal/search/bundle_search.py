@@ -52,7 +52,11 @@ async def filter_bundle(
     ):
         return False
 
-    if max_price and (bundle.price * bundle.discount_percentage / 100) > max_price:
+    if (
+        max_price
+        and float(bundle.price) * (1 - float(bundle.discount_percentage) / 100)
+        > max_price
+    ):
         return False
 
     reservations = [
@@ -61,4 +65,5 @@ async def filter_bundle(
             bundle_id=int(bundle.bundle_id)
         )
     ]
-    return bool(reservations and bundle.total_qty > len(list(reservations)))
+    reservations_count = len(list(reservations))
+    return not reservations_count >= bundle.total_qty
