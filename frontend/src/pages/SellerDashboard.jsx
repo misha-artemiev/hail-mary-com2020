@@ -3,7 +3,7 @@
  * @author Thomas Noakes
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -17,11 +17,16 @@ import {
     PieChart,
     Pie,
     Cell,
+    LineChart,
+    Line,
+    Legend,
+    ReferenceLine,
 } from "recharts";
 
 import { useAuth } from "../context/AuthContext";
 import useSellerBundles from "../hooks/useSellerBundles";
 import useSellerIssueReports from "../hooks/useSellerIssueReports";
+import { useSellerAnalytics } from "../hooks/useSellerAnalytics";
 
 import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
@@ -225,6 +230,275 @@ function StatsSection({ bundles, reservations }) {
     );
 }
 
+function AnalyticsSection({ analytics, onRefresh, refreshing }) {
+    const [timelineData, setTimelineData] = useState([]);
+    const [categoryData, setCategoryData] = useState([]);
+    const [timeWindowData, setTimeWindowData] = useState([]);
+    const [sellThroughData, setSellThroughData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const loadAnalytics = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [
+                actualRes,
+                forecastRes,
+                categoryRes,
+                timeWindowRes,
+                sellThroughRes,
+            ] = await Promise.allSettled([
+                analytics.fetchGraph(1),
+                analytics.fetchGraph(5),
+                analytics.fetchGraph(3),
+                analytics.fetchGraph(4),
+                analytics.fetchGraph(2),
+            ]);
+
+            if (
+                actualRes.status === "fulfilled" &&
+                forecastRes.status === "fulfilled"
+            ) {
+                const combined = await analytics.getCombinedTimelineData();
+                setTimelineData(combined);
+            }
+
+            if (categoryRes.status === "fulfilled") {
+                const series = categoryRes.value[1];
+                const catSeries = series.find(
+                    (s) => s[0].series_name === "categories",
+                );
+                if (catSeries) {
+                    setCategoryData(
+                        catSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+
+            if (timeWindowRes.status === "fulfilled") {
+                const series = timeWindowRes.value[1];
+                const twSeries = series.find(
+                    (s) => s[0].series_name === "time_windows",
+                );
+                if (twSeries) {
+                    setTimeWindowData(
+                        twSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+
+            if (sellThroughRes.status === "fulfilled") {
+                const series = sellThroughRes.value[1];
+                const stSeries = series.find(
+                    (s) => s[0].series_name === "sell_rate",
+                );
+                if (stSeries) {
+                    setSellThroughData(
+                        stSeries[1].map((p) => ({
+                            name: p.x,
+                            value: Number(p.y),
+                        })),
+                    );
+                }
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadAnalytics();
+    }, [analytics]);
+
+    const today = new Date().toISOString().split("T")[0];
+
+    return (
+        <Card className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-green-700">Analytics</h2>
+                <Button
+                    onClick={() => {
+                        onRefresh();
+                        setTimeout(loadAnalytics, 500);
+                    }}
+                    disabled={refreshing || loading}
+                    className="!w-auto"
+                >
+                    {refreshing || loading ? "Loading..." : "Refresh Analytics"}
+                </Button>
+            </div>
+
+            {error && <p className="text-red-500 mb-4">Error: {error}</p>}
+
+            <div className="space-y-8">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Sales vs Posted (Past & Forecast)
+                    </h3>
+                    {timelineData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={timelineData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <ReferenceLine
+                                    x={today}
+                                    stroke="#666"
+                                    strokeDasharray="5 5"
+                                    label={{
+                                        value: "Today",
+                                        position: "top",
+                                    }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="actualSales"
+                                    stroke="#22c55e"
+                                    strokeWidth={2}
+                                    name="Actual Sales"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="actualPosted"
+                                    stroke="#22c55e"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    name="Actual Posted"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="forecastSales"
+                                    stroke="#3b82f6"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    name="Forecast Sales"
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="forecastPosted"
+                                    stroke="#3b82f6"
+                                    strokeWidth={2}
+                                    strokeDasharray="10 5"
+                                    name="Forecast Posted"
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[300px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No sales data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Category Distribution
+                    </h3>
+                    {categoryData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={categoryData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar
+                                    dataKey="value"
+                                    fill="#8b5cf6"
+                                    name="Reservations"
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No category data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Time Window Distribution
+                    </h3>
+                    {timeWindowData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <BarChart data={timeWindowData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar
+                                    dataKey="value"
+                                    fill="#f59e0b"
+                                    name="Reservations"
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No time window data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Sell Through Rate
+                    </h3>
+                    {sellThroughData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie
+                                    data={sellThroughData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    label={({ name, value }) =>
+                                        `${name}: ${value}%`
+                                    }
+                                >
+                                    <Cell fill="#22c55e" />
+                                    <Cell fill="#ef4444" />
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="w-full h-[250px] flex items-center justify-center bg-gray-50 border border-gray-200 rounded">
+                            <p className="text-gray-500">
+                                No sell through data yet. Click &quot;Refresh
+                                Analytics&quot; to generate.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </Card>
+    );
+}
+
 function BundleRow({ bundle }) {
     const navigate = useNavigate();
     const [showReservations, setShowReservations] = useState(false);
@@ -307,6 +581,19 @@ export default function SellerDashboard() {
     ).length;
     const [showCollectModal, setShowCollectModal] = useState(false);
     const allReservations = useSellerAllReservations(bundles);
+    const analytics = useSellerAnalytics();
+    const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
+
+    const handleRefreshAnalytics = async () => {
+        setRefreshingAnalytics(true);
+        try {
+            await analytics.refreshAnalytics();
+        } catch (err) {
+            console.error("Failed to refresh analytics:", err);
+        } finally {
+            setRefreshingAnalytics(false);
+        }
+    };
 
     if (userRole !== "seller") {
         return (
@@ -378,6 +665,12 @@ export default function SellerDashboard() {
             </Card>
 
             <SellerProfileCard onLogout={logout} />
+
+            <AnalyticsSection
+                analytics={analytics}
+                onRefresh={handleRefreshAnalytics}
+                refreshing={refreshingAnalytics}
+            />
 
             {showCollectModal && (
                 <CollectModal
