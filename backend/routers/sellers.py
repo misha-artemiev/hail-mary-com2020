@@ -92,6 +92,8 @@ from internal.queries.category import (
 )
 from internal.queries.category import AsyncQuerier as CategoryQuerier
 from internal.queries.forecast import AsyncQuerier as ForecastQuerier
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import (
     AnalyticsGraph,
     AnalyticsGraphsType,
@@ -344,6 +346,20 @@ async def create_bundle(
             raise HTTPException(
                 status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to add bundle allergen"
             )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=seller.user_id,
+            sender_id=seller.user_id,
+            message_subject="Bundle listed",
+            message_text=(
+                f"Your bundle '{bundle.bundle_name}' is now listed and "
+                "available for reservations. "
+                "It expires when the pickup window ends at "
+                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+            ),
+        )
+    )
     return bundle
 
 
@@ -524,6 +540,7 @@ async def get_bundles(conn: database_dependency, seller: SellerAuthDep) -> list[
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get bundles",
         )
+
     return list(bundles)
 
 
@@ -629,6 +646,30 @@ async def reservation_collection(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update reservation status",
         )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=seller.user_id,
+            sender_id=seller.user_id,
+            message_subject="Bundle collected",
+            message_text=(
+                "A reservation for bundle "
+                f"'{bundle.bundle_name}' has been collected successfully."
+            ),
+        )
+    )
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=claimed_reservation.consumer_id,
+            sender_id=seller.user_id,
+            message_subject="Reservation collected",
+            message_text=(
+                f"Your reservation for '{bundle.bundle_name}' has been marked "
+                "as collected."
+            ),
+        )
+    )
+
     await conn.commit()
     badge_engine.run(claimed_reservation.consumer_id, bundle.window_start)
     return claimed_reservation

@@ -148,6 +148,49 @@ async def send_message(
     return message
 
 
+@router.patch(
+    "/me/inbox/{message_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Mark an inbox message as read",
+    description=(
+        "Marks a specific inbox message owned by the authenticated user as read."
+    ),
+    response_model=Inbox,
+)
+async def mark_inbox_message_as_read(
+    message_id: int, conn: database_dependency, session: BearerAuthDep
+) -> Inbox:
+    """Mark a single inbox message as read for the current user.
+
+    Args:
+      message_id: inbox message id
+      conn: database connection
+      session: users session
+
+    Returns:
+            The updated inbox message.
+
+    Raises:
+    HTTPException: if message does not exist for user or update fails
+    """
+    inbox_querier = InboxQuerier(conn)
+    user_messages = [
+        msg async for msg in inbox_querier.get_user_inbox(user_id=session.user_id)
+    ]
+    if all(msg.message_id != message_id for msg in user_messages):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Inbox message not found"
+        )
+
+    updated_message = await inbox_querier.read_inbox_message(message_id=message_id)
+    if not updated_message:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to mark inbox message as read",
+        )
+    return updated_message
+
+
 @router.get(
     path="/id/{username}",
     summary="Get user ID by username",
@@ -282,6 +325,16 @@ async def create_seller_issue_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create seller issue report",
         )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=user.user_id,
+            sender_id=user.user_id,
+            message_subject="Issue report submitted",
+            message_text="Your reservation issue report was submitted successfully.",
+        )
+    )
+
     return report
 
 
@@ -327,6 +380,18 @@ async def create_admin_issue_report(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create admin issue report",
         )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=user.user_id,
+            sender_id=user.user_id,
+            message_subject="Issue report submitted",
+            message_text=(
+                "Your issue report was submitted successfully and is awaiting review."
+            ),
+        )
+    )
+
     return report
 
 

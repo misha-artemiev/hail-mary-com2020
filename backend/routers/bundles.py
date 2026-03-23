@@ -13,6 +13,8 @@ from internal.geolocation.types import LocationModel
 from internal.queries.allergens import AsyncQuerier as AllergensQuerier
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
 from internal.queries.category import AsyncQuerier as CategoriesQuerier
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import CreateReservationParams
@@ -140,6 +142,32 @@ async def reserve_bundle(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create reservation",
         )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=consumer.user_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=(
+                f"You reserved '{bundle.bundle_name}'. "
+                f"Your claim code is {reservation.claim_code}. "
+                "This reservation expires when the pickup window ends at "
+                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+            ),
+        )
+    )
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=bundle.seller_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=(
+                "A reservation has been created for your bundle "
+                f"'{bundle.bundle_name}'."
+            ),
+        )
+    )
+
     return reservation
 
 
