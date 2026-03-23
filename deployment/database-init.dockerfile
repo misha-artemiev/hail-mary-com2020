@@ -13,4 +13,4 @@ WORKDIR /app/backend
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir ".[dev]"
 
-CMD ["sh", "-c", "until nc -z database ${DATABASE_PORT}; do echo 'waiting for database'; sleep 1; done; make init-db-noninteractive && make upload-db"]
+CMD ["sh", "-c", "until nc -z database ${DATABASE_PORT}; do echo 'waiting for database'; sleep 1; done; make init-db-noninteractive && make upload-db && make upload-images"]
