@@ -90,7 +90,7 @@ export default function Navbar() {
             const response = await fetch(
                 `${API_BASE_URL}/users/me/inbox/${messageId}`,
                 {
-                    method: "DELETE",
+                    method: "PATCH",
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },

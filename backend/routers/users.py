@@ -148,7 +148,7 @@ async def send_message(
     return message
 
 
-@router.delete(
+@router.patch(
     "/me/inbox/{message_id}",
     status_code=status.HTTP_200_OK,
     summary="Mark an inbox message as read",
