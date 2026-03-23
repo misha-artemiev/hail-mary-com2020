@@ -9,10 +9,12 @@ import { useNavigate } from "react-router-dom";
 // Components
 import Card from "../components/Card";
 import LeaderboardItem from "../components/LeaderboardItem";
-import RoleSelect from "../components/forms/RoleSelect";
 
 // Hooks
 import useLeaderboard from "../hooks/useLeaderboard";
+import useLeaderboardTypes, {
+    CATEGORY_LABELS,
+} from "../hooks/useLeaderboardTypes";
 
 // Services
 import { getUsername } from "../services/authService";
@@ -25,6 +27,12 @@ import { getUsername } from "../services/authService";
  */
 export default function Leaderboard() {
     const navigate = useNavigate();
+
+    const {
+        types: leaderboardTypes,
+        loading: typesLoading,
+        error: typesError,
+    } = useLeaderboardTypes();
 
     // Get current user's username
     const [currentUsername, setCurrentUsername] = useState(null);
@@ -73,50 +81,61 @@ export default function Leaderboard() {
 
                 {/* Type selector */}
                 <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
-                    <div className="flex gap-2">
-                        {/* Sort by Most Reservations */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setLeaderboardCategory("reservations")
-                            }
-                            className={`px-4 py-2 rounded-md font-semibold transition-colors ${
-                                leaderboardCategory === "reservations"
-                                    ? "bg-green-600 text-white"
-                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            }`}
-                        >
-                            Most Reservations
-                        </button>
-
-                        {/* Sort by CO2 */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setLeaderboardCategory("carbon_dioxide")
-                            }
-                            className={`px-4 py-2 rounded-md font-semibold transition-colors ${
-                                leaderboardCategory === "carbon_dioxide"
-                                    ? "bg-green-600 text-white"
-                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                            }`}
-                        >
-                            Most CO<sub>2</sub> Saved
-                        </button>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {typesLoading ? (
+                            <span className="text-gray-500">
+                                Loading categories...
+                            </span>
+                        ) : typesError ? (
+                            <span className="text-red-500">{typesError}</span>
+                        ) : (
+                            leaderboardTypes.map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setLeaderboardCategory(type)}
+                                    className={`px-4 py-2 rounded-md font-semibold transition-colors ${
+                                        leaderboardCategory === type
+                                            ? "bg-green-600 text-white"
+                                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    {CATEGORY_LABELS[type] || type}
+                                </button>
+                            ))
+                        )}
                     </div>
 
                     {/* Limit selection */}
-                    <RoleSelect
-                        label=""
-                        value={String(leaderboardLimit)}
-                        onChange={(e) => setLeaderboardLimit(e.target.value)}
-                        options={[
-                            { value: 10, label: "Top 10" },
-                            { value: 25, label: "Top 25" },
-                            { value: 50, label: "Top 50" },
-                            { value: 100, label: "Top 100" },
-                        ]}
-                    />
+                    <div className="relative">
+                        <select
+                            value={leaderboardLimit}
+                            onChange={(e) =>
+                                setLeaderboardLimit(Number(e.target.value))
+                            }
+                            className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 font-semibold text-gray-700 cursor-pointer hover:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        >
+                            <option value={10}>Top 10</option>
+                            <option value={25}>Top 25</option>
+                            <option value={50}>Top 50</option>
+                            <option value={100}>Top 100</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <svg
+                                className="w-4 h-4 text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Loading state */}
