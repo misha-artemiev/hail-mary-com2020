@@ -8,58 +8,41 @@ import { useEffect, useState } from "react";
 /**
  * Custom React hook for fetching user's listings
  *
- * @param {string} username - The name of the user to fetch listings for.
+ * Note: The backend doesn't expose public endpoints for viewing other users'
+ * bundles or reservations, so this returns null/empty listings.
  *
- * @returns {Array<Object>|null} the array of listings objects.
+ * @param {string} username - The name of the user to fetch listings for.
+ * @param {string} userRole - The role of the user (seller or consumer).
+ * @param {number} userId - The ID of the user.
+ *
+ * @returns {{ listings: Array<Object>|null, loading: boolean, error: string|null }}
+ *          the listings and loading state.
  *
  * ---
  * @example
- * const listings = useUserListings("seller_123");
+ * const { listings, loading } = useUserListings("seller_123", "seller", 1);
  *
- * if (!listings) return <Loading />;
+ * if (loading) return <Loading />;
  * return <ListingsGrid listings={listings} />;
  */
-export function useUserListings(username) {
-    // State object: stores the listing information
+export function useUserListings(username, userRole, userId) {
     const [listings, setListings] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch user listings
     useEffect(() => {
-        // TODO: get user listings properly
-        async function fetchListings() {
-            // const res = await fetch(`/api/listings?user=&{username}`);
-            // const data = await res.json();
-            // setListings(data);
-
-            // TODO: remove
-            setListings([
-                {
-                    title: "Item 1",
-                    image: "",
-                    info: [
-                        { label: "Pickup", value: "13:00-15:00" },
-                        { label: "", value: "3 left" },
-                    ],
-                },
-                {
-                    title: "Item 2",
-                    image: "",
-                    info: [
-                        { label: "Pickup", value: "09:00-10:00" },
-                        { label: "", value: "Collection only" },
-                    ],
-                },
-                {
-                    title: "Item 3",
-                    image: "",
-                    info: [{ label: "Pickup", value: "13:00-15:00" }],
-                },
-            ]);
+        if (!username || !userRole || !userId) {
+            setListings(null);
+            setLoading(false);
+            return;
         }
 
-        fetchListings();
-    }, [username]);
+        setLoading(true);
 
-    // Exit with user listings
-    return listings;
+        setTimeout(() => {
+            setListings([]);
+            setLoading(false);
+        }, 100);
+    }, [username, userRole, userId]);
+
+    return { listings, loading };
 }

@@ -4,13 +4,16 @@
  */
 
 import { useEffect, useState } from "react";
+import { getAuthToken } from "../services/authService";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 /**
  * Custom React hook for fetching and managing user data.
  *
  * @param {string} username - The name of the user to fetch.
  *
- * @returns {{ user: Object|null, loading: boolean }}
+ * @returns {{ user: Object|null, loading: boolean, error: string|null }}
  *          the object of user data and/or loading state.
  *
  * ---
@@ -22,37 +25,92 @@ import { useEffect, useState } from "react";
  * return <UserProfile user={user} />
  */
 export function useUser(username) {
-    // State object: stores the user information
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Fetch user information
     useEffect(() => {
+        if (!username) return;
+
         let cancelled = false;
 
-        // TODO: get user information properly
         async function fetchUser() {
-            // const res = await fetch(`/api/user/&{username}`);
-            // const data = await res.json();
-            // setUser(data);
+            setLoading(true);
+            setError(null);
 
-            // TODO: REMOVE
-            const data = {
-                username: username,
-                bio: "Selling quality items with fast delivery and trusted service.",
-                activeSince: "1st Jan, 2026",
-                streak: "2 Weeks",
-                mealsSaved: "15",
-                co2e: "15kg",
-                // location: "Exeter, England",
-                // openingHours: "9am-5pm daily",
-                // role: "seller",
-                // categories: ["Fast Food", "Tacos", "Mexican", "Spicy"],
-            };
+            try {
+                const token = getAuthToken();
+                const headers = token
+                    ? { Authorization: `Bearer ${token}` }
+                    : {};
 
-            if (!cancelled) {
-                setUser(data);
-                setLoading(false);
+                const idRes = await fetch(
+                    `${API_BASE_URL}/users/id/${encodeURIComponent(username)}`,
+                    { headers },
+                );
+
+                if (!idRes.ok) {
+                    if (!cancelled) {
+                        setError("User not found");
+                        setLoading(false);
+                    }
+                    return;
+                }
+
+                const [userId, role] = await idRes.json();
+
+                if (role === "seller") {
+                    const sellerRes = await fetch(
+                        `${API_BASE_URL}/sellers/${userId}`,
+                        { headers },
+                    );
+
+                    if (!sellerRes.ok) {
+                        if (!cancelled) {
+                            setError("Failed to fetch seller data");
+                            setLoading(false);
+                        }
+                        return;
+                    }
+
+                    const sellerData = await sellerRes.json();
+
+                    if (!cancelled) {
+                        setUser({
+                            ...sellerData,
+                            role: "seller",
+                        });
+                        setLoading(false);
+                    }
+                } else {
+                    const consumerRes = await fetch(
+                        `${API_BASE_URL}/consumers/${userId}`,
+                        { headers },
+                    );
+
+                    if (!consumerRes.ok) {
+                        if (!cancelled) {
+                            setError("Failed to fetch consumer data");
+                            setLoading(false);
+                        }
+                        return;
+                    }
+
+                    const consumerData = await consumerRes.json();
+
+                    if (!cancelled) {
+                        setUser({
+                            ...consumerData,
+                            role: "consumer",
+                        });
+                        setLoading(false);
+                    }
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err.message);
+                    setLoading(false);
+                }
             }
         }
 
@@ -63,6 +121,5 @@ export function useUser(username) {
         };
     }, [username]);
 
-    // Exit with user information and loading status
-    return { user, loading };
+    return { user, loading, error };
 }

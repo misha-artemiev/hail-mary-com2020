@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getAuthToken } from "../services/authService";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+
 export function useUserProfileImage(username) {
     const [imageUrl, setImageUrl] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -13,38 +15,31 @@ export function useUserProfileImage(username) {
         let currentUrl = null;
 
         async function fetchUserProfileImage() {
-            const token = getAuthToken();
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-
             setLoading(true);
 
             try {
+                const token = getAuthToken();
+                const headers = token
+                    ? { Authorization: `Bearer ${token}` }
+                    : {};
+
                 const idResponse = await fetch(
-                    `${import.meta.env.VITE_API_BASE_URL || "/api"}/users/id/${username}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    },
+                    `${API_BASE_URL}/users/id/${username}`,
+                    { headers },
                 );
 
                 if (!idResponse.ok) {
-                    setLoading(false);
+                    if (!cancelled) {
+                        setLoading(false);
+                    }
                     return;
                 }
 
                 const [userId] = await idResponse.json();
 
                 const imageResponse = await fetch(
-                    `${import.meta.env.VITE_API_BASE_URL || "/api"}/users/${userId}/image`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    },
+                    `${API_BASE_URL}/users/${userId}/image`,
+                    { headers },
                 );
 
                 if (imageResponse.ok) {
