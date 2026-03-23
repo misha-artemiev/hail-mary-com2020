@@ -19,6 +19,7 @@ ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
 COPY --from=builder /app/backend/dist/*.whl .
+RUN apt-get update && apt-get install -y libgomp1
 RUN pip install --no-cache-dir *.whl
 RUN rm *.whl
 

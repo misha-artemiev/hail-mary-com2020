@@ -2,7 +2,7 @@ FROM python:3.14-slim
 ENV PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /app
-RUN apt-get update && apt-get install -y make
+RUN apt-get update && apt-get install -y make netcat-openbsd
 COPY backend/database ./backend/database
 COPY backend/internal ./backend/internal
 COPY backend/pyproject.toml ./backend/pyproject.toml
