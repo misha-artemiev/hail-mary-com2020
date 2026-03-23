@@ -24,7 +24,7 @@ metadata:
   annotations:
     keel.sh/policy: all
     keel.sh/trigger: poll
-    keel.sh/pollSchedule: "@every 5m"
+    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 1
   selector:
@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:0.1.0
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-frontend:1.4.11
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -70,7 +70,7 @@ metadata:
   annotations:
     keel.sh/policy: all
     keel.sh/trigger: poll
-    keel.sh/pollSchedule: "@every 5m"
+    keel.sh/pollSchedule: "@every 1m"
 spec:
   replicas: 1
   selector:
@@ -83,7 +83,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:0.1.0
+          image: ghcr.io/misha-artemiev/hail-mary-com2020/hail-mary-com2020-backend:1.4.11
           imagePullPolicy: Always
           env:
             - name: HOST_PORT

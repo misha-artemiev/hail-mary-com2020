@@ -491,10 +491,10 @@ class AnalyticsProcesser:
             await AnalyticsProcesser.add_forecast_graph(
                 analytics_querier, seller_id, bundle_rows, reservation_rows
             )
-            await AnalyticsProcesser.add_forecast_outputs(
-                ForecastQuerier(conn),
-                CategoryQuerier(conn),
-                SellerQuerier(conn),
-                seller_id,
-                conn,
-            )
+            #await AnalyticsProcesser.add_forecast_outputs(
+            #    ForecastQuerier(conn),
+            #    CategoryQuerier(conn),
+            #    SellerQuerier(conn),
+            #    seller_id,
+            #    conn,
+            #)

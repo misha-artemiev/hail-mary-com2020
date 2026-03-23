@@ -813,7 +813,7 @@ async def get_analytics_graph(
         )
     ) is None:
         raise HTTPException(
-            status.HTTP_500_INTERNAL_SERVER_ERROR, "failed to get graph"
+            status.HTTP_404_NOT_FOUND, "failed to find graph for this seller"
         )
     series = [
         series
