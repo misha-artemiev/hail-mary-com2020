@@ -177,25 +177,6 @@ export default function CreateBundle() {
 
                 {/* Login form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {renderFields(CREATE_BUNDLE_FORM_FIELDS.top)}
-
-                    {/* Larger description container */}
-                    <div>
-                        <label className="block font-semibold text-gray-700 mb-1">
-                            Description
-                        </label>
-                        <textarea
-                            name="description"
-                            value={form.description}
-                            onChange={handleChange}
-                            rows={3}
-                            placeholder="Describe what's in this bundle..."
-                            className="w-full rounded-md px-3 py-2 border
-                                       focus:ring-2 focus:ring-green-500
-                                       focus:outline-none"
-                        />
-                    </div>
-
                     {/* Bundle image upload */}
                     <div>
                         <label className="block font-semibold text-gray-700 mb-1">
@@ -222,6 +203,25 @@ export default function CreateBundle() {
                                 className="absolute inset-0 opacity-0 cursor-pointer"
                             />
                         </label>
+                    </div>
+
+                    {renderFields(CREATE_BUNDLE_FORM_FIELDS.top)}
+
+                    {/* Larger description container */}
+                    <div>
+                        <label className="block font-semibold text-gray-700 mb-1">
+                            Description
+                        </label>
+                        <textarea
+                            name="description"
+                            value={form.description}
+                            onChange={handleChange}
+                            rows={3}
+                            placeholder="Describe what's in this bundle..."
+                            className="w-full rounded-md px-3 py-2 border
+                                       focus:ring-2 focus:ring-green-500
+                                       focus:outline-none"
+                        />
                     </div>
 
                     {/* 2-wide grid container */}
