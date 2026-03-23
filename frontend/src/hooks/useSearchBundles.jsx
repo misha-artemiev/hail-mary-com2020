@@ -12,8 +12,22 @@ export default function useSearchBundles() {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [totalPages, setTotalPages] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [userLocation, setUserLocation] = useState({ lat: 0, lon: 0 });
+
+    const goToPage = useCallback((page, filters = {}) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+            search(filters, page);
+        }
+    }, [totalPages, search]);
+
+    const resetFilters = useCallback((newFilters = {}) => {
+        setCurrentPage(1);
+        search(newFilters, 1);
+    }, [search]);
 
     /**
      * Search function
@@ -21,7 +35,7 @@ export default function useSearchBundles() {
      * if specific coordinates aren't passed in the arguments.
      */
     const search = useCallback(
-        async (filters = {}) => {
+        async (filters = {}, page = 1) => {
             setLoading(true);
             setError(null);
 
@@ -47,6 +61,7 @@ export default function useSearchBundles() {
                     categories: filters.category
                         ? [Number(filters.category)]
                         : [],
+                    page: page,
                 };
 
                 const response = await fetch(`${API_BASE_URL}/bundles/search`, {
@@ -61,7 +76,10 @@ export default function useSearchBundles() {
 
                 const data = await response.json();
                 const bundles_list = Array.isArray(data) ? data[1] : data;
+                const pages = Array.isArray(data) ? data[0] : 1;
                 setListings(bundles_list || []);
+                setTotalPages(pages || 1);
+                setCurrentPage(page);
             } catch (err) {
                 console.error(err);
                 setError(err.message);
@@ -105,5 +123,5 @@ export default function useSearchBundles() {
         );
     }, []);
 
-    return { listings, loading, error, search, userLocation };
+    return { listings, loading, error, search, userLocation, totalPages, currentPage, goToPage, resetFilters };
 }

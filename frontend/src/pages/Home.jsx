@@ -40,7 +40,7 @@ export default function Home() {
     });
 
     // Use custom hooks
-    const { listings, loading, search } = useSearchBundles();
+    const { listings, loading, search, totalPages, currentPage, goToPage, resetFilters } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
     const { sellerOptions: restaurantOptions } = useSellers();
@@ -82,7 +82,7 @@ export default function Home() {
      * Handles submitting a search.
      */
     const handleSearch = () => {
-        search(filters);
+        resetFilters(filters);
     };
 
     /**
@@ -270,6 +270,38 @@ export default function Home() {
                 {listings && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {renderListings(listings)}
+                    </div>
+                )}
+
+                {totalPages > 1 && (
+                    <div className="flex flex-wrap justify-center gap-2 mt-6">
+                        <button
+                            onClick={() => goToPage(currentPage - 1, filters)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Prev
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => goToPage(page, filters)}
+                                className={`px-3 py-1 rounded ${
+                                    currentPage === page
+                                        ? "bg-green-600 text-white"
+                                        : "bg-green-500 text-white hover:bg-green-600"
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+                        <button
+                            onClick={() => goToPage(currentPage + 1, filters)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
                     </div>
                 )}
             </Card>
