@@ -31,7 +31,7 @@ WHERE bundle_id=$1 AND claim_code=$2 AND collected_at IS NULL
 LIMIT 1;
 
 -- name: GetConsumersReservationsFull :many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, COALESCE(array_agg(bc.category_id) FILTER (WHERE bc.category_id IS NOT NULL), ARRAY[]::integer[]) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
@@ -39,7 +39,7 @@ WHERE consumer_id=$1
 GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end;
 
 -- name: GetSellerReservationsFull :many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, COALESCE(array_agg(bc.category_id) FILTER (WHERE bc.category_id IS NOT NULL), ARRAY[]::integer[]) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id

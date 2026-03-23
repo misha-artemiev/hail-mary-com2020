@@ -41,7 +41,7 @@ FROM inbox
 GET_USER_INBOX = """-- name: get_user_inbox \\:many
 SELECT message_id, user_id, sender_id, message_subject, message_text, sent_at, read_status
 FROM inbox
-WHERE user_id = :p1
+WHERE user_id = :p1 AND read_status = FALSE
 """
 
 

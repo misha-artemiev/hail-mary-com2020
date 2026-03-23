@@ -220,8 +220,10 @@ class AnalyticsProcesser:
                     category_id=category.category_id
                 )
             ) is None:
-                logger.exception("failed to get category")
-                return
+                logger.warning(
+                    f"failed to get category {category.category_id}, skipping"
+                )
+                continue
             if (
                 await analytics_querier.create_graph_point(
                     CreateGraphPointParams(
@@ -468,7 +470,9 @@ class AnalyticsProcesser:
                 ReservationRow(
                     bundle_date=reservation.window_start.date(),
                     window_start=reservation.window_start.time(),
-                    category_ids=reservation.category_ids,
+                    category_ids=list(reservation.category_ids)
+                    if reservation.category_ids
+                    else [],
                     collected_at=reservation.collected_at,
                 )
                 async for reservation in seller_reservations

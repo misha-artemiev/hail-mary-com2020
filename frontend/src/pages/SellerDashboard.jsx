@@ -31,7 +31,6 @@ import { useSellerAnalytics } from "../hooks/useSellerAnalytics";
 import SellerProfileCard from "../components/SellerProfileCard";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
 import { useCollectReservation } from "../hooks/useCollectReservation";
-import { useSellerAllReservations } from "../hooks/useSellerAllReservations";
 
 import Card from "../components/Card";
 import Modal from "../components/Modal";
@@ -119,114 +118,6 @@ function CollectModal({ bundles, onClose }) {
                 </div>
             </form>
         </Modal>
-    );
-}
-
-const COLORS = ["#22c55e", "#eab308", "#ef4444"];
-
-function StatsSection({ bundles, reservations }) {
-    const statsByBundle = bundles.map((bundle) => {
-        const bundleRes = reservations.filter(
-            (r) => r.bundle_name === bundle.bundle_name,
-        );
-        const total = bundleRes.length;
-        const collected = bundleRes.filter(
-            (r) => r.status === "collected",
-        ).length;
-        const reserved = bundleRes.filter(
-            (r) => r.status === "reserved",
-        ).length;
-        const noShow = bundleRes.filter((r) => r.status === "no_show").length;
-        return {
-            name: bundle.bundle_name.slice(0, 15),
-            total,
-            collected,
-            reserved,
-            noShow,
-        };
-    });
-
-    const statusData = [
-        {
-            name: "Collected",
-            value: reservations.filter((r) => r.status === "collected").length,
-        },
-        {
-            name: "Reserved",
-            value: reservations.filter((r) => r.status === "reserved").length,
-        },
-        {
-            name: "No Show",
-            value: reservations.filter((r) => r.status === "no_show").length,
-        },
-    ];
-
-    return (
-        <Card className="mb-6">
-            <h2 className="text-2xl font-bold text-green-700 mb-4">
-                Statistics
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Reservations by Bundle
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={statsByBundle}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis allowDecimals={false} />
-                            <Tooltip />
-                            <Bar
-                                dataKey="collected"
-                                stackId="a"
-                                fill="#22c55e"
-                                name="Collected"
-                            />
-                            <Bar
-                                dataKey="reserved"
-                                stackId="a"
-                                fill="#eab308"
-                                name="Reserved"
-                            />
-                            <Bar
-                                dataKey="noShow"
-                                stackId="a"
-                                fill="#ef4444"
-                                name="No Show"
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-                <div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Reservation Status
-                    </h3>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <PieChart>
-                            <Pie
-                                data={statusData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                                label={({ name, value }) => `${name}: ${value}`}
-                            >
-                                {statusData.map((_, index) => (
-                                    <Cell
-                                        key={`cell-${index}`}
-                                        fill={COLORS[index % COLORS.length]}
-                                    />
-                                ))}
-                            </Pie>
-                            <Tooltip />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-        </Card>
     );
 }
 
@@ -504,9 +395,11 @@ function BundleRow({ bundle }) {
     const [showReservations, setShowReservations] = useState(false);
     const { reservations } = useSellerBundleReservations(bundle.bundle_id);
 
-    const reservedCount = reservations.filter(
-        (r) => r.status === "reserved",
-    ).length;
+    const reservationCount = reservations.length;
+
+    const getStatus = (reservation) => {
+        return reservation.collected_at ? "collected" : "reserved";
+    };
 
     return (
         <>
@@ -514,16 +407,26 @@ function BundleRow({ bundle }) {
                 className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
                 onClick={() => setShowReservations(!showReservations)}
             >
-                <td className="py-3 px-4">{bundle.bundle_name}</td>
+                <td className="py-3 px-4">
+                    <div>
+                        <p className="font-medium">{bundle.bundle_name}</p>
+                        <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                            {bundle.description}
+                        </p>
+                    </div>
+                </td>
                 <td className="py-3 px-4">£{bundle.price}</td>
                 <td className="py-3 px-4">{bundle.discount_percentage}%</td>
                 <td className="py-3 px-4">
-                    {reservedCount} / {bundle.total_qty}
+                    {(bundle.carbon_dioxide / 1000).toFixed(1)}kg
                 </td>
                 <td className="py-3 px-4">
+                    {reservationCount} / {bundle.total_qty}
+                </td>
+                <td className="py-3 px-4 text-sm">
                     {new Date(bundle.window_start).toLocaleString()}
                 </td>
-                <td className="py-3 px-4">
+                <td className="py-3 px-4 text-sm">
                     {new Date(bundle.window_end).toLocaleString()}
                 </td>
                 <td className="py-3 px-4">
@@ -533,13 +436,13 @@ function BundleRow({ bundle }) {
                             navigate(`/bundles/${bundle.bundle_id}`);
                         }}
                     >
-                        Open Listing
+                        Open
                     </Button>
                 </td>
             </tr>
             {showReservations && (
                 <tr key={`${bundle.bundle_id}-reservations`}>
-                    <td colSpan={7} className="py-4 px-4 bg-gray-50">
+                    <td colSpan={8} className="py-4 px-4 bg-gray-50">
                         <div className="ml-4">
                             <h4 className="text-sm font-semibold text-gray-600 mb-2">
                                 Reservations
@@ -557,8 +460,8 @@ function BundleRow({ bundle }) {
                                             reserved_at={
                                                 reservation.reserved_at
                                             }
-                                            claimCode={reservation.claim_code}
-                                            status={reservation.status}
+                                            claimCode="-"
+                                            status={getStatus(reservation)}
                                         />
                                     ))}
                                 </div>
@@ -580,7 +483,6 @@ export default function SellerDashboard() {
         (issue) => issue.status === "open",
     ).length;
     const [showCollectModal, setShowCollectModal] = useState(false);
-    const allReservations = useSellerAllReservations(bundles);
     const analytics = useSellerAnalytics();
     const [refreshingAnalytics, setRefreshingAnalytics] = useState(false);
 
@@ -679,13 +581,6 @@ export default function SellerDashboard() {
                 />
             )}
 
-            {!loading && bundles && bundles.length > 0 && (
-                <StatsSection
-                    bundles={bundles}
-                    reservations={allReservations}
-                />
-            )}
-
             <Card>
                 <h2 className="text-2xl font-bold text-green-700 mb-4">
                     My Bundles
@@ -712,13 +607,16 @@ export default function SellerDashboard() {
                                         Discount
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Reservations
+                                        CO2 Saved
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Window Start
+                                        Reserved
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
-                                        Window End
+                                        Start
+                                    </th>
+                                    <th className="py-3 px-4 text-green-700 font-semibold">
+                                        End
                                     </th>
                                     <th className="py-3 px-4 text-green-700 font-semibold">
                                         Listing

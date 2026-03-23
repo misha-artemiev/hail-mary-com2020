@@ -123,6 +123,7 @@ export default function Bundle() {
                 id={reservation.reservation_id}
                 reserved_at={reservation.reserved_at}
                 claimCode={reservation.claim_code}
+                status={reservation.collected_at ? "collected" : "reserved"}
                 onReport={() =>
                     navigate(
                         `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,

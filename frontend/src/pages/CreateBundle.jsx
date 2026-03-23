@@ -46,6 +46,7 @@ export default function CreateBundle() {
     const { creating, createBundle, uploadImage } = useCreateBundle();
 
     const [categoryError, setCategoryError] = useState("");
+    const [imageError, setImageError] = useState("");
 
     // State object: stores form data
     const [form, setFormData] = useState({
@@ -128,6 +129,13 @@ export default function CreateBundle() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Error if no image selected
+        if (!newBundleImage) {
+            setImageError("Please upload a bundle image.");
+            return;
+        }
+        setImageError("");
+
         // Error if no categories selected
         if (form.categories.length === 0) {
             setCategoryError("Please select at least one category.");
@@ -180,7 +188,7 @@ export default function CreateBundle() {
                     {/* Bundle image upload */}
                     <div>
                         <label className="block font-semibold text-gray-700 mb-1">
-                            Bundle Image
+                            Bundle Image <span className="text-red-500">*</span>
                         </label>
                         <label className="cursor-pointer relative block w-full">
                             <img
@@ -203,6 +211,11 @@ export default function CreateBundle() {
                                 className="absolute inset-0 opacity-0 cursor-pointer"
                             />
                         </label>
+                        {imageError && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {imageError}
+                            </p>
+                        )}
                     </div>
 
                     {renderFields(CREATE_BUNDLE_FORM_FIELDS.top)}
