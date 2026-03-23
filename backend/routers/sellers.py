@@ -354,7 +354,9 @@ async def create_bundle(
             message_subject="Bundle listed",
             message_text=(
                 f"Your bundle '{bundle.bundle_name}' is now listed and "
-                "available for reservations."
+                "available for reservations. "
+                "It expires when the pickup window ends at "
+                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
             ),
         )
     )
@@ -538,21 +540,6 @@ async def get_bundles(conn: database_dependency, seller: SellerAuthDep) -> list[
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get bundles",
         )
-
-    now = datetime.now(tz=UTC)
-    for bundle in bundles:
-        if bundle.window_end <= now:
-            await InboxQuerier(conn).create_inbox_message(
-                CreateInboxMessageParams(
-                    user_id=seller.user_id,
-                    sender_id=seller.user_id,
-                    message_subject="Bundle expired",
-                    message_text=(
-                        f"Your bundle '{bundle.bundle_name}' has expired at "
-                        f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
-                    ),
-                )
-            )
 
     return list(bundles)
 
