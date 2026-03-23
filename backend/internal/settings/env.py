@@ -15,7 +15,7 @@ class HostSettings(BaseSettings):
     port: int = 8080
     name: str = "hail mary"
     forward_from: str = "*"
-    fuzz_threshold: int = 80
+    fuzz_threshold: int = 90
 
     model_config = SettingsConfigDict(
         env_prefix="HOST_",

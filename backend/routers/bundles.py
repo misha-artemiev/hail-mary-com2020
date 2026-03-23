@@ -10,9 +10,7 @@ from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
-from internal.queries.allergens import AsyncQuerier as AllergensQuerier
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
-from internal.queries.category import AsyncQuerier as CategoriesQuerier
 from internal.queries.inbox import AsyncQuerier as InboxQuerier
 from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Bundle, Reservation
@@ -20,6 +18,7 @@ from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerByLocationParams
+from internal.search.bundle_search import filter_bundle
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
@@ -196,6 +195,7 @@ class SearchBundlesResponse(BaseModel):
     window_start: datetime
     window_end: datetime
     dist: float
+    search_score: float | None = None
 
 
 @router.post(
@@ -253,18 +253,11 @@ async def search_bundles(
             )
         ]
         for bundle in seller_bundles:
-            allergens = [
-                item
-                async for item in AllergensQuerier(conn).get_bundle_allergens(
-                    bundle_id=bundle.bundle_id
-                )
-            ]
-            if (
-                allergens
-                and form.allergens
-                and not set(allergens).isdisjoint(set(form.allergens))
+            if not await filter_bundle(
+                conn, bundle, form.allergens, form.categories, form.max_price
             ):
                 continue
+<<<<<<< Updated upstream
             categories = [
                 item
                 async for item in CategoriesQuerier(conn).get_bundle_categories(
@@ -290,6 +283,8 @@ async def search_bundles(
             ]
             if bundle.total_qty <= len(list(reservations)):
                 continue
+=======
+>>>>>>> Stashed changes
             filtered_bundles.append(
                 SearchBundlesResponse(
                     bundle_id=bundle.bundle_id,
@@ -303,8 +298,25 @@ async def search_bundles(
                     dist=round(dist, 2),
                 )
             )
+
+    if form.seller_name:
+        for fb in filtered_bundles:
+            fb.search_score = WRatio(form.seller_name, fb.sellers_name)
+        filtered_bundles = [
+            fb
+            for fb in filtered_bundles
+            if fb.search_score and fb.search_score >= host_settings.fuzz_threshold
+        ]
+        filtered_bundles.sort(
+            key=lambda x: (-(x.search_score or 0), x.dist, -x.discount_percentage)
+        )
+    else:
+        filtered_bundles.sort(key=lambda x: (x.dist, -x.discount_percentage))
+
     pages = ceil(len(filtered_bundles) / BUNDLES_PER_PAGE)
-    page_bundles = filtered_bundles[form.page : form.page + BUNDLES_PER_PAGE]
+    start_idx = (form.page - 1) * BUNDLES_PER_PAGE
+    end_idx = start_idx + BUNDLES_PER_PAGE
+    page_bundles = filtered_bundles[start_idx:end_idx]
     return (pages, page_bundles)
 
 

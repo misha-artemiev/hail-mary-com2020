@@ -310,22 +310,53 @@ export default function Home() {
                         >
                             Prev
                         </button>
-                        {Array.from(
-                            { length: totalPages },
-                            (_, i) => i + 1,
-                        ).map((page) => (
-                            <button
-                                key={page}
-                                onClick={() => handlePageClick(page)}
-                                className={`px-3 py-1 rounded font-semibold ${
-                                    currentPage === page
-                                        ? "bg-green-700 text-white shadow-md"
-                                        : "bg-green-500 text-white hover:bg-green-600"
-                                }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
+                        {(() => {
+                            const pages = [];
+                            if (totalPages <= 5) {
+                                for (let i = 1; i <= totalPages; i++) {
+                                    pages.push(i);
+                                }
+                            } else {
+                                pages.push(1);
+                                if (currentPage <= 3) {
+                                    for (let i = 2; i <= 5; i++) {
+                                        pages.push(i);
+                                    }
+                                    pages.push("...");
+                                } else if (currentPage >= totalPages - 2) {
+                                    pages.push("...");
+                                    for (let i = totalPages - 4; i <= totalPages; i++) {
+                                        pages.push(i);
+                                    }
+                                } else {
+                                    pages.push("...");
+                                    for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+                                        pages.push(i);
+                                    }
+                                    pages.push("...");
+                                }
+                                pages.push(totalPages);
+                            }
+                            return pages.map((page, idx) =>
+                                page === "..." ? (
+                                    <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">
+                                        ...
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageClick(page)}
+                                        className={`px-3 py-1 rounded font-semibold ${
+                                            currentPage === page
+                                                ? "bg-green-700 text-white shadow-md"
+                                                : "bg-green-500 text-white hover:bg-green-600"
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ),
+                            );
+                        })()}
                         <button
                             onClick={() => handlePageClick(currentPage + 1)}
                             disabled={currentPage === totalPages}
