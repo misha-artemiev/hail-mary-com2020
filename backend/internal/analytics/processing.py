@@ -382,9 +382,8 @@ class AnalyticsProcesser:
         bundles = [
             b async for b in bundles_querier.get_sellers_bundles(seller_id=seller_id)
         ]
-        future_bundles = [
-            b for b in bundles if b.window_start > datetime.datetime.now(datetime.UTC)
-        ]
+        now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        future_bundles = [b for b in bundles if b.window_start > now]
 
         bundle_queries: list[tuple[int, ForecastQuery]] = []
         for bundle in future_bundles:
