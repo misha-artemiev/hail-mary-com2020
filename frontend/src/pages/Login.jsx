@@ -66,7 +66,7 @@ export default function Login() {
         try {
             // Authenticate to get token, store it
             const tokenData = await createSession(form.email, form.password);
-            storeAuthToken(tokenData);
+            await storeAuthToken(tokenData);
 
             // Update AuthContext state
             auth_ctx.login(tokenData);

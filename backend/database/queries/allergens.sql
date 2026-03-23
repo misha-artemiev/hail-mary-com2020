@@ -24,3 +24,13 @@ RETURNING *;
 DELETE FROM allergens
 WHERE allergen_id = $1
 RETURNING *;
+
+-- name: AddBundlesAllergen :one
+INSERT INTO bundle_allergens (bundle_id, allergen_id)
+VALUES ($1,$2)
+RETURNING *;
+
+-- name: DeleteBundleAllergen :one
+DELETE FROM bundle_allergens
+WHERE allergen_id=$1 AND bundle_id=$2
+RETURNING *;

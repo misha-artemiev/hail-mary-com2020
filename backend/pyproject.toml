@@ -15,6 +15,14 @@ dependencies = [
     "geopy==2.4.1",
     "thefuzz[speedup]==0.22.1",
     "greenlet==3.3.2",
+    "minio==7.2.20",
+    "pillow==12.1.1",
+    "python-multipart==0.0.22",
+    "numpy==2.4.2",
+    "requests==2.32.5",
+    "holidays==0.93",
+    "lightgbm==4.6.0",
+    "types-requests==2.32.4.20260107"
 ]
 
 [project.optional-dependencies]
@@ -30,6 +38,7 @@ dev = [
     "pandas-stubs>=3.0.0.260204",
     "pdoc>=16.0.0",
     "psycopg2-binary>=2.9.11",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -90,7 +99,9 @@ select = [
 ]
 extend-ignore = [
     "COM812", # missing-trailing-comma
-    "S101" , # assert
+    "S101", # assert
+    "S110", # try-except-pass
+    "BLE001", # blind-except
 ]
 
 [tool.ruff.lint.pydocstyle]

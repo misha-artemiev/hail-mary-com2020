@@ -5,10 +5,10 @@ import datetime
 import decimal
 import enum
 import pydantic
-from typing import Optional
+from typing import Any, Optional
 
 
-class AdminIssueType(str, enum.Enum):
+class AdminIssueType(enum.StrEnum):
     LOGIN_FAILED = "LOGIN_FAILED"
     ACCOUNT_LOCKED = "ACCOUNT_LOCKED"
     PASSWORD_RESET_FAILED = "PASSWORD_RESET_FAILED"
@@ -21,7 +21,7 @@ class AdminIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
-class ChartType(str, enum.Enum):
+class ChartType(enum.StrEnum):
     LINE = "line"
     MULTI_LINE = "multi_line"
     BAR = "bar"
@@ -30,7 +30,7 @@ class ChartType(str, enum.Enum):
     AREA = "area"
 
 
-class DayOfWeek(str, enum.Enum):
+class DayOfWeek(enum.StrEnum):
     MONDAY = "Monday"
     TUESDAY = "Tuesday"
     WEDNESDAY = "Wednesday"
@@ -40,19 +40,19 @@ class DayOfWeek(str, enum.Enum):
     SUNDAY = "Sunday"
 
 
-class IssueStatus(str, enum.Enum):
+class IssueStatus(enum.StrEnum):
     OPEN = "open"
     IN_PROGRESS = "in_progress"
     CLOSED = "closed"
 
 
-class ReservationStatus(str, enum.Enum):
+class ReservationStatus(enum.StrEnum):
     RESERVED = "reserved"
     COLLECTED = "collected"
     NO_SHOW = "no_show"
 
 
-class SellerIssueType(str, enum.Enum):
+class SellerIssueType(enum.StrEnum):
     ITEM_MISSING = "ITEM_MISSING"
     ITEM_INCORRECT = "ITEM_INCORRECT"
     ITEM_DAMAGED = "ITEM_DAMAGED"
@@ -67,18 +67,27 @@ class SellerIssueType(str, enum.Enum):
     OTHER = "OTHER"
 
 
-class UserRole(str, enum.Enum):
+class UserRole(enum.StrEnum):
     SELLER = "seller"
     CONSUMER = "consumer"
     ADMIN = "admin"
 
 
-class WeatherFlag(str, enum.Enum):
+class WeatherFlag(enum.StrEnum):
     SUNNY = "sunny"
     CLOUDY = "cloudy"
     RAINY = "rainy"
     SNOWY = "snowy"
     WINDY = "windy"
+
+
+class ActivityLog(pydantic.BaseModel):
+    activity_id: int
+    user_id: Optional[int]
+    action: str
+    details: Optional[Any]
+    ip_address: str
+    created_at: datetime.datetime
 
 
 class Admin(pydantic.BaseModel):
@@ -113,23 +122,22 @@ class AnalyticsGraphsType(pydantic.BaseModel):
     graph_type_id: int
     chart_type: ChartType
     graph_summary: str
-    x_axis_label: str
-    y_axis_label: str
+    x_axis_label: Optional[str]
+    y_axis_label: Optional[str]
 
 
 class AnalyticsPoint(pydantic.BaseModel):
     series_id: int
-    sort_order: int
-    x_coordinate: str
-    y_coordinate: decimal.Decimal
     sort_index: int
+    x: str
+    y: decimal.Decimal
 
 
 class AnalyticsSeries(pydantic.BaseModel):
     series_id: int
     graph_id: int
-    sort_index: int
     series_name: str
+    sort_index: int
 
 
 class Badge(pydantic.BaseModel):
@@ -183,11 +191,12 @@ class Consumer(pydantic.BaseModel):
 
 class ForecastInput(pydantic.BaseModel):
     input_id: int
+    bundle_id: int
     seller_id: int
     category_id: int
     day_of_week: DayOfWeek
-    window_start_hour: datetime.time
-    window_end_hour: datetime.time
+    window_start: datetime.datetime
+    window_end: datetime.datetime
     is_holiday: bool
     temperature: decimal.Decimal
     weather_flag: WeatherFlag
@@ -198,7 +207,10 @@ class ForecastInput(pydantic.BaseModel):
 class ForecastOutput(pydantic.BaseModel):
     output_id: int
     bundle_id: int
-    predicted_reservations: int
+    seller_id: int
+    window_start: datetime.datetime
+    predicted_sales: int
+    posted_qty: int
     predicted_no_show_prob: decimal.Decimal
     confidence: decimal.Decimal
     rationale: Optional[str]

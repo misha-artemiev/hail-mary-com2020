@@ -11,7 +11,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 /**
  * A custom React hook to create a new bundle.
  *
- * @returns {{ creating: boolean, createBundle: () => Promise<void> }}
+ * @returns {{ creating: boolean, createBundle: () => Promise<void>, uploadImage: (bundleId: number, file: File) => Promise<void> }}
  */
 export default function useCreateBundle() {
     // State object: stores status of creating bundle
@@ -46,6 +46,7 @@ export default function useCreateBundle() {
                     description: bundleData.description,
                     price: parseFloat(bundleData.price),
                     total_qty: bundleData.total_qty,
+                    weight: Math.round(parseFloat(bundleData.weight) * 1000),
                     discount_percentage: parseInt(
                         bundleData.discount_percentage,
                     ),
@@ -71,9 +72,47 @@ export default function useCreateBundle() {
         }
     }
 
+    /**
+     * Upload an image for a bundle.
+     *
+     * @param {number} bundleId - The bundle ID
+     * @param {File} file - The image file
+     * @returns {Promise<void>}
+     */
+    async function uploadImage(bundleId, file) {
+        const token = localStorage.getItem("authToken");
+        if (!token || !file) {
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch(
+                `${API_BASE_URL}/sellers/me/bundles/${bundleId}/image`,
+                {
+                    method: "PATCH",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: formData,
+                },
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message);
+            }
+        } catch (err) {
+            console.error(err.message);
+        }
+    }
+
     // Exit with the status of creating the bundle, and the hook to make the bundle
     return {
         creating,
         createBundle,
+        uploadImage,
     };
 }

@@ -3,7 +3,6 @@
 from pydantic import BaseModel, EmailStr, SecretStr
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from internal.geolocation.location import get_location
 from internal.queries.admin import AsyncQuerier as AdminQuerier
 from internal.queries.admin import CreateAdminParams
 from internal.queries.consumer import AsyncQuerier as ConsumerQuerier
@@ -97,6 +96,8 @@ class CreateSellerForm(BaseModel):
     post_code: str
     region: str | None = None
     country: str
+    latitude: float
+    longitude: float
 
 
 async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller:
@@ -115,16 +116,6 @@ async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller
     user = await create_user(
         form.username, form.email, form.password, UserRole.SELLER, conn
     )
-    address: str = ""
-    address += f"{form.address_line1}"
-    if form.address_line2:
-        address += f", {form.address_line2}"
-    address += f", {form.city}"
-    address += f", {form.post_code}"
-    if form.region:
-        address += f", {form.region}"
-    address += f", {form.country}"
-    loc = get_location(address)
     seller = await SellerQuerier(conn).create_seller(
         CreateSellerParams(
             user_id=user.user_id,
@@ -135,8 +126,8 @@ async def create_seller(form: CreateSellerForm, conn: AsyncConnection) -> Seller
             post_code=form.post_code,
             region=form.region,
             country=form.country,
-            latitude=loc.lat,
-            longitude=loc.lon,
+            latitude=form.latitude,
+            longitude=form.longitude,
         )
     )
     if not seller:

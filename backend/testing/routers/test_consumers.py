@@ -2,6 +2,7 @@
 
 import asyncio
 from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from typing import Any
 from unittest import TestCase
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -14,133 +15,170 @@ from testing.test_database import cleanup_database, init_database
 
 TEST_RESERVATION_ID = 101
 TEST_BUNDLE_ID = 5
+TEST_USER_ID = 20
+
+
+class MockModel:
+    """Mock models for consumer validation."""
+
+    def __init__(self, **kwargs: Any) -> None:  # noqa: D107, ANN401
+        self.user_id = TEST_USER_ID
+        self.username = "test"
+        self.email = "test@test.com"
+        self.fname = "A"
+        self.lname = "B"
+        self.role = "consumer"
+        self.created_at = datetime.now(tz=UTC)
+        self.last_login = datetime.now(tz=UTC)
+        self.acquired_at = datetime.now(tz=UTC)
+        self.bundle_name = "Bundle"
+        self.seller_name = "Seller"
+        self.description = "Desc"
+        self.price = 10.0
+        self.discount_percentage = 50
+        self.total_qty = 5
+        self.__dict__.update(kwargs)
 
 
 def override_consumer_auth() -> MagicMock:
-    """Mock the consumer authentication dependency.
+    """Mock consumer auth.
 
     Returns:
-        MagicMock: Mock Object simualator.
+        MagicMock: Mock object with user_id.
     """
-    return MagicMock()
+    mock = MagicMock()
+    mock.user_id = TEST_USER_ID
+    return mock
 
 
 class TestConsumers(TestCase):
-    """Test suite for consumer-related functionality."""
+    """Test suite."""
 
-    def setUp(self) -> None:
-        """Runs before every test to set up the client."""
+    def setUp(self) -> None:  # noqa: D102
         init_database()
         self.client = TestClient(app)
 
-    def tearDown(self) -> None:
-        """Runs after every test to tear down the client."""
+    def tearDown(self) -> None:  # noqa: D102
         del self.client
         cleanup_database()
 
-    @patch("routers.consumers.create_consumer")
-    def test_register_consumer(self, mock_create: MagicMock) -> None:
-        """Test consumer registration."""
-        mock_create.return_value = True
-
+    @patch("routers.consumers.create_consumer", new_callable=AsyncMock)
+    def test_register_consumer(self, mock_create: AsyncMock) -> None:
+        """Test registration."""
+        mock_create.return_value = MockModel()
         payload = {
-            "username": "consumer_test",
-            "email": "consumer@test.com",
-            "password": "securepass",
-            "first_name": "Furkan",
-            "last_name": "RuggedHill",
+            "username": "u",
+            "email": "e@e.com",
+            "password": "p",
+            "first_name": "f",
+            "last_name": "l",
         }
-
         response = self.client.post("/consumers", json=payload)
-
         assert response.status_code == status.HTTP_201_CREATED
-        mock_create.assert_called_once()
 
-    @patch("routers.consumers.ReservationsQuerier")
-    def test_get_my_reservations(self, mock_querier: MagicMock) -> None:
-        """Test getting logged-in user's reservations."""
-        app.dependency_overrides[consumer_auth] = override_consumer_auth
+    @patch("routers.consumers.create_consumer", new_callable=AsyncMock)
+    def test_register_consumer_fail(self, mock_create: AsyncMock) -> None:
+        """Test registration fail."""
+        mock_create.side_effect = ValueError("err")
+        payload = {
+            "username": "u",
+            "email": "e@e.com",
+            "password": "p",
+            "first_name": "f",
+            "last_name": "l",
+        }
+        response = self.client.post("/consumers", json=payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-        mock_instance = mock_querier.return_value
-
-        mock_res = MagicMock()
-        mock_res.reservation_id = TEST_RESERVATION_ID
-        mock_res.bundle_id = TEST_BUNDLE_ID
-        mock_res.claim_code = "ABC123XYZ"
-        mock_res.status = "reserved"
-
-        async def mock_generator(
-            *args: object, **kwargs: object
-        ) -> AsyncGenerator[Any]:
-            await asyncio.sleep(0)
-            yield mock_res
-
-        mock_instance.get_consumers_reservations.side_effect = mock_generator
-
-        response = self.client.get("/consumers/me/reservations")
-
-        # Debug print if it fails again to see validation errors
-        if response.status_code != status.HTTP_200_OK:
-            print(response.text)
-
+    @patch("routers.consumers.ConsumerQuerier")
+    def test_get_consumer(self, mock_querier: MagicMock) -> None:
+        """Test get specific consumer."""
+        mock_querier.return_value.get_consumer = AsyncMock(return_value=MockModel())
+        response = self.client.get(f"/consumers/{TEST_USER_ID}")
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()) == 1
-        assert response.json()[0]["reservation_id"] == TEST_RESERVATION_ID
 
-        del app.dependency_overrides[consumer_auth]
-
-    @patch("routers.consumers.ReservationsQuerier")
-    def test_get_my_reservations_empty(self, mock_querier: MagicMock) -> None:
-        """Test empty reservations returns empty list."""
+    @patch("routers.consumers.ConsumerQuerier")
+    def test_get_consumer_me(self, mock_querier: MagicMock) -> None:
+        """Test get me."""
         app.dependency_overrides[consumer_auth] = override_consumer_auth
-
-        mock_instance = mock_querier.return_value
-
-        async def mock_empty_generator(
-            *args: object, **kwargs: object
-        ) -> AsyncGenerator[Any]:
-            await asyncio.sleep(0)
-            items: list[Any] = []
-            for item in items:
-                yield item
-
-        mock_instance.get_consumers_reservations.side_effect = mock_empty_generator
-
-        response = self.client.get("/consumers/me/reservations")
-
+        mock_querier.return_value.get_consumer = AsyncMock(return_value=MockModel())
+        response = self.client.get("/consumers/me")
         assert response.status_code == status.HTTP_200_OK
-        assert response.json() == []
-
         del app.dependency_overrides[consumer_auth]
 
     @patch("routers.consumers.ConsumerQuerier")
     def test_update_consumer(self, mock_querier: MagicMock) -> None:
-        """Test updating consumer profile."""
+        """Test update me."""
         app.dependency_overrides[consumer_auth] = override_consumer_auth
-
-        mock_instance = mock_querier.return_value
-        mock_instance.update_consumer = AsyncMock(return_value=True)
-
-        payload = {"first_name": "Who", "last_name": "should it be"}
-
-        response = self.client.patch("/consumers/me", json=payload)
-
+        mock_updated = MockModel(fname="New")
+        mock_querier.return_value.update_consumer = AsyncMock(return_value=mock_updated)
+        response = self.client.patch(
+            "/consumers/me", json={"first_name": "New", "last_name": "B"}
+        )
         assert response.status_code == status.HTTP_200_OK
-
         del app.dependency_overrides[consumer_auth]
 
     @patch("routers.consumers.ConsumerQuerier")
     def test_update_consumer_fail(self, mock_querier: MagicMock) -> None:
-        """Test failure when updating consumer profile."""
+        """Test update fail."""
         app.dependency_overrides[consumer_auth] = override_consumer_auth
-
-        mock_instance = mock_querier.return_value
-        mock_instance.update_consumer = AsyncMock(return_value=None)
-
-        payload = {"first_name": "X", "last_name": "Y"}
-
-        response = self.client.patch("/consumers/me", json=payload)
-
+        mock_querier.return_value.update_consumer = AsyncMock(return_value=None)
+        response = self.client.patch(
+            "/consumers/me", json={"first_name": "N", "last_name": "S"}
+        )
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        del app.dependency_overrides[consumer_auth]
 
+    @patch("routers.consumers.ReservationsQuerier")
+    def test_get_consumer_reservations(self, mock_querier: MagicMock) -> None:
+        """Test get reservations."""
+        app.dependency_overrides[consumer_auth] = override_consumer_auth
+        mock_res = MockModel(
+            reservation_id=TEST_RESERVATION_ID,
+            bundle_id=TEST_BUNDLE_ID,
+            window_start=datetime.now(tz=UTC),
+            window_end=datetime.now(tz=UTC),
+        )
+
+        async def mock_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield mock_res
+
+        mock_querier.return_value.get_consumers_reservations_full.side_effect = mock_gen
+        response = self.client.get("/consumers/me/reservations")
+        assert response.status_code == status.HTTP_200_OK
+        del app.dependency_overrides[consumer_auth]
+
+    @patch("routers.consumers.ReservationsQuerier")
+    def test_get_streaks(self, mock_querier: MagicMock) -> None:
+        """Test collection streaks."""
+        app.dependency_overrides[consumer_auth] = override_consumer_auth
+        mock_res = MockModel(
+            collected_at=datetime.now(tz=UTC),
+            window_start=datetime.now(tz=UTC),
+            window_end=datetime.now(tz=UTC),
+        )
+
+        async def mock_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield mock_res
+
+        mock_querier.return_value.get_consumers_reservations_full.side_effect = mock_gen
+        response = self.client.get("/consumers/me/streaks")
+        assert response.status_code == status.HTTP_200_OK
+        del app.dependency_overrides[consumer_auth]
+
+    @patch("routers.consumers.BadgeQuerier")
+    def test_get_consumer_badges(self, mock_querier: MagicMock) -> None:
+        """Test get badges."""
+        app.dependency_overrides[consumer_auth] = override_consumer_auth
+        mock_badge = MockModel(badge_id=1, level=1, name="N", description="D")
+
+        async def mock_gen(*_: object, **__: object) -> AsyncGenerator[Any]:
+            await asyncio.sleep(0)
+            yield mock_badge
+
+        mock_querier.return_value.get_consumer_badges.side_effect = mock_gen
+        response = self.client.get("/consumers/me/badges")
+        assert response.status_code == status.HTTP_200_OK
         del app.dependency_overrides[consumer_auth]

@@ -1,28 +1,31 @@
 """Endpoints for bundles."""
 
 from datetime import datetime
-from typing import Annotated
+from math import ceil
 
-from fastapi import APIRouter, HTTPException, Security, status
-from internal.auth.middleware import consumer_auth
+from fastapi import APIRouter, HTTPException, Response, status
+from internal.auth.middleware import ConsumerAuthDep
 from internal.auth.security import generate_claim_code
+from internal.block.management import block_management
 from internal.database.dependency import database_dependency
 from internal.geolocation.distance import dist_safe_box, get_distance
 from internal.geolocation.types import LocationModel
-from internal.queries.allergens import AsyncQuerier as AllergensQuerier
 from internal.queries.bundle import AsyncQuerier as BundleQuerier
-from internal.queries.category import AsyncQuerier as CategoriesQuerier
+from internal.queries.inbox import AsyncQuerier as InboxQuerier
+from internal.queries.inbox import CreateInboxMessageParams
 from internal.queries.models import Bundle, Reservation
 from internal.queries.reservations import AsyncQuerier as ReservationQuerier
 from internal.queries.reservations import CreateReservationParams
 from internal.queries.seller import AsyncQuerier as SellerQuerier
 from internal.queries.seller import GetSellerByLocationParams
-from internal.queries.token import GetSessionByTokenRow
+from internal.search.bundle_search import filter_bundle
 from internal.settings.env import host_settings
 from pydantic import BaseModel, Field
 from thefuzz.fuzz import WRatio  # type: ignore[import-untyped]
 
 router = APIRouter(prefix="/bundles", tags=["bundles"])
+
+BUNDLES_PER_PAGE = 30
 
 
 @router.get(
@@ -89,9 +92,7 @@ async def get_bundle(bundle_id: str, conn: database_dependency) -> Bundle:
     ),
 )
 async def reserve_bundle(
-    bundle_id: str,
-    conn: database_dependency,
-    consumer: Annotated[GetSessionByTokenRow, Security(consumer_auth)],
+    bundle_id: str, conn: database_dependency, consumer: ConsumerAuthDep
 ) -> Reservation:
     """Create bundle reservation.
 
@@ -140,6 +141,32 @@ async def reserve_bundle(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create reservation",
         )
+
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=consumer.user_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=(
+                f"You reserved '{bundle.bundle_name}'. "
+                f"Your claim code is {reservation.claim_code}. "
+                "This reservation expires when the pickup window ends at "
+                f"{bundle.window_end.strftime('%Y-%m-%d %H:%M UTC')}."
+            ),
+        )
+    )
+    await InboxQuerier(conn).create_inbox_message(
+        CreateInboxMessageParams(
+            user_id=bundle.seller_id,
+            sender_id=consumer.user_id,
+            message_subject="Bundle reserved",
+            message_text=(
+                "A reservation has been created for your bundle "
+                f"'{bundle.bundle_name}'."
+            ),
+        )
+    )
+
     return reservation
 
 
@@ -148,11 +175,12 @@ class SearchBundlesForm(BaseModel):
 
     lat: float
     lon: float
-    max_dist: int | None = Field(gt=0)
+    max_dist: int = Field(gt=0)
     max_price: float | None = Field(gt=0)
     seller_name: str | None
     allergens: list[int] | None
     categories: list[int] | None
+    page: int = Field(gt=0, default=1)
 
 
 class SearchBundlesResponse(BaseModel):
@@ -167,6 +195,7 @@ class SearchBundlesResponse(BaseModel):
     window_start: datetime
     window_end: datetime
     dist: float
+    search_score: float | None = None
 
 
 @router.post(
@@ -179,7 +208,7 @@ class SearchBundlesResponse(BaseModel):
 )
 async def search_bundles(
     form: SearchBundlesForm, conn: database_dependency
-) -> list[SearchBundlesResponse]:
+) -> tuple[int, list[SearchBundlesResponse]]:
     """Bundle search with parameters endpoint.
 
     Args:
@@ -188,11 +217,7 @@ async def search_bundles(
 
     Returns:
       found bundles card information
-
-    Raises:
-        HTTPException: if failed to find item
     """
-    form.max_dist = form.max_dist or 10
     distance_box = dist_safe_box(
         LocationModel(lat=form.lat, lon=form.lon), form.max_dist
     )
@@ -207,11 +232,6 @@ async def search_bundles(
             )
         )
     ]
-    if not sellers:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get sellers",
-        )
     filtered_bundles: list[SearchBundlesResponse] = []
     for seller in sellers:
         dist = get_distance(
@@ -233,42 +253,9 @@ async def search_bundles(
             )
         ]
         for bundle in seller_bundles:
-            allergens = [
-                item
-                async for item in AllergensQuerier(conn).get_bundle_allergens(
-                    bundle_id=bundle.bundle_id
-                )
-            ]
-            if (
-                allergens
-                and form.allergens
-                and not set(allergens).isdisjoint(set(form.allergens))
+            if not await filter_bundle(
+                conn, bundle, form.allergens, form.categories, form.max_price
             ):
-                continue
-            categories = [
-                item
-                async for item in CategoriesQuerier(conn).get_bundle_categories(
-                    bundle_id=bundle.bundle_id
-                )
-            ]
-            if (
-                categories
-                and form.categories
-                and set(categories).isdisjoint(set(form.categories))
-            ):
-                continue
-            if (
-                form.max_price
-                and (bundle.price * bundle.discount_percentage / 100) > form.max_price
-            ):
-                continue
-            reservations = [
-                item
-                async for item in ReservationQuerier(conn).get_bundle_reservations(
-                    bundle_id=int(bundle.bundle_id)
-                )
-            ]
-            if not reservations or bundle.total_qty <= len(list(reservations)):
                 continue
             filtered_bundles.append(
                 SearchBundlesResponse(
@@ -283,4 +270,49 @@ async def search_bundles(
                     dist=round(dist, 2),
                 )
             )
-    return filtered_bundles
+
+    if form.seller_name:
+        for fb in filtered_bundles:
+            fb.search_score = WRatio(form.seller_name, fb.sellers_name)
+        filtered_bundles = [
+            fb
+            for fb in filtered_bundles
+            if fb.search_score and fb.search_score >= host_settings.fuzz_threshold
+        ]
+        filtered_bundles.sort(
+            key=lambda x: (-(x.search_score or 0), x.dist, -x.discount_percentage)
+        )
+    else:
+        filtered_bundles.sort(key=lambda x: (x.dist, -x.discount_percentage))
+
+    pages = ceil(len(filtered_bundles) / BUNDLES_PER_PAGE)
+    start_idx = (form.page - 1) * BUNDLES_PER_PAGE
+    end_idx = start_idx + BUNDLES_PER_PAGE
+    page_bundles = filtered_bundles[start_idx:end_idx]
+    return (pages, page_bundles)
+
+
+@router.get(
+    path="/{bundle_id}/image",
+    status_code=status.HTTP_200_OK,
+    summary="Get bundle image",
+    description="Retrieves the image for a specific bundle.",
+)
+async def get_bundle_image(bundle_id: int, conn: database_dependency) -> Response:
+    """Get bundle image.
+
+    Args:
+        bundle_id: bundle id
+        conn: database connection
+
+    Returns:
+        bundle image
+
+    Raises:
+        HTTPException: if failed to get image
+    """
+    if await BundleQuerier(conn).get_bundle(bundle_id=bundle_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "bundle not found")
+    return Response(
+        block_management.get_bundle_image(bundle_id), media_type="image/jpeg"
+    )

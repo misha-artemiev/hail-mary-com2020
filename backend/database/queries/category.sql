@@ -30,3 +30,13 @@ RETURNING *;
 DELETE FROM category
 WHERE category_id = $1
 RETURNING *;
+
+-- name: AddBundlesCategory :one
+INSERT INTO bundle_category (bundle_id, category_id)
+VALUES ($1,$2)
+RETURNING *;
+
+-- name: DeleteBundleCategory :one
+DELETE FROM bundle_category
+WHERE category_id=$1 AND bundle_id=$2
+RETURNING *;

@@ -31,14 +31,28 @@ WHERE bundle_id=$1 AND claim_code=$2 AND collected_at IS NULL
 LIMIT 1;
 
 -- name: GetConsumersReservationsFull :many
-SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, bc.category_id
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
 FROM reservations r
 INNER JOIN bundles b ON b.bundle_id = r.bundle_id
 LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
-WHERE consumer_id=$1;
+WHERE consumer_id=$1
+GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.seller_id, b.carbon_dioxide, b.window_start, b.window_end;
+
+-- name: GetSellerReservationsFull :many
+SELECT r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end, array_agg(bc.category_id) AS category_ids
+FROM reservations r
+INNER JOIN bundles b ON b.bundle_id = r.bundle_id
+LEFT JOIN bundle_category bc ON bc.bundle_id = r.bundle_id
+WHERE b.seller_id=$1
+GROUP BY r.reservation_id, r.bundle_id, r.reserved_at, r.collected_at, b.carbon_dioxide, b.window_start, b.window_end;
 
 -- name: GetReservations :many
 SELECT * FROM reservations;
+
+-- name: CountConsumerCollectedReservations :one
+SELECT COUNT(*) AS collected_count, CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END AS has_collected
+FROM reservations
+WHERE consumer_id=$1 AND collected_at IS NOT NULL;
 
 -- name: DeleteReservation :one
 DELETE FROM reservations

@@ -121,6 +121,21 @@ spec:
                 secretKeyRef:
                   name: hail-mary-postgres-secret
                   key: password
+            - name: BLOCK_URL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: block_url_port
+            - name: BLOCK_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-minio-secret
+                  key: access-key
+            - name: BLOCK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-minio-secret
+                  key: secret-key
           ports:
             - containerPort: 80
       imagePullSecrets:

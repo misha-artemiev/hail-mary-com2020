@@ -10,10 +10,12 @@ import { useNavigate } from "react-router-dom";
 import useAllergens from "../hooks/useAllergens";
 import useCategories from "../hooks/useCategories";
 import useSearchBundles from "../hooks/useSearchBundles";
+import useSellers from "../hooks/useSellers";
 
 // Components
 import Card from "../components/Card";
 import FormInput from "../components/forms/FormInput";
+import RestaurantSelect from "../components/forms/SearchableDropdown";
 import Button from "../components/forms/Button";
 import Category from "../components/Category";
 import DropdownSelect from "../components/forms/DropdownSelect";
@@ -26,7 +28,7 @@ import Listing from "../components/Listing";
  */
 export default function Home() {
     const navigate = useNavigate();
-    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(true);
 
     // State object: holds all fields for the form
     const [filters, setFilters] = useState({
@@ -34,13 +36,22 @@ export default function Home() {
         category: "",
         allergens: [],
         maxPrice: "",
-        maxDistance: "",
+        maxDistance: "10",
     });
 
     // Use custom hooks
-    const { listings, loading, search } = useSearchBundles();
+    const {
+        listings,
+        loading,
+        totalPages,
+        currentPage,
+        goToPage,
+        resetFilters,
+        locationRequired,
+    } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
+    const { sellerOptions: restaurantOptions } = useSellers();
 
     /**
      * Handles changes to the filters.
@@ -79,7 +90,12 @@ export default function Home() {
      * Handles submitting a search.
      */
     const handleSearch = () => {
-        search(filters);
+        resetFilters(filters);
+    };
+
+    const handlePageClick = (page) => {
+        goToPage(page, filters);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     /**
@@ -129,6 +145,7 @@ export default function Home() {
                 <Listing
                     key={listing.bundle_id}
                     title={listing.bundle_name}
+                    bundleId={listing.bundle_id}
                     info={[
                         {
                             label: "Description",
@@ -193,20 +210,18 @@ export default function Home() {
 
                 {/* Collapsible filter content */}
                 <div
-                    className={`overflow-hidden transition-all duration-250 ${
-                        filtersOpen
-                            ? "max-h-125 opacity-100 mt-4"
-                            : "max-h-0 opacity-0"
+                    className={`overflow-visible transition-all duration-250 ${
+                        filtersOpen ? "opacity-100 mt-4" : "max-h-0 opacity-0"
                     }`}
                 >
                     {/* Restaurant filter */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <FormInput
-                            placeholder="Restaurant Name"
-                            name="restaurant"
-                            type="text"
+                        <RestaurantSelect
                             value={filters.restaurant}
                             onChange={handleChange}
+                            options={restaurantOptions}
+                            placeholder="Search restaurants..."
+                            name="restaurant"
                         />
 
                         {/* Max price filter */}
@@ -255,20 +270,111 @@ export default function Home() {
             </Card>
 
             <Card>
-                {/* Display a temporary loading indicator */}
                 {loading && (
-                    <p className="text-gray-600">Loading listings...</p>
+                    <div className="flex flex-col items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mb-4"></div>
+                        <p className="text-gray-500">Loading listings...</p>
+                    </div>
                 )}
 
-                {/* Display if there are no listings */}
-                {!listings ||
-                    (listings.length === 0 && (
-                        <p className="text-gray-600">No listings yet!</p>
-                    ))}
+                {!loading && (!listings || listings.length === 0) && (
+                    <div className="text-center py-8">
+                        {locationRequired ? (
+                            <div>
+                                <p className="text-gray-700 font-medium mb-2">
+                                    Location access is required to view listings
+                                </p>
+                                <p className="text-gray-500 text-sm">
+                                    Please enable location services in your
+                                    browser settings
+                                </p>
+                            </div>
+                        ) : (
+                            <p className="text-gray-600">No listings found!</p>
+                        )}
+                    </div>
+                )}
 
-                {listings && (
+                {!loading && listings && listings.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {renderListings(listings)}
+                    </div>
+                )}
+
+                {totalPages > 1 && !loading && (
+                    <div className="flex flex-wrap justify-center gap-2 mt-6">
+                        <button
+                            onClick={() => handlePageClick(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Prev
+                        </button>
+                        {(() => {
+                            const pages = [];
+                            if (totalPages <= 5) {
+                                for (let i = 1; i <= totalPages; i++) {
+                                    pages.push(i);
+                                }
+                            } else {
+                                pages.push(1);
+                                if (currentPage <= 3) {
+                                    for (let i = 2; i <= 5; i++) {
+                                        pages.push(i);
+                                    }
+                                    pages.push("...");
+                                } else if (currentPage >= totalPages - 2) {
+                                    pages.push("...");
+                                    for (
+                                        let i = totalPages - 4;
+                                        i <= totalPages;
+                                        i++
+                                    ) {
+                                        pages.push(i);
+                                    }
+                                } else {
+                                    pages.push("...");
+                                    for (
+                                        let i = currentPage - 2;
+                                        i <= currentPage + 2;
+                                        i++
+                                    ) {
+                                        pages.push(i);
+                                    }
+                                    pages.push("...");
+                                }
+                                pages.push(totalPages);
+                            }
+                            return pages.map((page, idx) =>
+                                page === "..." ? (
+                                    <span
+                                        key={`ellipsis-${idx}`}
+                                        className="px-2 text-gray-500"
+                                    >
+                                        ...
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageClick(page)}
+                                        className={`px-3 py-1 rounded font-semibold ${
+                                            currentPage === page
+                                                ? "bg-green-700 text-white shadow-md"
+                                                : "bg-green-500 text-white hover:bg-green-600"
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ),
+                            );
+                        })()}
+                        <button
+                            onClick={() => handlePageClick(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Next
+                        </button>
                     </div>
                 )}
             </Card>

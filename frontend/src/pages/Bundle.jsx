@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import { useReserveBundle } from "../hooks/useReserveBundle";
 import { useConsumerReservations } from "../hooks/useConsumerHasReserved";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
+import { useBundleImage } from "../hooks/useBundleImage";
 
 // Components
 import Card from "../components/Card";
@@ -51,6 +52,9 @@ export default function Bundle() {
 
     // Get seller reservations
     const { sellerReservations } = useSellerBundleReservations(parseInt(id));
+
+    // Get bundle image
+    const { imageUrl } = useBundleImage(bundle?.bundle_id);
 
     if (loading) {
         return (
@@ -119,6 +123,11 @@ export default function Bundle() {
                 id={reservation.reservation_id}
                 reserved_at={reservation.reserved_at}
                 claimCode={reservation.claim_code}
+                onReport={() =>
+                    navigate(
+                        `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
+                    )
+                }
             />
         ));
 
@@ -129,7 +138,7 @@ export default function Bundle() {
                     {/* Image */}
                     <div className="relative w-full h-64 md:h-80">
                         <img
-                            src={defaultListing} // TODO: fetch image
+                            src={imageUrl || defaultListing}
                             alt={bundle.bundle_name}
                             className="w-full h-full object-cover"
                         />
@@ -180,6 +189,20 @@ export default function Bundle() {
                     label="Pickup Window"
                     value={`${formatDateTime(windowStart)} - ${formatDateTime(windowEnd)}`}
                 />
+
+                {(userRole === "consumer" || userRole === "seller") && (
+                    <div className="mt-4">
+                        <Button
+                            onClick={() =>
+                                navigate(
+                                    `/report-error?issueType=bundle&bundle_id=${id}`,
+                                )
+                            }
+                        >
+                            Report This Bundle
+                        </Button>
+                    </div>
+                )}
             </Card>
 
             {/* Consumer reservation section */}
@@ -245,6 +268,21 @@ export default function Bundle() {
                                                     {reservation.claim_code}
                                                 </span>
                                             </p>
+                                        )}
+
+                                    {!isCollected &&
+                                        reservation?.reservation_id && (
+                                            <div className="mt-4">
+                                                <Button
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/report-error?issueType=reservation&reservation_id=${reservation.reservation_id}&bundle_id=${id}`,
+                                                        )
+                                                    }
+                                                >
+                                                    Report This Reservation
+                                                </Button>
+                                            </div>
                                         )}
                                 </div>
                             );

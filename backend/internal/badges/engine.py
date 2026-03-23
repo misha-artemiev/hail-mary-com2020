@@ -91,13 +91,15 @@ class BadgeEngine:
             if badge meets requirements
         """
         reservations_filtered = [
-            reservation for reservation in reservations_full if reservation.collected_at
+            reservation
+            for reservation in reservations_full
+            if reservation.collected_at is not None
         ]
         if rule.category_id:
             reservations_filtered = [
                 reservation
                 for reservation in reservations_filtered
-                if reservation.category_id == rule.category_id
+                if rule.category_id in reservation.category_ids
             ]
         if rule.seller_id:
             reservations_filtered = [
@@ -122,7 +124,9 @@ class BadgeEngine:
             if badge meets requirements
         """
         reservations_filtered = [
-            reservation for reservation in reservations_full if reservation.collected_at
+            reservation
+            for reservation in reservations_full
+            if reservation.collected_at is not None
         ]
         carbon_dioxide = sum(
             reservation.carbon_dioxide for reservation in reservations_filtered
@@ -144,11 +148,15 @@ class BadgeEngine:
             if badge meets requirements
         """
         reservations_filtered = [
-            reservation for reservation in reservations_full if reservation.collected_at
+            reservation
+            for reservation in reservations_full
+            if reservation.collected_at is not None
         ]
         if rule.dif_categories >= 1:
             categories = {
-                reservation.category_id for reservation in reservations_filtered
+                cid
+                for reservation in reservations_filtered
+                for cid in reservation.category_ids
             }
             if len(categories) < rule.dif_categories:
                 return False
@@ -177,7 +185,7 @@ class BadgeEngine:
             reservations_filtered = [
                 reservation
                 for reservation in reservations_filtered
-                if reservation.category_id == rule.category_id
+                if rule.category_id in reservation.category_ids
             ]
         if rule.seller_id:
             reservations_filtered = [
@@ -212,8 +220,9 @@ class BadgeEngine:
         )
         reservations_streak: list[GetConsumersReservationsFullRow] = []
         for reservation in reservations_sorted:
-            if not reservation.collected_at and reservation.window_end > datetime.now(
-                tz=UTC
+            if (
+                not reservation.collected_at is not None
+                and reservation.window_end > datetime.now(tz=UTC)
             ):
                 continue
             if not reservation.collected_at:
@@ -309,7 +318,7 @@ class BadgeEngine:
                         )
                 if not to_acquire:
                     continue
-                acquired_badge = BadgeEngine.update_badge(
+                acquired_badge = await BadgeEngine.update_badge(
                     conn, consumer_id, acquire_badge.badge_id, acquire_badge.rule.level
                 )
                 if not acquired_badge:

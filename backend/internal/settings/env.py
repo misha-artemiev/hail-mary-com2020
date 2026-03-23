@@ -15,7 +15,7 @@ class HostSettings(BaseSettings):
     port: int = 8080
     name: str = "hail mary"
     forward_from: str = "*"
-    fuzz_threshold: int = 80
+    fuzz_threshold: int = 90
 
     model_config = SettingsConfigDict(
         env_prefix="HOST_",
@@ -72,7 +72,23 @@ class BadgesSettings(BaseSettings):
     )
 
 
+class BlockSettings(BaseSettings):
+    """Settings for block storage."""
+
+    url_port: str = ""
+    access_key: str = ""
+    secret_key: str = ""
+
+    model_config = SettingsConfigDict(
+        env_prefix="BLOCK_",
+        case_sensitive=False,
+        env_file=BASE_DIR / ".env",
+        extra="ignore",
+    )
+
+
 host_settings = HostSettings()
 database_settings = DatabaseSettings()
 auth_settings = AuthSettings()
 badges_settings = BadgesSettings()
+block_settings = BlockSettings()

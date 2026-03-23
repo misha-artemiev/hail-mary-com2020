@@ -228,36 +228,43 @@ CREATE TABLE IF NOT EXISTS inbox (
 
 CREATE TABLE IF NOT EXISTS forecast_input (
     input_id SERIAL PRIMARY KEY,
+    bundle_id INT NOT NULL,
     seller_id INT NOT NULL,
     category_id INT NOT NULL,
     day_of_week day_of_week NOT NULL,
-    window_start_hour TIME NOT NULL,
-    window_end_hour TIME NOT NULL,
+    window_start TIMESTAMP NOT NULL,
+    window_end TIMESTAMP NOT NULL,
     is_holiday BOOLEAN NOT NULL,
     temperature DECIMAL(5,2) NOT NULL,
     weather_flag weather_flag NOT NULL,
     observed_reservations INT NOT NULL,
     observed_no_shows INT NOT NULL,
-    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
+    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES category(category_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS forecast_output (
     output_id SERIAL PRIMARY KEY,
-    bundle_id INT NOT NULL,
-    predicted_reservations INT NOT NULL,
+    bundle_id INT NOT NULL UNIQUE,
+    seller_id INT NOT NULL,
+    window_start TIMESTAMP NOT NULL,
+    predicted_sales INT NOT NULL,
+    posted_qty INT NOT NULL,
     predicted_no_show_prob DECIMAL(5,4) NOT NULL,
     confidence DECIMAL(5,4) NOT NULL,
     rationale VARCHAR(500),
     generated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE
+    FOREIGN KEY (bundle_id) REFERENCES bundles(bundle_id) ON DELETE CASCADE,
+    FOREIGN KEY (seller_id) REFERENCES sellers(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS analytics_graphs_types (
     graph_type_id SERIAL PRIMARY KEY,
     chart_type chart_type NOT NULL,
     graph_summary VARCHAR(255) NOT NULL,
-    x_axis_label VARCHAR(255) NOT NULL,
-    y_axis_label VARCHAR(255) NOT NULL
+    x_axis_label VARCHAR(255),
+    y_axis_label VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS analytics_graphs (
@@ -272,17 +279,26 @@ CREATE TABLE IF NOT EXISTS analytics_graphs (
 CREATE TABLE IF NOT EXISTS analytics_series (
     series_id SERIAL PRIMARY KEY,
     graph_id INT NOT NULL,
-    sort_index INT NOT NULL,
     series_name VARCHAR(255) NOT NULL,
+    sort_index INT NOT NULL,
     FOREIGN KEY (graph_id) REFERENCES analytics_graphs(graph_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS analytics_points (
     series_id INT NOT NULL,
-    sort_order INT NOT NULL,
-    x_coordinate VARCHAR(255) NOT NULL,
-    y_coordinate DECIMAL(18,4) NOT NULL,
     sort_index INT NOT NULL,
-    PRIMARY KEY (series_id, sort_order),
+    x VARCHAR(255) NOT NULL,
+    y DECIMAL(18,4) NOT NULL,
+    PRIMARY KEY (series_id, sort_index),
     FOREIGN KEY (series_id) REFERENCES analytics_series(series_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS activity_log (
+    activity_id SERIAL PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(255) NOT NULL,
+    details JSONB,
+    ip_address VARCHAR(45) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );

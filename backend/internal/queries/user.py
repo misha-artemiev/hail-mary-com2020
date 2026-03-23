@@ -3,6 +3,7 @@
 #   sqlc v1.30.0
 # source: user.sql
 import datetime
+import decimal
 import pydantic
 from typing import AsyncIterator, Optional
 
@@ -65,6 +66,19 @@ class GetUserRow(pydantic.BaseModel):
     created_at: datetime.datetime
 
 
+GET_USER_ID = """-- name: get_user_id \\:one
+SELECT user_id, role
+FROM users
+WHERE username=:p1
+LIMIT 1
+"""
+
+
+class GetUserIdRow(pydantic.BaseModel):
+    user_id: int
+    role: models.UserRole
+
+
 GET_USER_LOGIN = """-- name: get_user_login \\:one
 SELECT user_id, username, email, pw_hash, role
 FROM users
@@ -94,6 +108,97 @@ class GetUsersRow(pydantic.BaseModel):
     role: models.UserRole
     created_at: datetime.datetime
     last_login: datetime.datetime
+
+
+LEADERBOARD_CARBON_DIOXIDE = """-- name: leaderboard_carbon_dioxide \\:many
+SELECT u.username, COALESCE(SUM(b.carbon_dioxide), 0)\\:\\:numeric AS total_carbon_dioxide
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_carbon_dioxide DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardCarbonDioxideRow(pydantic.BaseModel):
+    username: str
+    total_carbon_dioxide: decimal.Decimal
+
+
+LEADERBOARD_MONEY_SAVED = """-- name: leaderboard_money_saved \\:many
+SELECT u.username, COALESCE(SUM(b.price * b.discount_percentage / (100.0 - b.discount_percentage)), 0)\\:\\:numeric AS total_money_saved
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_money_saved DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardMoneySavedRow(pydantic.BaseModel):
+    username: str
+    total_money_saved: decimal.Decimal
+
+
+LEADERBOARD_RESERVATIONS = """-- name: leaderboard_reservations \\:many
+SELECT u.username, COUNT(r.reservation_id) AS reservation_count
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+GROUP BY u.user_id, u.username
+ORDER BY reservation_count DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardReservationsRow(pydantic.BaseModel):
+    username: str
+    reservation_count: int
+
+
+LEADERBOARD_TOTAL_SPENT = """-- name: leaderboard_total_spent \\:many
+SELECT u.username, COALESCE(SUM(b.price), 0)\\:\\:numeric AS total_spent
+FROM users u
+LEFT JOIN reservations r ON r.consumer_id = u.user_id
+LEFT JOIN bundles b ON b.bundle_id = r.bundle_id
+GROUP BY u.user_id, u.username
+ORDER BY total_spent DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardTotalSpentRow(pydantic.BaseModel):
+    username: str
+    total_spent: decimal.Decimal
+
+
+LEADERBOARD_WEEKLY_STREAK = """-- name: leaderboard_weekly_streak \\:many
+WITH weekly_counts AS (
+    SELECT u.user_id, u.username,
+           DATE_TRUNC('week', r.reserved_at) AS week_start
+    FROM users u
+    LEFT JOIN reservations r ON r.consumer_id = u.user_id
+    WHERE r.reserved_at IS NOT NULL
+    GROUP BY u.user_id, u.username, week_start
+),
+streaks AS (
+    SELECT username,
+           week_start,
+           week_start - INTERVAL '1 week' * ROW_NUMBER() OVER (PARTITION BY username ORDER BY week_start) AS grp
+    FROM weekly_counts
+)
+SELECT username, COUNT(*)\\:\\:int AS streak_weeks
+FROM streaks
+GROUP BY username
+ORDER BY streak_weeks DESC
+LIMIT :p1
+"""
+
+
+class LeaderboardWeeklyStreakRow(pydantic.BaseModel):
+    username: str
+    streak_weeks: int
 
 
 UPDATE_USER_EMAIL = """-- name: update_user_email \\:one
@@ -183,6 +288,15 @@ class AsyncQuerier:
             created_at=row[4],
         )
 
+    async def get_user_id(self, *, username: str) -> Optional[GetUserIdRow]:
+        row = (await self._conn.execute(sqlalchemy.text(GET_USER_ID), {"p1": username})).first()
+        if row is None:
+            return None
+        return GetUserIdRow(
+            user_id=row[0],
+            role=row[1],
+        )
+
     async def get_user_login(self, *, email: str) -> Optional[GetUserLoginRow]:
         row = (await self._conn.execute(sqlalchemy.text(GET_USER_LOGIN), {"p1": email})).first()
         if row is None:
@@ -205,6 +319,46 @@ class AsyncQuerier:
                 role=row[3],
                 created_at=row[4],
                 last_login=row[5],
+            )
+
+    async def leaderboard_carbon_dioxide(self, *, limit: int) -> AsyncIterator[LeaderboardCarbonDioxideRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_CARBON_DIOXIDE), {"p1": limit})
+        async for row in result:
+            yield LeaderboardCarbonDioxideRow(
+                username=row[0],
+                total_carbon_dioxide=row[1],
+            )
+
+    async def leaderboard_money_saved(self, *, limit: int) -> AsyncIterator[LeaderboardMoneySavedRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_MONEY_SAVED), {"p1": limit})
+        async for row in result:
+            yield LeaderboardMoneySavedRow(
+                username=row[0],
+                total_money_saved=row[1],
+            )
+
+    async def leaderboard_reservations(self, *, limit: int) -> AsyncIterator[LeaderboardReservationsRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_RESERVATIONS), {"p1": limit})
+        async for row in result:
+            yield LeaderboardReservationsRow(
+                username=row[0],
+                reservation_count=row[1],
+            )
+
+    async def leaderboard_total_spent(self, *, limit: int) -> AsyncIterator[LeaderboardTotalSpentRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_TOTAL_SPENT), {"p1": limit})
+        async for row in result:
+            yield LeaderboardTotalSpentRow(
+                username=row[0],
+                total_spent=row[1],
+            )
+
+    async def leaderboard_weekly_streak(self, *, limit: int) -> AsyncIterator[LeaderboardWeeklyStreakRow]:
+        result = await self._conn.stream(sqlalchemy.text(LEADERBOARD_WEEKLY_STREAK), {"p1": limit})
+        async for row in result:
+            yield LeaderboardWeeklyStreakRow(
+                username=row[0],
+                streak_weeks=row[1],
             )
 
     async def update_user_email(self, arg: UpdateUserEmailParams) -> Optional[UpdateUserEmailRow]:

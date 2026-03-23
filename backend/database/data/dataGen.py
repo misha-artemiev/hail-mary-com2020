@@ -38,7 +38,7 @@ NUM_PICKUP_WINDOWS = 10
 WEEKS = 6
 TOKEN_CREATION_THRESHOLD = 0.2
 BADGE_PROBABILITY = 0.4
-START_DATE = datetime(year=2026, month=2, day=1, tzinfo=UTC)
+START_DATE = datetime.now(tz=UTC) - timedelta(days=15)
 
 # default product category names (easily changeable if needed)
 DEFAULT_CATEGORY_NAMES = [
@@ -534,22 +534,17 @@ def generate_tokens(users_df: pd.DataFrame) -> pd.DataFrame:
 if __name__ == "__main__":
     print("Starting Data Gen...")
 
-    # Define Output Folder
     OUTPUT_FOLDER = "synthetic_data"
-    # Create the folder if it doesn't exist
     if not pathlib.Path(OUTPUT_FOLDER).exists():
         pathlib.Path(OUTPUT_FOLDER).mkdir(parents=True)
         print(f"Created folder: {OUTPUT_FOLDER}")
 
-    # Users & Profiles
     df_users = generate_users()
     df_sellers, df_consumers, df_admins = generate_profiles(df_users)
     print(f"   Generated {len(df_users)} users")
 
-    # categories, allergens, and pickup windows
     df_windows = generate_pickup_windows()
 
-    # Inventory
     df_bundles = generate_inventory(df_sellers["user_id"].tolist(), df_windows)
 
     # Junction Tables

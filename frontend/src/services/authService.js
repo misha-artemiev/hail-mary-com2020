@@ -6,6 +6,30 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 /**
+ * Fetches the current user's profile to get their username.
+ *
+ * @param {string} role - The user's role (consumer/seller).
+ * @param {string} token - The auth token.
+ * @returns {Promise<string|null>} The username or null if failed.
+ */
+export async function fetchUsername(role, token) {
+    const endpoint = role === "seller" ? "/sellers/me" : "/consumers/me";
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data.username || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Creates a session by authenticating with email and password.
  *
  * @param {string} email - User's email (used as username).
@@ -26,14 +50,19 @@ export async function createSession(email, password) {
         },
     });
 
+    // Handle errors
     if (!response.ok) {
-        // Check for invalid credentials
-        if (response.status === 401) {
-            throw new Error("Invalid email or password");
+        let errorMessage = "An error occurred. Please try again.";
+
+        try {
+            const errorData = await response.json();
+            errorMessage =
+                errorData.detail || errorData.message || errorMessage;
+        } catch {
+            // Response wasn't JSON, use default message
         }
 
-        // Other authentication errors
-        throw new Error("An error occurred. Please try again.");
+        throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -44,11 +73,17 @@ export async function createSession(email, password) {
  *
  * @param {Object} tokenData - Response from {@link createSession}.
  */
-export function storeAuthToken(tokenData) {
+export async function storeAuthToken(tokenData) {
     // Push auth information to local storage
     localStorage.setItem("authToken", tokenData.token);
     localStorage.setItem("tokenExpiresAt", tokenData.expires_at);
     localStorage.setItem("userRole", tokenData.role);
+
+    // Fetch username based on role
+    const username = await fetchUsername(tokenData.role, tokenData.token);
+    if (username) {
+        localStorage.setItem("username", username);
+    }
 }
 
 /**
@@ -61,6 +96,15 @@ export function getAuthToken() {
 }
 
 /**
+ * Retrieves the current username, if authenticated.
+ *
+ * @returns {string|null} the stored username.
+ */
+export function getUsername() {
+    return localStorage.getItem("username");
+}
+
+/**
  * Clears stored authentication data.
  */
 export function clearAuthToken() {
@@ -68,6 +112,7 @@ export function clearAuthToken() {
     localStorage.removeItem("authToken");
     localStorage.removeItem("tokenExpiresAt");
     localStorage.removeItem("userRole");
+    localStorage.removeItem("username");
 }
 
 /**

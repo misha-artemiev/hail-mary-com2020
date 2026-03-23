@@ -25,6 +25,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/consumers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 first_name: form.firstName,
@@ -37,6 +38,7 @@ const buildRequest = (role, form) => {
         return {
             endpoint: `${API_BASE_URL}/sellers`,
             payload: {
+                username: form.username,
                 email: form.email,
                 password: form.password,
                 seller_name: form.sellerName,
@@ -46,6 +48,8 @@ const buildRequest = (role, form) => {
                 post_code: form.postCode,
                 region: form.county,
                 country: form.country,
+                latitude: form.location.lat,
+                longitude: form.location.lng,
             },
         };
     }
@@ -61,9 +65,11 @@ export function useSignup() {
     // State object: holds all fields for the form
     const [role, setRole] = useState("");
     const [form, setForm] = useState({
+        username: "",
         email: "",
         password: "",
         confirmPassword: "",
+        terms: false,
         firstName: "",
         lastName: "",
         sellerName: "",
@@ -73,6 +79,7 @@ export function useSignup() {
         postCode: "",
         county: "",
         country: "",
+        location: null,
     });
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -81,8 +88,21 @@ export function useSignup() {
      * Handles changes to the form.
      */
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setForm((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
+    };
+
+    /**
+     * Handles location changes from the map picker.
+     */
+    const handleLocationChange = (location) => {
+        setForm((prev) => ({
+            ...prev,
+            location,
+        }));
     };
 
     /**
@@ -102,6 +122,17 @@ export function useSignup() {
         // Ensure passwords match
         if (form.password !== form.confirmPassword) {
             alert("Please ensure that passwords match");
+            return;
+        }
+
+        // Ensure terms are accepted
+        if (!form.terms) {
+            setError("You must accept the terms and conditions.");
+            return;
+        }
+
+        if (role === "seller" && !form.location) {
+            setError("Please select a location on the map.");
             return;
         }
 
@@ -126,13 +157,15 @@ export function useSignup() {
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
                 throw new Error(
-                    data?.message ?? `Signup failed (${response.status}).`,
+                    data?.detail ??
+                        data?.message ??
+                        `Signup failed (${response.status}).`,
                 );
             }
 
             // Auto-login with new user
             const tokenData = await createSession(form.email, form.password);
-            storeAuthToken(tokenData);
+            await storeAuthToken(tokenData);
             authContext.login(tokenData);
 
             // Redirect to home page
@@ -144,5 +177,14 @@ export function useSignup() {
         }
     };
 
-    return { form, handleChange, role, setRole, error, loading, handleSubmit };
+    return {
+        form,
+        handleChange,
+        handleLocationChange,
+        role,
+        setRole,
+        error,
+        loading,
+        handleSubmit,
+    };
 }
