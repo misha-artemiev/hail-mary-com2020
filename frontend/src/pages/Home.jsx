@@ -145,6 +145,7 @@ export default function Home() {
                 <Listing
                     key={listing.bundle_id}
                     title={listing.bundle_name}
+                    bundleId={listing.bundle_id}
                     info={[
                         {
                             label: "Description",

@@ -7,6 +7,7 @@ import React from "react";
 
 // Resources
 import defaultListing from "../assets/default-listing.jpg";
+import { useBundleImage } from "../hooks/useBundleImage";
 
 /**
  * A reusable card for displaying a listing as a post.
@@ -19,10 +20,14 @@ import defaultListing from "../assets/default-listing.jpg";
  *          - Click event handler.
  * @param {React.ReactNode} props.children
  *          - Additional elements to add to the card.
+ * @param {number} [props.bundleId]
+ *          - Bundle ID for loading image from endpoint.
  *
  * @returns {JSX.Element} a card with a listing and any information.
  */
-export default function Listing({ title, info, onClick, children }) {
+export default function Listing({ title, info, onClick, children, bundleId }) {
+    const { imageUrl } = useBundleImage(bundleId);
+    const imageSrc = imageUrl || defaultListing;
     return (
         <div
             className="bg-white border rounded-xl
@@ -33,7 +38,7 @@ export default function Listing({ title, info, onClick, children }) {
         >
             {/* Item image */}
             <img
-                src={defaultListing}
+                src={imageSrc}
                 alt="title"
                 className="w-full h-40 object-cover rounded-t-xl"
             />
