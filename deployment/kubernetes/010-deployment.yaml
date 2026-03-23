@@ -136,6 +136,16 @@ spec:
                 secretKeyRef:
                   name: hail-mary-minio-secret
                   key: secret-key
+            - name: AUTH_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: auth_root_username
+            - name: AUTH_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hail-mary-deployment-secret
+                  key: auth_root_password
           ports:
             - containerPort: 80
       imagePullSecrets:
