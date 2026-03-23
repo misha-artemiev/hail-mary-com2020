@@ -27,7 +27,9 @@ const BADGE_IMAGES = import.meta.glob("../assets/badges/*_*.jpeg", {
 
 const getBadgeImage = (badgeId, level = 1) => {
     const key = Object.keys(BADGE_IMAGES).find(
-        (path) => path.includes(`_${badgeId}.${level}.jpeg`) || path.includes(`_${badgeId}.jpeg`),
+        (path) =>
+            path.includes(`_${badgeId}.${level}.jpeg`) ||
+            path.includes(`_${badgeId}.jpeg`),
     );
     return key ? BADGE_IMAGES[key] : null;
 };

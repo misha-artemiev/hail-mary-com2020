@@ -34,7 +34,8 @@ export function useUserBadges(consumerId) {
                         ...badge,
                         level: acquiredMap.get(badge.badge_id)?.level ?? 0,
                         acquired_at:
-                            acquiredMap.get(badge.badge_id)?.acquired_at ?? null,
+                            acquiredMap.get(badge.badge_id)?.acquired_at ??
+                            null,
                     }));
 
                     if (!cancelled) {
