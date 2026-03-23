@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext";
 import { useReserveBundle } from "../hooks/useReserveBundle";
 import { useConsumerReservations } from "../hooks/useConsumerHasReserved";
 import { useSellerBundleReservations } from "../hooks/useSellerBundleReservations";
+import { useBundleImage } from "../hooks/useBundleImage";
 
 // Components
 import Card from "../components/Card";
@@ -51,6 +52,9 @@ export default function Bundle() {
 
     // Get seller reservations
     const { sellerReservations } = useSellerBundleReservations(parseInt(id));
+
+    // Get bundle image
+    const { imageUrl } = useBundleImage(bundle?.bundle_id);
 
     if (loading) {
         return (
@@ -134,7 +138,7 @@ export default function Bundle() {
                     {/* Image */}
                     <div className="relative w-full h-64 md:h-80">
                         <img
-                            src={defaultListing} // TODO: fetch image
+                            src={imageUrl || defaultListing}
                             alt={bundle.bundle_name}
                             className="w-full h-full object-cover"
                         />
