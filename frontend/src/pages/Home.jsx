@@ -40,7 +40,14 @@ export default function Home() {
     });
 
     // Use custom hooks
-    const { listings, loading, search, totalPages, currentPage, goToPage, resetFilters } = useSearchBundles();
+    const {
+        listings,
+        loading,
+        totalPages,
+        currentPage,
+        goToPage,
+        resetFilters,
+    } = useSearchBundles();
     const { allergenOptions } = useAllergens();
     const { categoryOptions } = useCategories();
     const { sellerOptions: restaurantOptions } = useSellers();
@@ -133,15 +140,7 @@ export default function Home() {
                 minute: "2-digit",
             });
 
-    /**
-     * Handles pagination.
-     */
-    const handlePageClick = (page) => {
-        goToPage(page, filters);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    return (
+            return (
                 <Listing
                     key={listing.bundle_id}
                     title={listing.bundle_name}
@@ -277,7 +276,9 @@ export default function Home() {
                 )}
 
                 {!loading && (!listings || listings.length === 0) && (
-                    <p className="text-gray-600 text-center py-8">No listings found!</p>
+                    <p className="text-gray-600 text-center py-8">
+                        No listings found!
+                    </p>
                 )}
 
                 {!loading && listings && listings.length > 0 && (
@@ -295,7 +296,10 @@ export default function Home() {
                         >
                             Prev
                         </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        {Array.from(
+                            { length: totalPages },
+                            (_, i) => i + 1,
+                        ).map((page) => (
                             <button
                                 key={page}
                                 onClick={() => handlePageClick(page)}

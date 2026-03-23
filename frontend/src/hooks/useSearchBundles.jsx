@@ -73,17 +73,23 @@ export default function useSearchBundles() {
         [userLocation],
     );
 
-    const goToPage = useCallback((page, filters = {}) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-            search(filters, page);
-        }
-    }, [totalPages, search]);
+    const goToPage = useCallback(
+        (page, filters = {}) => {
+            if (page >= 1 && page <= totalPages) {
+                setCurrentPage(page);
+                search(filters, page);
+            }
+        },
+        [totalPages, search],
+    );
 
-    const resetFilters = useCallback((newFilters = {}) => {
-        setCurrentPage(1);
-        search(newFilters, 1);
-    }, [search]);
+    const resetFilters = useCallback(
+        (newFilters = {}) => {
+            setCurrentPage(1);
+            search(newFilters, 1);
+        },
+        [search],
+    );
 
     /**
      * Geolocation Effect
@@ -118,5 +124,15 @@ export default function useSearchBundles() {
         );
     }, []);
 
-    return { listings, loading, error, search, userLocation, totalPages, currentPage, goToPage, resetFilters };
+    return {
+        listings,
+        loading,
+        error,
+        search,
+        userLocation,
+        totalPages,
+        currentPage,
+        goToPage,
+        resetFilters,
+    };
 }
