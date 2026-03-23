@@ -212,6 +212,7 @@ async def get_reservations(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get reservations",
         )
+
     return list(reservations)
 
 
