@@ -19,6 +19,7 @@ services:
       - ./.env
     depends_on:
       - database
+      - block-storage
   block-storage:
     image: minio/minio
     container_name: hail-mary-block
