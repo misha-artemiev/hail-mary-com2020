@@ -240,11 +240,18 @@ export default function Navbar() {
                                 Our Team
                             </NavLink>
                             <NavLink
-                                to="/contact"
+                                to="/legal"
                                 className="block px-4 py-2 hover:bg-gray-100"
                                 onClick={() => setIsAboutDropdownOpen(false)}
                             >
-                                Contact
+                                Legal
+                            </NavLink>
+                            <NavLink
+                                to="/terms"
+                                className="block px-4 py-2 hover:bg-gray-100"
+                                onClick={() => setIsAboutDropdownOpen(false)}
+                            >
+                                Terms
                             </NavLink>
                         </div>
                     )}
