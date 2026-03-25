@@ -105,6 +105,22 @@ export default function HamburgerMenu({ isOpen, onClose }) {
                 About Us
             </NavLink>
 
+            <NavLink
+                to="/legal"
+                className="text-bold text-lg"
+                onClick={onClose}
+            >
+                Legal
+            </NavLink>
+
+            <NavLink
+                to="/terms"
+                className="text-bold text-lg"
+                onClick={onClose}
+            >
+                Terms
+            </NavLink>
+
             {/* If user is a seller, show create bundle link */}
             {userRole === "seller" && (
                 <NavLink
