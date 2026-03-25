@@ -30,6 +30,7 @@ import ReportError from "../pages/ReportError";
 import AdminPage from "../pages/AdminPage";
 import TermsAndConditions from "../pages/TermsAndConditions";
 import Legal from "../pages/Legal";
+import Environmental from "../pages/Environmental";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -58,7 +59,11 @@ export const ROUTES = [
     },
     {
         path: "/legal",
-        element: <LegalAndEthical />,
+        element: <Legal />,
+    },
+    {
+        path: "/environmental",
+        element: <Environmental />,
     },
     {
         path: "/our-team",
