@@ -12,20 +12,8 @@ export const FOOTER_LINKS = [
         description: "Legal",
     },
     {
-        to: "/privacy",
-        description: "Privacy Policy",
-    },
-    {
-        to: "/cookies",
-        description: "Cookie Policy",
-    },
-    {
         to: "/terms",
         description: "Terms and Conditions",
-    },
-    {
-        to: "/contact",
-        description: "Contact Us",
     },
     {
         to: "/report-error",
