@@ -28,6 +28,7 @@ import SellerIssues from "../pages/SellerIssues";
 import ConsumerDashboard from "../pages/ConsumerDashboard";
 import ReportError from "../pages/ReportError";
 import AdminPage from "../pages/AdminPage";
+import TermsAndConditions from "../pages/TermsAndConditions";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -50,6 +51,10 @@ export const ROUTES = [
         path: "/aboutus",
         element: <AboutUs />,
     },
+    {
+        path: "/terms",
+        element: <TermsAndConditions />,
+    }
     {
         path: "/our-team",
         element: <OurTeam />,
