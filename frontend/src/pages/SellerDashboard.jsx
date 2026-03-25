@@ -258,6 +258,7 @@ function AnalyticsSection({ analytics, onRefresh, refreshing }) {
                                     stroke="#22c55e"
                                     strokeWidth={2}
                                     name="Actual Sales"
+                                    connectNulls
                                 />
                                 <Line
                                     type="monotone"
@@ -266,6 +267,7 @@ function AnalyticsSection({ analytics, onRefresh, refreshing }) {
                                     strokeWidth={2}
                                     strokeDasharray="5 5"
                                     name="Actual Posted"
+                                    connectNulls
                                 />
                                 <Line
                                     type="monotone"
@@ -274,6 +276,7 @@ function AnalyticsSection({ analytics, onRefresh, refreshing }) {
                                     strokeWidth={2}
                                     strokeDasharray="5 5"
                                     name="Forecast Sales"
+                                    connectNulls
                                 />
                                 <Line
                                     type="monotone"
@@ -282,6 +285,7 @@ function AnalyticsSection({ analytics, onRefresh, refreshing }) {
                                     strokeWidth={2}
                                     strokeDasharray="10 5"
                                     name="Forecast Posted"
+                                    connectNulls
                                 />
                             </LineChart>
                         </ResponsiveContainer>

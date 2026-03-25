@@ -100,33 +100,37 @@ def _fetch_weather(
 
     date_str = bundle_date.isoformat()
 
-    response = requests.get(
-        url,
-        params={
-            "latitude": str(latitude),
-            "longitude": str(longitude),
-            "daily": "temperature_2m_max,weathercode",
-            # Europe/London keeps daily windows aligned with UK midnight.
-            "timezone": "Europe/London",
-            "start_date": date_str,
-            "end_date": date_str,
-        },
-        timeout=_TIMEOUT,
-    )
-    response.raise_for_status()
-
-    daily = response.json()["daily"]
-    # API always returns lists even for a single date.
-    temperatures: list[float] = daily["temperature_2m_max"]
-    weather_codes: list[int] = daily["weathercode"]
-
-    if not temperatures or temperatures[0] is None:
-        raise ValueError(
-            f"Open-Meteo returned no data for {date_str} at ({latitude}, {longitude})."
+    try:
+        response = requests.get(
+            url,
+            params={
+                "latitude": str(latitude),
+                "longitude": str(longitude),
+                "daily": "temperature_2m_max,weathercode",
+                "timezone": "Europe/London",
+                "start_date": date_str,
+                "end_date": date_str,
+            },
+            timeout=_TIMEOUT,
         )
+        response.raise_for_status()
 
-    temperature = Decimal(str(round(temperatures[0], 2)))
-    weather_flag = _wmo_to_flag(int(weather_codes[0]))
+        daily = response.json()["daily"]
+        temperatures: list[float] = daily["temperature_2m_max"]
+        weather_codes: list[int] = daily["weathercode"]
+
+        if not temperatures or temperatures[0] is None:
+            raise ValueError(
+                f"Open-Meteo returned no data for {date_str} at ({latitude}, {longitude})."
+            )
+
+        temperature = Decimal(str(round(temperatures[0], 2)))
+        weather_flag = _wmo_to_flag(int(weather_codes[0]))
+    except requests.HTTPError as e:
+        raise ValueError(
+            f"Open-Meteo API error for {date_str}: {e}. "
+            f"Weather API may not support dates this far in the future."
+        ) from e
 
     return temperature, weather_flag
 
@@ -157,9 +161,19 @@ def build_forecast_query(bundle: BundleDetails) -> ForecastQuery:
 
     today = datetime.date.today()
     weather_url = _PAST_URL if bundle.bundle_date < today else _FORECAST_URL
-    temperature, weather_flag = _fetch_weather(
-        weather_url, bundle.bundle_date, bundle.latitude, bundle.longitude
-    )
+    try:
+        temperature, weather_flag = _fetch_weather(
+            weather_url, bundle.bundle_date, bundle.latitude, bundle.longitude
+        )
+    except ValueError as e:
+        import logging
+
+        weather_logger = logging.getLogger("uvicorn")
+        weather_logger.warning(
+            f"[Weather] {e}. Using defaults for bundle_id={bundle.bundle_id}"
+        )
+        temperature = Decimal("15.0")
+        weather_flag = WeatherFlag.CLOUDY
 
     return ForecastQuery(
         bundle_id=bundle.bundle_id,

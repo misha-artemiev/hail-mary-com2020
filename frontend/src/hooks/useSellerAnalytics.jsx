@@ -47,16 +47,16 @@ export function useSellerAnalytics() {
             fetchGraph(5),
         ]);
 
-        const actualSales = actualData[1].find(
+        const actualSales = actualData[1]?.find(
             (s) => s[0].series_name === "sales",
         );
-        const actualPosted = actualData[1].find(
+        const actualPosted = actualData[1]?.find(
             (s) => s[0].series_name === "posted",
         );
-        const forecastSales = forecastData[1].find(
+        const forecastSales = forecastData[1]?.find(
             (s) => s[0].series_name === "sales",
         );
-        const forecastPosted = forecastData[1].find(
+        const forecastPosted = forecastData[1]?.find(
             (s) => s[0].series_name === "posted",
         );
 
@@ -64,45 +64,61 @@ export function useSellerAnalytics() {
 
         if (actualSales) {
             for (const point of actualSales[1]) {
-                timelineMap.set(point.x, {
-                    date: point.x,
-                    actualSales: Number(point.y),
-                    actualPosted: timelineMap.get(point.x)?.actualPosted || 0,
-                });
+                const existing = timelineMap.get(point.x) || { date: point.x };
+                existing.actualSales = Number(point.y);
+                timelineMap.set(point.x, existing);
             }
         }
         if (actualPosted) {
             for (const point of actualPosted[1]) {
-                timelineMap.set(point.x, {
-                    date: point.x,
-                    actualSales: timelineMap.get(point.x)?.actualSales || 0,
-                    actualPosted: Number(point.y),
-                });
+                const existing = timelineMap.get(point.x) || { date: point.x };
+                existing.actualPosted = Number(point.y);
+                timelineMap.set(point.x, existing);
             }
         }
         if (forecastSales) {
             for (const point of forecastSales[1]) {
-                timelineMap.set(point.x, {
-                    date: point.x,
-                    forecastSales: Number(point.y),
-                    forecastPosted:
-                        timelineMap.get(point.x)?.forecastPosted || 0,
-                });
+                const existing = timelineMap.get(point.x) || { date: point.x };
+                existing.forecastSales = Number(point.y);
+                timelineMap.set(point.x, existing);
             }
         }
         if (forecastPosted) {
             for (const point of forecastPosted[1]) {
-                timelineMap.set(point.x, {
-                    date: point.x,
-                    forecastSales: timelineMap.get(point.x)?.forecastSales || 0,
-                    forecastPosted: Number(point.y),
-                });
+                const existing = timelineMap.get(point.x) || { date: point.x };
+                existing.forecastPosted = Number(point.y);
+                timelineMap.set(point.x, existing);
             }
         }
 
-        return Array.from(timelineMap.values()).sort(
+        const sortedData = Array.from(timelineMap.values()).sort(
             (a, b) => new Date(a.date) - new Date(b.date),
         );
+
+        const today = new Date().toISOString().split("T")[0];
+        
+        let lastActualDate = null;
+        let firstForecastDate = null;
+
+        for (const item of sortedData) {
+            if (item.date <= today && item.actualSales !== undefined) {
+                lastActualDate = item.date;
+            }
+            if (item.date >= today && item.forecastSales !== undefined && !firstForecastDate) {
+                firstForecastDate = item.date;
+            }
+        }
+
+        if (lastActualDate && firstForecastDate && lastActualDate !== firstForecastDate) {
+            const insertIndex = sortedData.findIndex(item => item.date === firstForecastDate);
+            if (insertIndex !== -1) {
+                const existing = sortedData[insertIndex];
+                existing.actualSales = existing.forecastSales;
+                existing.actualPosted = existing.forecastPosted;
+            }
+        }
+
+        return sortedData;
     };
 
     return {

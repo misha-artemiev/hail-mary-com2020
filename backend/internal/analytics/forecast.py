@@ -7,6 +7,7 @@ from statistics import mean
 from typing import Protocol
 
 import numpy as np
+from internal.logger.logger import logger as forecast_logger
 from internal.queries.models import DayOfWeek, ForecastInput, WeatherFlag
 from lightgbm import LGBMRegressor
 from pydantic import BaseModel
@@ -198,10 +199,16 @@ def _forecast_single_category(
         A ForecastResult with predictions for the category.
     """
     n = len(subset)
+    forecast_logger.debug(
+        f"[Forecast] bundle_id={bundle_id}, category_ids={query.category_ids}, history_rows={n}"
+    )
 
     # if no history exists for this category, return the
     # cold-start defaults.
     if n == 0:
+        forecast_logger.warning(
+            f"[Forecast] bundle_id={bundle_id} - No history, using cold-start defaults"
+        )
         return ForecastResult(
             bundle_id=bundle_id,
             seller_id=query.seller_id,
@@ -217,9 +224,15 @@ def _forecast_single_category(
     # LightGBM needs enough rows to build meaningful decision trees;
     # the weighted average is more stable on very small samples.
     if n >= _MIN_ML_SAMPLES:
+        forecast_logger.debug(
+            f"[Forecast] bundle_id={bundle_id} - Using LightGBM (n={n} >= {_MIN_ML_SAMPLES})"
+        )
         pred_res, pred_ns = _predict_with_lgbm(subset, query)
         method = "LightGBM"
     else:
+        forecast_logger.debug(
+            f"[Forecast] bundle_id={bundle_id} - Using weighted average (n={n} < {_MIN_ML_SAMPLES})"
+        )
         pred_res, pred_ns = _predict_weighted_avg(subset, query)
         method = "similarity-weighted average"
 
@@ -352,6 +365,11 @@ def generate_seller_forecasts(
         A list of ForecastResult objects ready to insert into
         forecast_output, in the same order as bundles.
     """
+    forecast_logger.info(
+        f"[Forecast] Starting batch forecast - {len(bundles)} bundles to forecast, "
+        f"{len(history)} history rows"
+    )
+
     # Build a dictionary keyed by category_id so each lookup is instant.
     # defaultdict(list) means we never need to check whether a key exists
     # before appending it creates an empty list automatically on first access.
@@ -395,6 +413,11 @@ def _predict_with_lgbm(
     Returns:
         (predicted_reservations, predicted_no_show_rate)
     """
+    forecast_logger.debug(
+        f"[Forecast] LightGBM - Training with {len(subset)} samples, "
+        f"features={6}, day={query.day_of_week}, hour={query.window_start.hour}"
+    )
+
     # Build the feature matrix, each row is one historical bundle encoded
     # as a vector of 6 numbers. (n_samples, 6).
     x_all = np.array([_encode(r) for r in subset], dtype=float)
