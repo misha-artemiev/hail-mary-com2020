@@ -443,19 +443,12 @@ class AnalyticsProcesser:
         conn: AsyncConnection,
     ) -> None:
         """Save forecasts for seller's future bundles to forecast_output table."""
-        logger.info(
-            f"[Analytics] Starting forecast generation for seller_id={seller_id}"
-        )
         history = [
             row
             async for row in forecast_querier.get_forecast_inputs_by_seller(
                 seller_id=seller_id
             )
         ]
-        logger.debug(
-            f"[Analytics] ForecastOutputs - seller_id={seller_id}, history_rows={len(history)}"
-        )
-
         seller = await seller_querier.get_seller(user_id=seller_id)
         if seller is None:
             logger.exception("failed to get seller for forecast")
@@ -467,17 +460,8 @@ class AnalyticsProcesser:
         ]
         now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         future_bundles = [b for b in bundles if b.window_start > now]
-        logger.debug(
-            f"[Analytics] ForecastOutputs - total_bundles={len(bundles)}, "
-            f"future_bundles={len(future_bundles)}, now={now}"
-        )
-
         if not future_bundles:
-            logger.warning(
-                f"[Analytics] ForecastOutputs - No future bundles to forecast for seller_id={seller_id}"
-            )
             return
-
         bundle_queries: list[tuple[int, ForecastQuery]] = []
         for bundle in future_bundles:
             categories = [
@@ -504,16 +488,7 @@ class AnalyticsProcesser:
             f"[Analytics] Forecasting {len(bundle_queries)} bundles for seller_id={seller_id}"
         )
         forecasts = generate_seller_forecasts(history, bundle_queries)
-        logger.info(
-            f"[Analytics] Generated {len(forecasts)} forecasts, saving to database..."
-        )
-
         for forecast in forecasts:
-            logger.info(
-                f"[Analytics] Forecast result - bundle_id={forecast.bundle_id}, "
-                f"window_start={forecast.window_start}, predicted_sales={forecast.predicted_sales}, "
-                f"confidence={forecast.confidence}"
-            )
             await forecast_querier.upsert_forecast_output(
                 UpsertForecastOutputParams(
                     bundle_id=forecast.bundle_id,
@@ -535,9 +510,6 @@ class AnalyticsProcesser:
             seller_id: seller_id
 
         """
-        logger.info(
-            f"[Analytics] ========== Starting analytics processing for seller_id={seller_id} =========="
-        )
         async for conn in database_manager.get_connection():
             analytics_querier = AnalyticsQuerier(conn)
             graph_types = analytics_querier.get_graphs_types()
@@ -604,7 +576,4 @@ class AnalyticsProcesser:
             )
             await AnalyticsProcesser.add_forecast_graph(
                 analytics_querier, seller_id, bundle_rows, reservation_rows, conn
-            )
-            logger.info(
-                f"[Analytics] ========== Completed analytics processing for seller_id={seller_id} =========="
             )
