@@ -233,6 +233,13 @@ export default function Navbar() {
                                 About Us
                             </NavLink>
                             <NavLink
+                                to="/environmental"
+                                className="block px-4 py-2 hover:bg-gray-100"
+                                onClick={() => setIsAboutDropdownOpen(false)}
+                            >
+                                Environment
+                            </NavLink>
+                            <NavLink
                                 to="/our-team"
                                 className="block px-4 py-2 hover:bg-gray-100"
                                 onClick={() => setIsAboutDropdownOpen(false)}

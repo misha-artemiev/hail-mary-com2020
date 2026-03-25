@@ -106,6 +106,14 @@ export default function HamburgerMenu({ isOpen, onClose }) {
             </NavLink>
 
             <NavLink
+                to="/environmental"
+                className="text-bold text-lg"
+                onClick={onClose}
+            >
+                Environment
+            </NavLink>
+
+            <NavLink
                 to="/legal"
                 className="text-bold text-lg"
                 onClick={onClose}
