@@ -82,9 +82,22 @@ class AnalyticsProcesser:
         ) is None:
             logger.exception("failed to create posted series for sales_vs_posted")
             return
+        today = datetime.date.today()
+        past_bundle_rows = [b for b in bundle_rows if b.bundle_date <= today]
+        past_reservation_rows = [r for r in reservation_rows if r.bundle_date <= today]
+        logger.debug(
+            f"[Analytics] SalesVsPosted - seller_id={seller_id}, total_bundles={len(bundle_rows)}, "
+            f"past_bundles={len(past_bundle_rows)}, total_reservations={len(reservation_rows)}, "
+            f"past_reservations={len(past_reservation_rows)}, today={today}"
+        )
         for i, point in enumerate(
-            SellerAnalytics.graph_weekly_sales_vs_posted(bundle_rows, reservation_rows)
+            SellerAnalytics.graph_weekly_sales_vs_posted(
+                past_bundle_rows, past_reservation_rows
+            )
         ):
+            logger.debug(
+                f"[Analytics] SalesVsPosted point - date={point.day}, sold={point.sold_qty}, posted={point.posted_qty}"
+            )
             if (
                 await analytics_querier.create_graph_point(
                     CreateGraphPointParams(
@@ -291,14 +304,16 @@ class AnalyticsProcesser:
         seller_id: int,
         bundle_rows: list[BundleRow],
         reservation_rows: list[ReservationRow],
+        conn: AsyncConnection,
     ) -> None:
-        """Add forecast vs posted graph.
+        """Add forecast vs posted graph for future bundles.
 
         Args:
             analytics_querier: async analytics queries
             seller_id: seller id
             bundle_rows: formatted bundle rows
             reservation_rows: formatted reservation rows
+            conn: database connection for forecast querier
         """
         if (
             graph := await analytics_querier.get_graph(
@@ -325,16 +340,78 @@ class AnalyticsProcesser:
         ) is None:
             logger.exception("failed to create posted series for forecast")
             return
-        for i, point in enumerate(
-            SellerAnalytics.graph_weekly_sales_vs_posted(bundle_rows, reservation_rows)
-        ):
+
+        forecast_querier = ForecastQuerier(conn)
+        forecast_outputs = [
+            row
+            async for row in forecast_querier.get_forecast_outputs_by_seller(
+                seller_id=seller_id
+            )
+        ]
+        logger.debug(
+            f"[Analytics] ForecastGraph - seller_id={seller_id}, total_forecasts_in_db={len(forecast_outputs)}"
+        )
+
+        today = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        future_forecasts = [
+            f for f in forecast_outputs if f.window_start >= today_start
+        ]
+        logger.debug(
+            f"[Analytics] ForecastGraph - today_start={today_start}, future_forecasts_count={len(future_forecasts)}"
+        )
+
+        if not future_forecasts:
+            logger.warning(
+                f"[Analytics] ForecastGraph - No future forecasts found for seller_id={seller_id}. "
+                f"Run 'Refresh Analytics' to generate forecasts first."
+            )
+            return
+
+        forecast_by_day: dict[datetime.date, tuple[int, int]] = {}
+        forecast_count_by_day: dict[datetime.date, int] = {}
+        for forecast in future_forecasts:
+            logger.debug(
+                f"[Analytics] ForecastGraph - bundle_id={forecast.bundle_id}, "
+                f"window_start={forecast.window_start}, predicted_sales={forecast.predicted_sales}, "
+                f"posted_qty={forecast.posted_qty}"
+            )
+            forecast_date = forecast.window_start.date()
+            if forecast_date not in forecast_by_day:
+                forecast_by_day[forecast_date] = (0, 0)
+                forecast_count_by_day[forecast_date] = 0
+            current = forecast_by_day[forecast_date]
+            forecast_by_day[forecast_date] = (
+                current[0] + forecast.predicted_sales,
+                current[1] + forecast.posted_qty,
+            )
+            forecast_count_by_day[forecast_date] += 1
+
+        avg_forecast_by_day = {
+            date: (
+                round(total_sales / forecast_count_by_day[date])
+                if forecast_count_by_day[date] > 0
+                else 0,
+                round(total_posted / forecast_count_by_day[date])
+                if forecast_count_by_day[date] > 0
+                else 0,
+            )
+            for date, (total_sales, total_posted) in forecast_by_day.items()
+        }
+        logger.debug(
+            f"[Analytics] ForecastGraph - aggregated by day (averaged): {avg_forecast_by_day}"
+        )
+
+        sorted_dates = sorted(avg_forecast_by_day.keys())
+        for i, forecast_date in enumerate(sorted_dates):
+            predicted_sales, posted_qty = avg_forecast_by_day[forecast_date]
             if (
                 await analytics_querier.create_graph_point(
                     CreateGraphPointParams(
                         series_id=sales_series.series_id,
                         sort_index=i,
-                        x=point.day.strftime("%Y-%m-%d"),
-                        y=Decimal(point.sold_qty),
+                        x=forecast_date.strftime("%Y-%m-%d"),
+                        y=Decimal(predicted_sales),
                     )
                 )
                 is None
@@ -346,8 +423,8 @@ class AnalyticsProcesser:
                     CreateGraphPointParams(
                         series_id=posted_series.series_id,
                         sort_index=i,
-                        x=point.day.strftime("%Y-%m-%d"),
-                        y=Decimal(point.posted_qty),
+                        x=forecast_date.strftime("%Y-%m-%d"),
+                        y=Decimal(posted_qty),
                     )
                 )
                 is None
@@ -372,7 +449,6 @@ class AnalyticsProcesser:
                 seller_id=seller_id
             )
         ]
-
         seller = await seller_querier.get_seller(user_id=seller_id)
         if seller is None:
             logger.exception("failed to get seller for forecast")
@@ -384,7 +460,8 @@ class AnalyticsProcesser:
         ]
         now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
         future_bundles = [b for b in bundles if b.window_start > now]
-
+        if not future_bundles:
+            return
         bundle_queries: list[tuple[int, ForecastQuery]] = []
         for bundle in future_bundles:
             categories = [
@@ -407,8 +484,10 @@ class AnalyticsProcesser:
             query = build_forecast_query(details)
             bundle_queries.append((bundle.bundle_id, query))
 
+        logger.info(
+            f"[Analytics] Forecasting {len(bundle_queries)} bundles for seller_id={seller_id}"
+        )
         forecasts = generate_seller_forecasts(history, bundle_queries)
-
         for forecast in forecasts:
             await forecast_querier.upsert_forecast_output(
                 UpsertForecastOutputParams(
@@ -488,13 +567,13 @@ class AnalyticsProcesser:
             await AnalyticsProcesser.add_time_window_distribution_graph(
                 analytics_querier, seller_id, reservation_rows
             )
-            await AnalyticsProcesser.add_forecast_graph(
-                analytics_querier, seller_id, bundle_rows, reservation_rows
+            await AnalyticsProcesser.add_forecast_outputs(
+                ForecastQuerier(conn),
+                CategoryQuerier(conn),
+                SellerQuerier(conn),
+                seller_id,
+                conn,
             )
-            #await AnalyticsProcesser.add_forecast_outputs(
-            #    ForecastQuerier(conn),
-            #    CategoryQuerier(conn),
-            #    SellerQuerier(conn),
-            #    seller_id,
-            #    conn,
-            #)
+            await AnalyticsProcesser.add_forecast_graph(
+                analytics_querier, seller_id, bundle_rows, reservation_rows, conn
+            )

@@ -78,29 +78,20 @@ class SellerAnalytics:
         bundles: list[BundleRow], reservations: list[ReservationRow]
     ) -> list[SalesGraphPoint]:
         """Return coordinates for the provided days (Multiline Graph)."""
-        # Group total posted slots by day from the bundles list.
         posted_by_day: dict[date, float] = {}
         for bundle in bundles:
             current = posted_by_day.get(bundle.bundle_date, 0.0)
-            # max(value, 0) is a safety net: if a database error ever returns
-            # a negative total_qty, we force it to 0 so the graph doesn't break.
             posted_by_day[bundle.bundle_date] = current + float(
                 max(bundle.total_qty, 0)
             )
 
-        # Count collected reservations by day from the reservations list.
         sold_by_day: dict[date, float] = {}
         for reservation in reservations:
-            # Make sure every day from bundles has a sold entry even if zero sales
-            # happened, so it still appears as a point on the line graph.
             if reservation.bundle_date not in sold_by_day:
                 sold_by_day[reservation.bundle_date] = 0.0
-            # Business rule: a reservation is a sale if the consumer actually
-            # collected it (collected_at is not None).
             if reservation.collected_at is not None:
                 sold_by_day[reservation.bundle_date] += 1.0
 
-        # Merge both day-sets and sort chronologically so the line draws left-to-right.
         all_days = sorted(set(posted_by_day) | set(sold_by_day))
         return [
             SalesGraphPoint(
