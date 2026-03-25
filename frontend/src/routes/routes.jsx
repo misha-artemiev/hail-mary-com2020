@@ -29,6 +29,7 @@ import ConsumerDashboard from "../pages/ConsumerDashboard";
 import ReportError from "../pages/ReportError";
 import AdminPage from "../pages/AdminPage";
 import TermsAndConditions from "../pages/TermsAndConditions";
+import Legal from "../pages/Legal";
 
 // Route types
 import ProtectedRoute from "./ProtectedRoute";
@@ -54,7 +55,11 @@ export const ROUTES = [
     {
         path: "/terms",
         element: <TermsAndConditions />,
-    }
+    },
+    {
+        path: "/legal",
+        element: <LegalAndEthical />,
+    },
     {
         path: "/our-team",
         element: <OurTeam />,
